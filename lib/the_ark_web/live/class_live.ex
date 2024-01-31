@@ -138,6 +138,13 @@ defmodule TheArkWeb.ClassLive do
     |> noreply
   end
 
+  def handle_event("add_result", %{"class_id" => class_id}, socket) do
+    socket
+    |> redirect(to: ~p"/classes/#{class_id}/add_result")
+    |> noreply()
+
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -183,6 +190,9 @@ defmodule TheArkWeb.ClassLive do
               <.button class={"#{((@edit_class_id == class.id) or (@delete_class_id == class.id)) && "hidden"}"} phx-click="delete_class_id" phx-value-class_id={class.id}>Delete</.button>
             </div>
             <%!-- <% end %> --%>
+            <div>
+              <.button class={""} phx-click="add_result" phx-value-class_id={class.id}>Add Result</.button>
+            </div>
           </div>
           <%= if @delete_class_id == class.id do %>
             <div class="relative border p-3 rounded-lg w-1/2">

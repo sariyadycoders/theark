@@ -66,8 +66,8 @@ defmodule TheArk.Students do
   end
 
   def create_subjects({:ok, student}) do
-    for %{id: subject_id, label: name} <- Subjects.get_subjects_for_student(student.class_id) do
-      TheArk.Subjects.create_subject(%{"name" => name, "class_id" => student.class_id, "student_id" => student.id, "subject_id" => subject_id})
+    for %{id: subject_id, label: name, teacher_id: teacher_id} <- Subjects.get_subjects_for_student(student.class_id) do
+      TheArk.Subjects.create_subject(%{"name" => name, "class_id" => student.class_id, "student_id" => student.id, "subject_id" => subject_id, "teacher_id" => teacher_id})
     end
 
     {:ok, student}

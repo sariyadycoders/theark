@@ -7,6 +7,7 @@ defmodule TheArk.Results do
   alias TheArk.Repo
 
   alias TheArk.Results.Result
+  alias TheArk.Subjects
 
   @doc """
   Returns the list of results.
@@ -100,5 +101,14 @@ defmodule TheArk.Results do
   """
   def change_result(%Result{} = result, attrs \\ %{}) do
     Result.changeset(result, attrs)
+  end
+
+  def result_changeset_for_result_edition(student, term, subject) do
+    subject_id = (Subjects.get_subject_for_result_edition(student, subject)).id
+
+    result =
+      Repo.one(from r in Result, where: r.name== ^term and r.subject_id == ^subject_id)
+
+    change_result(result, %{})
   end
 end

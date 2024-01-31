@@ -43,8 +43,20 @@ defmodule TheArk.Subjects do
   """
   def get_subject!(id), do: Repo.get!(Subject, id) |> Repo.preload(:results)
 
-  def get_subjects_for_student(class_id) do
+  def get_subject_for_result_edition(student, subject_name) do
+    Repo.one(from s in Subject, where: s.student_id == ^student.id and s.name == ^subject_name)
+  end
+
+  def get_subject_by_subject_id(class_id, subject_id) do
+    Repo.one(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id, select: s.name)
+  end
+
+  def get_subjects_of_class(class_id) do
     Repo.all(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id, select: %{id: s.subject_id, label: s.name})
+  end
+
+  def get_subjects_for_student(class_id) do
+    Repo.all(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id, select: %{id: s.subject_id, label: s.name, teacher_id: s.teacher_id})
   end
 
   def get_subjects_of_teacher_for_class(class_id, teacher_id) do

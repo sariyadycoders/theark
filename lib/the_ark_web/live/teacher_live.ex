@@ -81,6 +81,7 @@ defmodule TheArkWeb.TeacherLive do
 
     socket
     |> assign(teachers: Teachers.list_teachers())
+    |> assign(is_class_choosen: false)
     |> noreply()
   end
 
@@ -91,12 +92,12 @@ defmodule TheArkWeb.TeacherLive do
       Enum.map(teacher.subjects, fn subject -> subject.subject_id end)
 
     subject_options =
-      Subjects.get_subjects_for_student(String.to_integer(class_id))
+      Subjects.get_subjects_of_class(String.to_integer(class_id))
       |> Enum.map(fn subject ->
         if subject.id in teacher_already_subjects_ids do
           Map.put(subject, :selected, true)
         else
-          subject
+          Map.put(subject, :selected, false)
         end
       end)
 

@@ -369,7 +369,7 @@ defmodule TheArkWeb.CoreComponents do
   def input(assigns) do
     ~H"""
     <div phx-feedback-for={@name}>
-      <.label for={@id}><%= @label %></.label>
+      <.label class={"#{(@type == "hidden") && "hidden"}"} for={@id}><%= @label %></.label>
       <input
         type={@type}
         name={@name}
@@ -392,11 +392,14 @@ defmodule TheArkWeb.CoreComponents do
   Renders a label.
   """
   attr :for, :string, default: nil
+  attr :class, :string, default: ""
   slot :inner_block, required: true
 
   def label(assigns) do
+    assigns =
+      Enum.into(assigns, %{class: ""})
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-zinc-800">
+    <label for={@for} class={"block text-sm font-semibold leading-6 text-zinc-800 #{@class}"}>
       <%= render_slot(@inner_block) %>
     </label>
     """
