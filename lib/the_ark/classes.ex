@@ -11,11 +11,12 @@ defmodule TheArk.Classes do
   def list_classes do
     Repo.all(from(c in Class, order_by: c.id))
     |> Repo.preload([:students, [subjects: from(s in Subject, where: s.is_class_subject == true)]])
+    |> Repo.preload([:students, [subjects: :results]])
   end
 
   def get_class!(id) do
     Repo.get!(Class, id)
-    |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true)], students: [:subjects]])
+    |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true)], students: [subjects: :results]])
   end
 
   def create_class(attrs \\ %{}, subject_options) do
@@ -38,6 +39,12 @@ defmodule TheArk.Classes do
 
   def create_class_subjects({:error, _} = error, _subject_options) do
     error
+  end
+
+  def update_class(%Class{} = class, attrs) do
+    class
+    |> Class.changeset(attrs)
+    |> Repo.update()
   end
 
   def update_class(%Class{} = class, attrs, subject_options) do

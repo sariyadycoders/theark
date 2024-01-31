@@ -4,9 +4,9 @@ defmodule TheArkWeb.StudentsShowLive do
   alias TheArk.Students
 
   @impl true
-  def mount(%{"id" => id}, _, socket) do
+  def mount(%{"id" => student_id}, _, socket) do
     socket
-    |> assign(student: Students.get_student!(String.to_integer(id)))
+    |> assign(student: Students.get_student!(String.to_integer(student_id)))
     |> ok
   end
 
@@ -15,7 +15,7 @@ defmodule TheArkWeb.StudentsShowLive do
     ~H"""
       <div>
         <h1 class="font-bold text-3xl mb-5"><%= @student.name %></h1>
-        <div class="grid grid-cols-5 items-center border-b-4 pb-2 font-bold text-lg mb-2">
+        <div class="grid grid-cols-7 items-center border-b-4 pb-2 font-bold text-lg mb-2">
           <div>
             Subject Name
           </div>
@@ -25,20 +25,31 @@ defmodule TheArkWeb.StudentsShowLive do
           <div>
             1st Term Obtained Marks
           </div>
+          <div>
+            2nd Term Total Marks
+          </div>
+          <div>
+            2nd Term Obtained Marks
+          </div>
+          <div>
+            3rd Term Total Marks
+          </div>
+          <div>
+            3rd Term Obtained Marks
+          </div>
         </div>
         <%= for subject <- @student.subjects do %>
-          <div class="grid grid-cols-5">
+          <div class="grid grid-cols-7">
             <div>
               <%= subject.name %>
             </div>
             <div>
-              <%= (Enum.filter(subject.results, fn result -> result.name == "first term" end) |> Enum.at(0)).total_marks  %>
+              <%= (Enum.filter(subject.results, fn result -> result.name == "first_term" end) |> Enum.at(0)).total_marks  %>
             </div>
             <div>
-              <%= (Enum.filter(subject.results, fn result -> result.name == "first term" end) |> Enum.at(0)).obtained_marks  %>
+              <%= (Enum.filter(subject.results, fn result -> result.name == "first_term" end) |> Enum.at(0)).obtained_marks  %>
             </div>
           </div>
-
         <% end %>
       </div>
     """

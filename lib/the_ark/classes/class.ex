@@ -39,7 +39,7 @@ defmodule TheArk.Classes.Class do
   @doc false
   def changeset(class, attrs) do
     class
-    |> cast(attrs, [:name, :incharge])
+    |> cast(attrs, [:name, :incharge, :is_first_term_result_completed])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)
     |> unsafe_validate_unique(:incharge, TheArk.Repo, message: "This teacher is incharge of another class")

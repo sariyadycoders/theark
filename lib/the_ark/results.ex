@@ -38,6 +38,11 @@ defmodule TheArk.Results do
   """
   def get_result!(id), do: Repo.get!(Result, id)
 
+  def get_result_of_student(student, term, subject) do
+    subject_id = (Subjects.get_subject_for_result_edition(student, subject)).id
+    Repo.one(from r in Result, where: r.name== ^term and r.subject_id == ^subject_id)
+  end
+
   @doc """
   Creates a result.
 
@@ -104,10 +109,7 @@ defmodule TheArk.Results do
   end
 
   def result_changeset_for_result_edition(student, term, subject) do
-    subject_id = (Subjects.get_subject_for_result_edition(student, subject)).id
-
-    result =
-      Repo.one(from r in Result, where: r.name== ^term and r.subject_id == ^subject_id)
+    result = get_result_of_student(student, term, subject)
 
     change_result(result, %{})
   end

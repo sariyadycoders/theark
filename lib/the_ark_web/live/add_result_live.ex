@@ -43,6 +43,28 @@ defmodule TheArkWeb.AddResultLive do
   end
 
   @impl true
+  def handle_event("add_result",
+    %{
+      "result_id" => result_id,
+      "result" => result_params
+    },
+    socket) do
+
+    result = Results.get_result!(result_id)
+
+    case Results.update_result(result, result_params) do
+      {:ok, _result} ->
+        socket
+        |> put_flash(:info, "result added")
+        |> noreply()
+      {:error, _} ->
+        socket
+        |> put_flash(:error, "Check obtained marks")
+        |> noreply()
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
       <div>
@@ -58,12 +80,12 @@ defmodule TheArkWeb.AddResultLive do
             <div class="mt-5">
               Add <%= @subject_choosen %> result for <%= student.name%>. Out of <%= @total_marks %>
             </div>
-            <.form :let={f} for={result_changeset(student, @term, @subject_choosen)} phx-submit="add_result">
-              <.input field={f[:obtained_marks]} type="number" label="Obtained Marks" value={0}/>
+            <.form :let={f} for={result_changeset(student, @term, @subject_choosen)} phx-value-result_id={get_result(student, @term, @subject_choosen)} phx-submit="add_result">
+              <.input field={f[:obtained_marks]} type="number" label="Obtained Marks"/>
               <.input field={f[:total_marks]} type="hidden" label="Total Marks" value={@total_marks}/>
               <.input field={f[:name]} type="text" label="Name"/>
 
-
+              <.button class="mt-2">Add</.button>
             </.form>
 
 
@@ -84,5 +106,9 @@ defmodule TheArkWeb.AddResultLive do
 
   def result_changeset(student, term, subject) do
     Results.result_changeset_for_result_edition(student, term, subject)
+  end
+
+  def get_result(student, term, subject) do
+    (Results.get_result_of_student(student, term, subject)).id
   end
 end

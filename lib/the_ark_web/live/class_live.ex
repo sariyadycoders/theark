@@ -78,6 +78,7 @@ defmodule TheArkWeb.ClassLive do
 
     socket
     |> assign(classes: Classes.list_classes)
+    |> put_flash(:info, "Class succefully deleted!")
     |> noreply()
   end
 
@@ -91,6 +92,7 @@ defmodule TheArkWeb.ClassLive do
       {:ok, _class} ->
         socket
         |> assign(edit_class_id: 0)
+        |> put_flash(:info, "Class successfully updated!")
         |> assign(classes: Classes.list_classes)
         |> noreply()
 
@@ -134,15 +136,44 @@ defmodule TheArkWeb.ClassLive do
     Classes.delete_class_by_id(String.to_integer(prev_id))
 
     socket
+    |> put_flash(:info, "Students transferred and class deleted!")
     |> assign(classes: Classes.list_classes)
     |> noreply
   end
 
+  @impl true
   def handle_event("add_result", %{"class_id" => class_id}, socket) do
     socket
-    |> redirect(to: ~p"/classes/#{class_id}/add_result")
+    |> redirect(to: "/classes/#{class_id}/add_result")
     |> noreply()
+  end
 
+  @impl true
+  def handle_event("check_result_completion", %{"class_id" => class_id}, socket) do
+    class = Classes.get_class!(class_id)
+
+    is_first_term_result_completed =
+      Enum.all?(class.students, fn student ->
+        Enum.all?(student.subjects, fn subject ->
+          Enum.all?(subject.results, fn result ->
+            if result.name == "first_term" do
+              if result.obtained_marks do
+                true
+              else
+                false
+              end
+            else
+              true
+            end
+          end)
+        end)
+      end)
+
+    Classes.update_class(class, %{"is_first_term_result_completed" => is_first_term_result_completed})
+
+    socket
+    |> assign(classes: Classes.list_classes)
+    |> noreply()
   end
 
   @impl true
@@ -161,7 +192,7 @@ defmodule TheArkWeb.ClassLive do
             Incharge
           </div>
           <div>
-            Subjects
+            # of Students
           </div>
           <div>
             Actions
@@ -180,9 +211,7 @@ defmodule TheArkWeb.ClassLive do
               <%= class.incharge %>
             </div>
             <div>
-              <%= for subject <- class.subjects do %>
-              <%= subject.name %>
-              <% end  %>
+              <%= Enum.count(class.students) %>
             </div>
             <%!-- <%= if @current_user.email == "management@ark.com" do %> --%>
             <div>
@@ -193,6 +222,11 @@ defmodule TheArkWeb.ClassLive do
             <div>
               <.button class={""} phx-click="add_result" phx-value-class_id={class.id}>Add Result</.button>
             </div>
+            <%= if class.is_first_term_announced do %>
+              <div class={"#{class.is_first_term_result_completed && "bg-green-200"}"}>
+                First Term <span phx-click="check_result_completion" phx-value-class_id={class.id} class="bg-blue-200 cursor-pointer">completed?</span>
+              </div>
+            <% end %>
           </div>
           <%= if @delete_class_id == class.id do %>
             <div class="relative border p-3 rounded-lg w-1/2">
