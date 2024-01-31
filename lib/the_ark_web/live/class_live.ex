@@ -1,23 +1,21 @@
 defmodule TheArkWeb.ClassLive do
   use TheArkWeb, :live_view
 
-  alias TheArk.Classes
-  alias TheArk.Students
-  alias TheArk.Subjects
-  alias TheArk.Teachers
+  alias TheArk.{
+    Classes,
+    Classes.Class,
+    Students,
+    Subjects,
+    Teachers
+  }
   alias Phoenix.LiveView.Components.MultiSelect
-
-  # alias TheArk.Classes.Class
-  # alias TheArk.Repo
-
-  # import Ecto.Changeset
 
   @impl true
   def mount(_params, _session, socket) do
     socket
     |> assign(classes: Classes.list_classes)
     |> assign(teachers: Teachers.list_teachers)
-    |> assign(class_changeset: Classes.change_class(%TheArk.Classes.Class{}))
+    |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(edit_class_id: 0)
     |> assign(delete_class_id: 0)
     |> assign(options: Subjects.list_subject_options)
@@ -25,24 +23,11 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
-  def handle_info({:updated_options, opts}, socket) do
-
+  def handle_info({:updated_options, options}, socket) do
     socket
-    |> assign(options: opts)
-    |> noreply
+    |> assign(options: options)
+    |> noreply()
   end
-
-  # def handle_event("search", %{"filter" => filter}, socket) do
-  #   options = socket.assigns.options
-  #   filtered_options =
-  #     Enum.filter(options, fn option ->
-  #       Sring.contains?(option.label, filter)
-  #     end)
-
-  #   socket
-  #   |> assign(options: filtered_options)
-  #   |> noreply
-  # end
 
   @impl true
   def handle_event("edit_class_id", %{"class_id" => "0"}, socket) do
@@ -54,7 +39,6 @@ defmodule TheArkWeb.ClassLive do
 
   @impl true
   def handle_event("edit_class_id", %{"class_id" => id}, socket) do
-
     class = Classes.get_class!(String.to_integer(id))
     class_changeset = Classes.change_class(class)
 
@@ -81,10 +65,16 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
-  def handle_event("delete_class", %{"class_id" => id}, socket) do
+  def handle_event("delete_class_id", %{"class_id" => id}, socket) do
+    socket
+    |> assign(delete_class_id: String.to_integer(id))
+    |> assign(edit_class_id: 0)
+    |> noreply
+  end
 
-    class = Classes.get_class!(String.to_integer(id))
-    Classes.delete_class(class)
+  @impl true
+  def handle_event("delete_class", %{"class_id" => id}, socket) do
+    Classes.delete_class_by_id(String.to_integer(id))
 
     socket
     |> assign(classes: Classes.list_classes)
@@ -92,10 +82,9 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
-  def handle_event("class updation",
-                  %{"class" => params, "class_id" => id},
-                  %{assigns: %{options: options}} = socket) do
-
+  def handle_event("class_updation",
+    %{"class" => params, "class_id" => id},
+    %{assigns: %{options: options}} = socket) do
     class = Classes.get_class!(String.to_integer(id))
 
     case Classes.update_class(class, params, options) do
@@ -113,8 +102,7 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
-  def handle_event("class validation", %{"class" => params, "class_id" => id}, socket) do
-
+  def handle_event("class_validation", %{"class" => params, "class_id" => id}, socket) do
     class = Classes.get_class!(String.to_integer(id))
     class_changeset = Classes.change_class(class, params) |> Map.put(:action, :insert)
 
@@ -138,21 +126,15 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
-  def handle_event("student_class_change", %{"prev_class_id" => prev_id, "student_class_change" => %{"class_id" => new_id}}, socket) do
+  def handle_event("student_class_change",
+    %{"prev_class_id" => prev_id, "student_class_change" => %{"class_id" => new_id}},
+    socket) do
     Students.replace_class_id_of_students(prev_id, new_id)
-    Subjects.replace_class_id_of_subjects(prev_id, new_id)
+    Students.replace_subjects_of_students(new_id)
     Classes.delete_class_by_id(String.to_integer(prev_id))
 
     socket
     |> assign(classes: Classes.list_classes)
-    |> noreply
-  end
-
-  @impl true
-  def handle_event("delete_class_id", %{"class_id" => id}, socket) do
-    socket
-    |> assign(delete_class_id: String.to_integer(id))
-    |> assign(edit_class_id: 0)
     |> noreply
   end
 
@@ -224,7 +206,7 @@ defmodule TheArkWeb.ClassLive do
               <div phx-click="edit_class_id" phx-value-class_id="0" class="absolute top-2 right-2 cursor-pointer">
                 &#9746;
               </div>
-              <.form :let={f} for={@class_changeset} phx-change="class validation" phx-submit="class updation" phx-value-class_id={class.id}>
+              <.form :let={f} for={@class_changeset} phx-change="class_validation" phx-submit="class_updation" phx-value-class_id={class.id}>
                 <.input field={f[:incharge]} type="select" options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")} label="Incharge Name" />
                 <MultiSelect.multi_select
                   id="subjects"

@@ -99,6 +99,15 @@ defmodule TheArk.Students do
     Repo.update_all(from(s in Student, where: s.class_id == ^prev_id), set: [class_id: new_id])
   end
 
+  def replace_subjects_of_students(new_class_id) do
+    students = get_students_by_class_id(new_class_id)
+
+    for student <- students do
+      Subjects.delete_all_by_attributes([student_id: student.id])
+      create_subjects({:ok, student})
+    end
+  end
+
   @doc """
   Deletes a student.
 
