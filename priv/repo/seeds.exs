@@ -20,7 +20,7 @@ for name <- ["Play Group", "Nursery", "Prep", "One", "Two", "Three", "Four", "Fi
   |> Repo.insert!
 end
 
-for name <- ["Afshan", "Sania", "Rimsha"] do
+for name <- ["Amina", "Sania", "Malaika"] do
   %Teacher{name: name}
   |> Repo.insert!
 end
