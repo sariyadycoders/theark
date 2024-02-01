@@ -16,7 +16,8 @@ defmodule TheArk.Results.Result do
   def changeset(result, attrs) do
     result
     |> cast(attrs, [:name, :total_marks, :obtained_marks, :subject_id])
-    |> validate_required([:name])
+    |> validate_required([:name, :subject_id])
+    |> unique_constraint(:name_subject_id, name: :name, subject_id: :subject_id)
     |> validate_obtained_marks_less_than_total_marks()
   end
 
@@ -28,8 +29,8 @@ defmodule TheArk.Results.Result do
       changeset
     else
       if obtained_marks > total_marks do
-      changeset
-      |> add_error(:obtained_marks, "should be less than or equal to total marks")
+        changeset
+        |> add_error(:obtained_marks, "should be less than or equal to total marks")
       else
         changeset
       end

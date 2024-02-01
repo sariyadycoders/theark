@@ -30,11 +30,10 @@ defmodule TheArk.Repo.Migrations.CreateClasses do
       add :is_third_term_announced, :boolean, default: false
       add :is_third_term_result_completed, :boolean, default: false
 
-
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:classes, [:incharge, :first_period_subject])
+    create unique_index(:classes, [:incharge])
     create unique_index(:classes, [:first_period_teacher])
     create unique_index(:classes, [:second_period_teacher])
     create unique_index(:classes, [:third_period_teacher])
@@ -44,6 +43,5 @@ defmodule TheArk.Repo.Migrations.CreateClasses do
     create unique_index(:classes, [:seven_period_teacher])
     create unique_index(:classes, [:eight_period_teacher])
     create unique_index(:classes, [:nine_period_teacher])
-
   end
 end

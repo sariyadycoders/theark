@@ -39,7 +39,7 @@ defmodule TheArk.Classes.Class do
   @doc false
   def changeset(class, attrs) do
     class
-    |> cast(attrs, [:name, :incharge, :is_first_term_result_completed])
+    |> cast(attrs, [:name, :incharge, :first_period_subject, :first_period_teacher, :second_period_subject, :second_period_teacher, :third_period_subject, :third_period_teacher, :four_period_subject, :four_period_teacher, :five_period_subject, :five_period_teacher, :six_period_subject, :six_period_teacher, :seven_period_subject, :seven_period_teacher, :eight_period_subject, :eight_period_teacher, :nine_period_subject, :nine_period_teacher, :is_first_term_announced, :is_first_term_result_completed, :is_second_term_announced, :is_second_term_result_completed, :is_third_term_announced, :is_third_term_result_completed])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)
     |> unsafe_validate_unique(:incharge, TheArk.Repo, message: "This teacher is incharge of another class")

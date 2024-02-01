@@ -10,5 +10,7 @@ defmodule TheArk.Repo.Migrations.CreateResults do
 
       timestamps(type: :utc_datetime)
     end
+
+    create unique_index(:results, [:name, :subject_id])
   end
 end
