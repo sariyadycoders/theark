@@ -220,23 +220,32 @@ defmodule TheArkWeb.CoreComponents do
       <.button phx-click="go" class="ml-2">Send!</.button>
   """
   attr :type, :string, default: nil
+  attr :icon, :string, required: false
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
 
   slot :inner_block, required: true
 
   def button(assigns) do
+    assigns =
+      assigns |> Enum.into(%{icon: nil, inner_block: nil})
+
     ~H"""
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3",
-        "text-sm font-semibold leading-6 text-white active:text-white/80",
-        @class
+        "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center",
+        "text-sm font-semibold leading-6 text-white active:text-white/80"
+
       ]}
       {@rest}
     >
-      <%= render_slot(@inner_block) %>
+      <%= if @icon do %>
+        <.icon name={@icon} class={"w-5 h-5 fill-current text-white #{@inner_block && "mr-1"}"} />
+      <% end %>
+      <%= if @inner_block do %>
+        <%= render_slot(@inner_block) %>
+      <% end %>
     </button>
     """
   end
@@ -412,7 +421,7 @@ defmodule TheArkWeb.CoreComponents do
 
   def error(assigns) do
     ~H"""
-    <p class="mt-3 flex gap-3 text-sm leading-6 text-rose-600 phx-no-feedback:hidden">
+    <p class="flex gap-3 text-sm leading-6 text-rose-600 phx-no-feedback:hidden">
       <.icon name="hero-exclamation-circle-mini" class="mt-0.5 h-5 w-5 flex-none" />
       <%= render_slot(@inner_block) %>
     </p>

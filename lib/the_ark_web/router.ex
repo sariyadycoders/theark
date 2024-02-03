@@ -24,6 +24,7 @@ defmodule TheArkWeb.Router do
     live "/registration", RegistrationLive
     live "/classes", ClassLive
     live "teachers", TeacherLive
+    live "teachers/:id/result", TeacherResultLive
     live "/classes/:id/students", StudentLive
     live "/classes/:class_id/add_result", AddResultLive
     live "/students/:id", StudentsShowLive

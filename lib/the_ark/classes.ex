@@ -19,6 +19,10 @@ defmodule TheArk.Classes do
     |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true)], students: [subjects: :results]])
   end
 
+  def get_all_class_ids() do
+    Repo.all(from(c in Class, select: c.id))
+  end
+
   def create_class(attrs \\ %{}, subject_options) do
     %Class{}
     |> Class.changeset(attrs)

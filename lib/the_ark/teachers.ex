@@ -43,6 +43,11 @@ defmodule TheArk.Teachers do
     |> Repo.preload([subjects: from(s in Subject, where: s.is_class_subject == true)])
   end
 
+  def get_teacher_for_result!(id) do
+    Repo.get!(Teacher, id)
+    |> Repo.preload([subjects: from(s in Subject, where: s.is_class_subject == false, order_by: s.class_id)])
+  end
+
   @doc """
   Creates a teacher.
 

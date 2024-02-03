@@ -9,6 +9,7 @@ defmodule TheArk.Teachers.Teacher do
     field :residence, :string
 
     has_many :subjects, TheArk.Subjects.Subject
+    has_many :periods, TheArk.Periods.Period
 
     timestamps(type: :utc_datetime)
   end

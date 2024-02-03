@@ -8,15 +8,21 @@ defmodule TheArkWeb.AddResultLive do
     Results.Result,
     Students
   }
+  alias TheArkWeb.ClassLive
 
   @term_options ["First Term": "first_term", "Second Term": "second_term", "Third Term": "third_term"]
 
   @impl true
-  def mount(%{"class_id" => id}, _session, socket) do
+  def mount(
+    %{"class_id" => id},
+    _session,
+    socket) do
+
     class = Classes.get_class!(id)
 
     socket
     |> assign(class: class)
+    |> assign(is_first_term_announced: class.is_first_term_announced)
     |> assign(subject_choosen: false)
     |> assign(total_marks: nil)
     |> assign(term: nil)
@@ -98,6 +104,13 @@ defmodule TheArkWeb.AddResultLive do
     case Results.update_result(result, result_params) do
       {:ok, _result} ->
         socket
+        |> then(fn socket ->
+          if socket.assigns.is_first_term_announced do
+            ClassLive.check_result_completion(socket)
+          else
+            socket
+          end
+        end)
         |> assign(result_changeset: Results.change_result(%Result{}))
         |> put_flash(:info, "result added")
         |> noreply()
