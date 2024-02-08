@@ -19,3 +19,5 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 
 
   Token for github: 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
+
+  mix phx.gen.context Slos Slo slos description:string

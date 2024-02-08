@@ -1,7 +1,6 @@
 defmodule TheArk.Periods.Period do
   use Ecto.Schema
   import Ecto.Changeset
-  import Ecto.Query
 
   schema "periods" do
     field :period_number, :integer

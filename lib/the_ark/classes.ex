@@ -27,6 +27,11 @@ defmodule TheArk.Classes do
     Repo.all(from(c in Class, select: c.id))
   end
 
+  def get_class_for_slos(id) do
+    Repo.get!(Class, id)
+    |> Repo.preload(:slos)
+  end
+
   def create_class(attrs \\ %{}, subject_options) do
     %Class{}
     |> Class.changeset(attrs)

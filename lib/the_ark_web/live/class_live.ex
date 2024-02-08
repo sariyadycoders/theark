@@ -9,6 +9,7 @@ defmodule TheArkWeb.ClassLive do
     Teachers
   }
   alias Phoenix.LiveView.Components.MultiSelect
+  alias Phoenix.LiveView.JS
 
   @impl true
   def mount(_params, _session, socket) do
@@ -150,6 +151,13 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
+  def handle_event("go_to_slos", %{"class_id" => id}, socket) do
+    socket
+    |> redirect(to: "/classes/#{id}/slos")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
       <div>
@@ -193,13 +201,13 @@ defmodule TheArkWeb.ClassLive do
               <%= Enum.count(class.students) %>
             </div>
             <div>
-              <.button icon="hero-eye" />
+              <.button phx-click="go_to_slos" phx-value-class_id={class.id} icon="hero-eye" />
             </div>
             <div class="flex items-center gap-1">
               <.button phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
               <.button phx-click="open_class" phx-value-class_id={class.id} icon="hero-eye" />
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1">
             <%= for term_name <- @list_of_terms do %>
               <%= if Map.get(class, String.to_atom("is_#{term_name}_announced")) do %>
                 <div class={"w-5 rounded-full text-center #{!Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-red-500 text-white"} #{Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-green-500 text-white"}"}>
@@ -218,49 +226,53 @@ defmodule TheArkWeb.ClassLive do
             </div>
             <%!-- <%= if @current_user.email == "management@ark.com" do %> --%>
             <div class="flex items-center gap-1">
-              <.button icon="hero-pencil" class={"#{((@edit_class_id == class.id) or (@delete_class_id == class.id)) && "hidden"}"} phx-click="edit_class_id" phx-value-class_id={class.id} />
-              <.button icon="hero-trash" class={"#{((@edit_class_id == class.id) or (@delete_class_id == class.id)) && "hidden"}"} phx-click="delete_class_id" phx-value-class_id={class.id} />
+              <.button icon="hero-pencil" phx-click={JS.push("edit_class_id") |> show_modal("edit_class_modal_#{class.id}")} phx-value-class_id={class.id} />
+              <.button icon="hero-trash" phx-click={JS.push("delete_class_id") |> show_modal("delete_class_modal_#{class.id}")} phx-value-class_id={class.id} />
             </div>
             <%!-- <% end %> --%>
           </div>
-          <%= if @delete_class_id == class.id do %>
-            <div class="relative border p-3 rounded-lg w-1/2">
-              <div phx-click="delete_class_id" phx-value-class_id="0" class="absolute top-2 right-2 cursor-pointer">
-                &#9746;
-              </div>
-              <.button class="mb-2" phx-click="delete_class" phx-value-class_id={class.id}>Delete Class alongwith All Students</.button>
-              <div class="font-bold">OR transfer students to another class</div>
-              <div class="p-2 border rounded-lg mt-2">
-                <h2 class="font-bold mb-2">Students of class <%= class.name %> should be transfered to:</h2>
-                <.form :let={s} for={%{}} as={:student_class_change} phx-value-prev_class_id={class.id} phx-submit="student_class_change">
-                  <.input field={s[:class_id]} type="select" label="Class" options={Enum.flat_map(@classes, fn class -> ["#{class.name}": class.id] end)} />
+          <.modal id={"delete_class_modal_#{class.id}"}>
+            <%= if @delete_class_id == class.id do %>
+              <div class="relative border p-3 rounded-lg">
+                <div phx-click="delete_class_id" phx-value-class_id="0" class="absolute top-2 right-2 cursor-pointer">
+                  &#9746;
+                </div>
+                <.button class="mb-2" phx-click="delete_class" phx-value-class_id={class.id}>Delete Class alongwith All Students</.button>
+                <div class="font-bold">OR transfer students to another class</div>
+                <div class="p-2 border rounded-lg mt-2">
+                  <h2 class="font-bold mb-2">Students of class <%= class.name %> should be transfered to:</h2>
+                  <.form :let={s} for={%{}} as={:student_class_change} phx-value-prev_class_id={class.id} phx-submit="student_class_change">
+                    <.input field={s[:class_id]} type="select" label="Class" options={Enum.flat_map(@classes, fn class -> ["#{class.name}": class.id] end)} />
 
-                  <.button class="mt-5">Transfer Studens and Delete Class</.button>
+                    <.button class="mt-5">Transfer Studens and Delete Class</.button>
+                  </.form>
+                </div>
+              </div>
+            <% end %>
+          </.modal>
+          <.modal id={"edit_class_modal_#{class.id}"}>
+            <%= if @edit_class_id == class.id do %>
+              <div class="relative border p-3 rounded-lg">
+                <div phx-click="edit_class_id" phx-value-class_id="0" class="absolute top-2 right-2 cursor-pointer">
+                  &#9746;
+                </div>
+                <.form :let={f} for={@class_changeset} phx-change="class_validation" phx-submit="class_updation" phx-value-class_id={class.id}>
+                  <.input field={f[:incharge]} type="select" options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")} label="Incharge Name" />
+                  <MultiSelect.multi_select
+                    id={"subjects_#{class.id}"}
+                    on_change={fn opts -> send(self(), {:updated_options, opts}) end}
+                    form={f}
+                    options={@options}
+                    max_selected={7}
+                    placeholder="Select subjects..."
+                    title="Select Subjects"
+                  />
+
+                  <.button phx-click={JS.exec("data-cancel", to: "#edit_class_modal_#{class.id}")} class="mt-5">Submit</.button>
                 </.form>
               </div>
-            </div>
-          <% end %>
-          <%= if @edit_class_id == class.id do %>
-            <div class="relative border p-3 w-1/2 rounded-lg">
-              <div phx-click="edit_class_id" phx-value-class_id="0" class="absolute top-2 right-2 cursor-pointer">
-                &#9746;
-              </div>
-              <.form :let={f} for={@class_changeset} phx-change="class_validation" phx-submit="class_updation" phx-value-class_id={class.id}>
-                <.input field={f[:incharge]} type="select" options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")} label="Incharge Name" />
-                <MultiSelect.multi_select
-                  id="subjects"
-                  on_change={fn opts -> send(self(), {:updated_options, opts}) end}
-                  form={f}
-                  options={@options}
-                  max_selected={7}
-                  placeholder="Select subjects..."
-                  title="Select Subjects"
-                />
-
-                <.button class="mt-5">Submit</.button>
-              </.form>
-            </div>
-          <% end %>
+            <% end %>
+          </.modal>
           <hr class=""/>
         <% end %>
       </div>

@@ -8,7 +8,6 @@ defmodule TheArkWeb.AddResultLive do
     Results.Result,
     Students
   }
-  alias TheArkWeb.ClassLive
 
   @term_options ["First Term": "first_term", "Second Term": "second_term", "Third Term": "third_term"]
 

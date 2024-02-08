@@ -24,7 +24,7 @@ defmodule TheArk.Subjects do
   end
 
   def list_subject_options do
-    Repo.all(from s in Subject, where: is_nil(s.class_id) and is_nil(s.student_id), select: %{id: s.id, label: s.name})
+    Repo.all(from s in Subject, where: is_nil(s.class_id) and is_nil(s.student_id), select: %{id: s.id, label: s.name, selected: false})
   end
 
   @doc """
