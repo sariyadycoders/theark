@@ -7,14 +7,14 @@ defmodule TheArk.PeriodsFixtures do
   @doc """
   Generate a perid.
   """
-  def perid_fixture(attrs \\ %{}) do
+  def period_fixture(attrs \\ %{}) do
     {:ok, perid} =
       attrs
       |> Enum.into(%{
         period_number: 42,
         subject: "some subject"
       })
-      |> TheArk.Periods.create_perid()
+      |> TheArk.Periods.create_period()
 
     perid
   end
