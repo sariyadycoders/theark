@@ -224,27 +224,29 @@ defmodule TheArkWeb.CoreComponents do
   attr :class, :string, default: nil
   attr :rest, :global, include: ~w(disabled form name value)
 
-  slot :inner_block, required: true
+  slot :inner_block
 
   def button(assigns) do
     assigns =
-      assigns |> Enum.into(%{icon: nil, inner_block: nil})
+      assigns |> Enum.into(%{icon: nil})
 
     ~H"""
     <button
       type={@type}
       class={[
-        "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center",
+        "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center gap-1",
         "text-sm font-semibold leading-6 text-white active:text-white/80"
 
       ]}
       {@rest}
     >
       <%= if @icon do %>
-        <.icon name={@icon} class={"w-5 h-5 fill-current text-white #{@inner_block && "mr-1"}"} />
+        <.icon name={@icon} class={"w-5 h-5 fill-current text-white"} />
       <% end %>
-      <%= if @inner_block do %>
-        <%= render_slot(@inner_block) %>
+      <%= if @inner_block != [] do %>
+        <span class="">
+          <%= render_slot(@inner_block) %>
+        </span>
       <% end %>
     </button>
     """

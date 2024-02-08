@@ -12,11 +12,9 @@ defmodule TheArkWeb.ClassLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    classes = Classes.list_classes
 
     socket
-    |> assign(classes: classes)
-    |> assign(start_result_checking: false)
+    |> check_result_completion()
     |> assign(teachers: Teachers.list_teachers)
     |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(edit_class_id: 0)
@@ -147,13 +145,7 @@ defmodule TheArkWeb.ClassLive do
   @impl true
   def handle_event("add_result", %{"class_id" => class_id}, socket) do
     socket
-    |> redirect(to: "/classes/#{class_id}/add_result?start_result_checking=#{socket.assigns.start_result_checking}")
-    |> noreply()
-  end
-
-  def handle_event("start_result_checking", _unsigned_params, socket) do
-    socket
-    |> update(:start_result_checking, fn post -> !post end)
+    |> redirect(to: "/classes/#{class_id}/add_result")
     |> noreply()
   end
 
@@ -182,7 +174,7 @@ defmodule TheArkWeb.ClassLive do
             Results
           </div>
           <div class="">
-            <.button icon={"hero-magnifying-glass#{(!@start_result_checking && "-plus") || ""}"} phx-click="start_result_checking" class="bg-white" />
+
           </div>
           <div>
             Actions
@@ -191,7 +183,7 @@ defmodule TheArkWeb.ClassLive do
 
         <%= for class <- @classes do %>
           <div class="grid grid-cols-7 items-center py-3 text-sm">
-            <div class="hover:text-blue-200" phx-click="open_class" phx-value-class_id={class.id}>
+            <div class="cursor-pointer" phx-click="open_class" phx-value-class_id={class.id}>
               <%= class.name %>
             </div>
             <div>
@@ -201,22 +193,29 @@ defmodule TheArkWeb.ClassLive do
               <%= Enum.count(class.students) %>
             </div>
             <div>
-              <.button class={""} icon="hero-eye" />
+              <.button icon="hero-eye" />
             </div>
             <div class="flex items-center gap-1">
-              <.button class={""} phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
-              <.button class={""} icon="hero-eye" />
+              <.button phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
+              <.button phx-click="open_class" phx-value-class_id={class.id} icon="hero-eye" />
             </div>
-            <%= if class.is_first_term_announced do %>
-              <div class="flex items-center gap-2">
-                <div class={"w-5 rounded-full text-center #{!class.is_first_term_result_completed && "bg-red-500 text-white"} #{class.is_first_term_result_completed && "bg-green-500 text-white"}"}>
-                  1
+            <div class="flex items-center gap-2">
+            <%= for term_name <- @list_of_terms do %>
+              <%= if Map.get(class, String.to_atom("is_#{term_name}_announced")) do %>
+                <div class={"w-5 rounded-full text-center #{!Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-red-500 text-white"} #{Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-green-500 text-white"}"}>
+                  <%= if term_name == "first_term" do %>
+                    1
+                  <% else %>
+                    <%= if term_name == "second_term" do %>
+                      2
+                    <% else %>
+                      3
+                    <% end %>
+                  <% end %>
                 </div>
-                <div class={"w-5 rounded-full text-center #{!class.is_first_term_result_completed && "bg-red-500 text-white"} #{class.is_first_term_result_completed && "bg-green-500 text-white"}"}>
-                  1
-                </div>
-              </div>
+              <% end %>
             <% end %>
+            </div>
             <%!-- <%= if @current_user.email == "management@ark.com" do %> --%>
             <div class="flex items-center gap-1">
               <.button icon="hero-pencil" class={"#{((@edit_class_id == class.id) or (@delete_class_id == class.id)) && "hidden"}"} phx-click="edit_class_id" phx-value-class_id={class.id} />
@@ -270,30 +269,44 @@ defmodule TheArkWeb.ClassLive do
 
   def check_result_completion(socket) do
     all_class_ids = Classes.get_all_class_ids()
+    list_of_terms = make_list_of_terms()
 
-    for id <- all_class_ids do
-      class = Classes.get_class!(id)
+    if Enum.any?(list_of_terms) do
+      for id <- all_class_ids do
+        class = Classes.get_class!(id)
+        for term_name <- list_of_terms do
+          is_term_result_completed =
+            Enum.all?(class.students, fn student ->
+              Enum.all?(student.subjects, fn subject ->
+                results = Enum.filter(subject.results, fn result ->
+                  result.name == term_name
+                end)
 
-      is_first_term_result_completed =
-        Enum.all?(class.students, fn student ->
-          Enum.all?(student.subjects, fn subject ->
-            Enum.all?(subject.results, fn result ->
-              if result.name == "first_term" do
-                if result.obtained_marks do
-                  true
-                else
-                  false
-                end
-              else
-                true
-              end
+                Enum.all?(results, fn result ->
+                  result.obtained_marks
+                end)
+              end)
             end)
-          end)
-        end)
 
-      Classes.update_class(class, %{"is_first_term_result_completed" => is_first_term_result_completed})
+          Classes.update_class(class, %{"is_#{term_name}_result_completed" => is_term_result_completed})
+        end
+      end
     end
 
+    classes = Classes.list_classes
     socket
+    |> assign(classes: classes)
+    |> assign(list_of_terms: list_of_terms)
+  end
+
+  def make_list_of_terms() do
+    class = Classes.get_any_one_class()
+
+    cond do
+      class.is_first_term_announced and class.is_second_term_announced and class.is_third_term_announced -> ["first_term", "second_term", "third_term"]
+      class.is_first_term_announced and class.is_second_term_announced -> ["first_term", "second_term"]
+      class.is_first_term_announced -> ["first_term"]
+      true -> []
+    end
   end
 end

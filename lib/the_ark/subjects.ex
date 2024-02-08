@@ -92,6 +92,10 @@ defmodule TheArk.Subjects do
     {:ok, subject}
   end
 
+  def create_results({:error, _} = error) do
+    error
+  end
+
 
   @doc """
   Updates a subject.

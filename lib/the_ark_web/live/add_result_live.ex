@@ -104,13 +104,6 @@ defmodule TheArkWeb.AddResultLive do
     case Results.update_result(result, result_params) do
       {:ok, _result} ->
         socket
-        |> then(fn socket ->
-          if socket.assigns.is_first_term_announced do
-            ClassLive.check_result_completion(socket)
-          else
-            socket
-          end
-        end)
         |> assign(result_changeset: Results.change_result(%Result{}))
         |> put_flash(:info, "result added")
         |> noreply()
