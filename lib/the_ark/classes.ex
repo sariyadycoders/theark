@@ -20,7 +20,7 @@ defmodule TheArk.Classes do
   end
 
   def get_any_one_class() do
-    Repo.get!(Class, 1)
+    Class |> first |> Repo.one
   end
 
   def get_all_class_ids() do
