@@ -47,8 +47,12 @@ defmodule TheArk.Subjects do
     Repo.one(from s in Subject, where: s.student_id == ^student.id and s.name == ^subject_name)
   end
 
-  def get_subject_by_subject_id(class_id, subject_id) do
+  def get_subject_name_by_subject_id(class_id, subject_id) do
     Repo.one(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id, select: s.name)
+  end
+
+  def get_subject_by_subject_id(class_id, subject_id) do
+    Repo.one(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id, preload: :results)
   end
 
   def get_subjects_of_class(class_id) do

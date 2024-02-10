@@ -21,14 +21,16 @@ defmodule TheArkWeb.Router do
     pipe_through [:browser]
 
     get "/", PageController, :home
+    live "/home", Home
     live "/registration", RegistrationLive
     live "/classes", ClassLive
-    live "teachers", TeacherLive
-    live "teachers/:id/result", TeacherResultLive
+    live "/classes/:id/results", ClassResultLive
     live "/classes/:id/students", StudentLive
-    live "/classes/:class_id/add_result", AddResultLive
+    live "/classes/:id/add_result", AddResultLive
     live "/classes/:id/slos", SloLive
     live "/students/:id", StudentsShowLive
+    live "teachers", TeacherLive
+    live "teachers/:id/result", TeacherResultLive
   end
 
   # Other scopes may use custom stacks.

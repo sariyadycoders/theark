@@ -21,3 +21,25 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   Token for github: 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
 
   mix phx.gen.context Slos Slo slos description:string
+
+defmodule TheArkWeb.Home do
+  use TheArk.Web, :live_view
+  
+  @impl true
+  def mount(_, _, socket) do
+    
+    socket
+    |> ok
+  end
+  
+  @impl true
+  def render(assigns) do
+    ~H"""
+      <div>
+      
+      
+      
+      </div>
+    """
+  end 
+end

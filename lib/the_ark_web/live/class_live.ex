@@ -157,6 +157,12 @@ defmodule TheArkWeb.ClassLive do
     |> noreply()
   end
 
+  def handle_event("open_class_result", %{"class_id" => id}, socket) do
+    socket
+    |> redirect(to: "/classes/#{id}/results")
+    |> noreply()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -205,7 +211,7 @@ defmodule TheArkWeb.ClassLive do
             </div>
             <div class="flex items-center gap-1">
               <.button phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
-              <.button phx-click="open_class" phx-value-class_id={class.id} icon="hero-eye" />
+              <.button phx-click="open_class_result" phx-value-class_id={class.id} icon="hero-eye" />
             </div>
             <div class="flex items-center gap-1">
             <%= for term_name <- @list_of_terms do %>
@@ -281,7 +287,7 @@ defmodule TheArkWeb.ClassLive do
 
   def check_result_completion(socket) do
     all_class_ids = Classes.get_all_class_ids()
-    list_of_terms = make_list_of_terms()
+    list_of_terms = Classes.make_list_of_terms()
 
     if Enum.any?(list_of_terms) do
       for id <- all_class_ids do
@@ -309,16 +315,5 @@ defmodule TheArkWeb.ClassLive do
     socket
     |> assign(classes: classes)
     |> assign(list_of_terms: list_of_terms)
-  end
-
-  def make_list_of_terms() do
-    class = Classes.get_any_one_class()
-
-    cond do
-      class.is_first_term_announced and class.is_second_term_announced and class.is_third_term_announced -> ["first_term", "second_term", "third_term"]
-      class.is_first_term_announced and class.is_second_term_announced -> ["first_term", "second_term"]
-      class.is_first_term_announced -> ["first_term"]
-      true -> []
-    end
   end
 end

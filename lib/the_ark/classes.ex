@@ -16,7 +16,7 @@ defmodule TheArk.Classes do
 
   def get_class!(id) do
     Repo.get!(Class, id)
-    |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true)], students: [subjects: :results]])
+    |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true, preload: :results)], students: [subjects: :results]])
   end
 
   def get_any_one_class() do
@@ -123,5 +123,24 @@ defmodule TheArk.Classes do
 
   def change_class(%Class{} = class, attrs \\ %{}) do
     Class.changeset(class, attrs)
+  end
+
+  def term_announcement(name, type) do
+    case name do
+      "first_term" -> Repo.update_all(Class, set: [is_first_term_announced: type])
+      "second_term" -> Repo.update_all(Class, set: [is_second_term_announced: type])
+      "third_term" -> Repo.update_all(Class, set: [is_third_term_announced: type])
+    end
+  end
+
+  def make_list_of_terms() do
+    class = get_any_one_class()
+
+    cond do
+      class.is_first_term_announced and class.is_second_term_announced and class.is_third_term_announced -> ["first_term", "second_term", "third_term"]
+      class.is_first_term_announced and class.is_second_term_announced -> ["first_term", "second_term"]
+      class.is_first_term_announced -> ["first_term"]
+      true -> []
+    end
   end
 end
