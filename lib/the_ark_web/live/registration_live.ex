@@ -99,6 +99,10 @@ defmodule TheArkWeb.RegistrationLive do
 
   @impl true
   def handle_event("student_submission", %{"student" => params}, socket) do
+    enrollment_date = Date.utc_today()
+    class_of_enrollment = Classes.get_class_name(String.to_integer(params["class_id"]))
+
+    params = Map.merge(params, %{"enrollment_date" => enrollment_date, "class_of_enrollment" => class_of_enrollment})
 
     case Students.create_student(params) do
       {:ok, _class} ->
@@ -139,11 +143,18 @@ defmodule TheArkWeb.RegistrationLive do
         </div>
         <div class="p-2 border rounded-lg">
           <h2 class="font-bold text-lg mb-2">Student Registration</h2>
+          <%= inspect @student_changeset %>
           <.form :let={s} for={@student_changeset} phx-change="student_validation" phx-submit="student_submission">
             <.input field={s[:name]} type="text" label="Student Name" />
             <.input field={s[:father_name]} type="text" label="Father Name" />
             <.input field={s[:age]} type="number" label="Age" />
-            <.input field={s[:class_id]} type="select" label="Class" options={Enum.flat_map(@classes, fn class -> ["#{class.name}": class.id] end)} />
+            <.input field={s[:address]} type="text" label="Address" />
+            <.input field={s[:class_id]} type="select" label="Class of Enrollment" options={Enum.flat_map(@classes, fn class -> ["#{class.name}": class.id] end)} />
+            <.input field={s[:date_of_birth]} type="date" label="Date of Birth" />
+            <.input field={s[:cnic]} type="text" label="Student CNIC" />
+            <.input field={s[:guardian_cnic]} type="text" label="Guardian CNIC" />
+            <.input field={s[:sim_number]} type="text" label="Contact Number (without whatsapp)" />
+            <.input field={s[:whatsapp_number]} type="text" label="Whatsapp Number" />
 
             <.button class="mt-5">Submit</.button>
           </.form>

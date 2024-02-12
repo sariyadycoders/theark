@@ -23,6 +23,10 @@ defmodule TheArk.Classes do
     Class |> first |> Repo.one
   end
 
+  def get_class_name(id) do
+    Repo.one(from c in Class, where: c.id == ^id, select: c.name)
+  end
+
   def get_all_class_ids() do
     Repo.all(from(c in Class, select: c.id))
   end
