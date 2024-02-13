@@ -3,9 +3,8 @@ defmodule TheArk.Repo.Migrations.CreateStudents do
 
   def change do
     create table(:students) do
-      add :name, :string
-      add :age, :integer
       add :father_name, :string
+      add :name, :string
       add :address, :string
       add :date_of_birth, :date
       add :cnic, :string
@@ -23,5 +22,7 @@ defmodule TheArk.Repo.Migrations.CreateStudents do
 
       timestamps(type: :utc_datetime)
     end
+
+    create unique_index(:students, [:cnic])
   end
 end

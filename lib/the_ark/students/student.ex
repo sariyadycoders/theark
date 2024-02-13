@@ -3,7 +3,6 @@ defmodule TheArk.Students.Student do
   import Ecto.Changeset
 
   schema "students" do
-    field :age, :integer
     field :father_name, :string
     field :name, :string
     field :address, :string
@@ -29,13 +28,15 @@ defmodule TheArk.Students.Student do
   @doc false
   def changeset(student, attrs) do
     student
-    |> cast(attrs, [:name, :age, :father_name, :date_of_birth, :cnic, :guardian_cnic, :sim_number, :whatsapp_number, :enrollment_number, :enrollment_date, :class_of_enrollment, :leaving_class, :leaving_date, :class_id])
+    |> cast(attrs, [:name, :father_name, :date_of_birth, :cnic, :guardian_cnic, :sim_number, :whatsapp_number, :enrollment_number, :enrollment_date, :class_of_enrollment, :leaving_class, :leaving_certificate_date, :last_attendance_date, :is_leaving, :class_id])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)
     |> validate_format(:cnic, ~r/^\d{5}-\d{7}-\d$/, message: "must match the pattern 00000-0000000-0")
     |> validate_format(:guardian_cnic, ~r/^\d{5}-\d{7}-\d$/, message: "must match the pattern 00000-0000000-0")
     |> validate_format(:whatsapp_number, ~r/^03\d{9}$/, message: "must start with 03 and have exactly 11 characters")
     |> validate_format(:sim_number, ~r/^03\d{9}$/, message: "must start with 03 and have exactly 11 characters")
+    |> unsafe_validate_unique(:cnic, TheArk.Repo, message: "This is a duplicate CNIC")
+    |> unique_constraint([:cnic])
 
   end
 end

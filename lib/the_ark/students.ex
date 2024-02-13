@@ -22,6 +22,14 @@ defmodule TheArk.Students do
     Repo.all(Student)
   end
 
+  def list_students_for_index() do
+    Repo.all(
+      from s in Student,
+      order_by: s.class_id,
+      preload: :class
+    )
+  end
+
   @doc """
   Gets a single student.
 
