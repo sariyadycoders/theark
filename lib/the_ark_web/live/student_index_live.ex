@@ -12,6 +12,13 @@ defmodule TheArkWeb.StudentIndexLive do
   end
 
   @impl true
+  def handle_event("show_student", %{"student_id" => id}, socket) do
+    socket
+    |> redirect(to: ~p"/students/#{id}")
+    |> noreply
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
       <div>
@@ -37,7 +44,7 @@ defmodule TheArkWeb.StudentIndexLive do
         </div>
       </div>
       <%= for student <- @students do %>
-      <div class="grid grid-cols-6 items-center border-b mb-2">
+      <div phx-click="show_student" phx-value-student_id={student.id} class="grid grid-cols-6 items-center border-b mb-2">
         <div>
           <%= student.name %>
         </div>

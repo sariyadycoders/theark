@@ -37,10 +37,7 @@ defmodule TheArkWeb.StudentLive do
           <div>
             Age
           </div>
-          <div>
-            Subjects
-          </div>
-          <div class="col-span-2">
+          <div class="col-span-3">
             Results
           </div>
         </div>
@@ -53,19 +50,15 @@ defmodule TheArkWeb.StudentLive do
               <%= student.father_name %>
             </div>
             <div>
-              <%= student.age %>
+              <%!-- <%= student.age %> --%>
             </div>
-            <div>
+            <div class="col-span-3">
               <%= for subject <- student.subjects do %>
               <%= subject.name %>
               <% end %>
             </div>
-            <div class="col-span-2" phx-click="show_subject_and_result" phx-value-student_id={student.id}>
-              Results
-            </div>
           </div>
         <% end %>
-
       </div>
     """
   end

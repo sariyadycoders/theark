@@ -11,9 +11,9 @@ defmodule TheArk.Students.Student do
     field :guardian_cnic, :string
     field :sim_number, :string
     field :whatsapp_number, :string
+    field :class_of_enrollment, :string
     field :enrollment_number, :integer
     field :enrollment_date, :date
-    field :class_of_enrollment, :string
     field :leaving_class, :string
     field :leaving_certificate_date, :date
     field :last_attendance_date, :date
@@ -38,5 +38,11 @@ defmodule TheArk.Students.Student do
     |> unsafe_validate_unique(:cnic, TheArk.Repo, message: "This is a duplicate CNIC")
     |> unique_constraint([:cnic])
 
+  end
+
+  def leaving_changeset(student, attrs) do
+    student
+    |> cast(attrs, [:leaving_class, :leaving_certificate_date, :last_attendance_date, :is_leaving])
+    |> validate_required([:leaving_class, :leaving_certificate_date, :last_attendance_date, :is_leaving])
   end
 end

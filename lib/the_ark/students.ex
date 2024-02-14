@@ -26,6 +26,7 @@ defmodule TheArk.Students do
     Repo.all(
       from s in Student,
       order_by: s.class_id,
+      order_by: s.is_leaving,
       preload: :class
     )
   end
@@ -46,7 +47,11 @@ defmodule TheArk.Students do
   """
   def get_student!(id) do
      Repo.get!(Student, id)
-     |> Repo.preload(subjects: [:results])
+     |> Repo.preload(:class, subjects: [:results])
+  end
+
+  def get_student_only(id) do
+    Repo.get!(Student, id)
   end
 
   def get_students_by_class_id(id) do
@@ -103,6 +108,16 @@ defmodule TheArk.Students do
     |> Repo.update()
   end
 
+  def update_student_leaving(%Student{} = student, attrs) do
+    student
+    |> Student.leaving_changeset(attrs)
+    |> Repo.update()
+  end
+
+  def reactivate_student(id) do
+    Repo.update_all(from(s in Student, where: s.id == ^id), set: [is_leaving: false, leaving_class: nil, leaving_certificate_date: nil, last_attendance_date: nil])
+  end
+
   def replace_class_id_of_students(prev_id, new_id) do
     Repo.update_all(from(s in Student, where: s.class_id == ^prev_id), set: [class_id: new_id])
   end
@@ -143,5 +158,9 @@ defmodule TheArk.Students do
   """
   def change_student(%Student{} = student, attrs \\ %{}) do
     Student.changeset(student, attrs)
+  end
+
+  def change_student_leaving(%Student{} = student, attrs \\ %{}) do
+    Student.leaving_changeset(student, attrs)
   end
 end
