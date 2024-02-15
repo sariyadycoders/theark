@@ -24,7 +24,11 @@ defmodule TheArk.Subjects do
   end
 
   def list_subject_options do
-    Repo.all(from s in Subject, where: is_nil(s.class_id) and is_nil(s.student_id), select: %{id: s.id, label: s.name, selected: false})
+    Repo.all(
+      from s in Subject,
+        where: is_nil(s.class_id) and is_nil(s.student_id),
+        select: %{id: s.id, label: s.name, selected: false}
+    )
   end
 
   @doc """
@@ -48,25 +52,46 @@ defmodule TheArk.Subjects do
   end
 
   def get_subject_name_by_subject_id(class_id, subject_id) do
-    Repo.one(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id, select: s.name)
+    Repo.one(
+      from s in Subject,
+        where:
+          s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id,
+        select: s.name
+    )
   end
 
   def get_subject_by_subject_id(class_id, subject_id) do
-    Repo.one(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id, preload: :results)
+    Repo.one(
+      from s in Subject,
+        where:
+          s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id,
+        preload: :results
+    )
   end
 
   def get_subjects_of_class(class_id) do
-    Repo.all(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id, select: %{id: s.subject_id, label: s.name})
+    Repo.all(
+      from s in Subject,
+        where: s.is_class_subject == true and s.class_id == ^class_id,
+        select: %{id: s.subject_id, label: s.name}
+    )
   end
 
   def get_subjects_for_student(class_id) do
-    Repo.all(from s in Subject, where: s.is_class_subject == true and s.class_id == ^class_id, select: %{id: s.subject_id, label: s.name, teacher_id: s.teacher_id})
+    Repo.all(
+      from s in Subject,
+        where: s.is_class_subject == true and s.class_id == ^class_id,
+        select: %{id: s.subject_id, label: s.name, teacher_id: s.teacher_id}
+    )
   end
 
   def get_subjects_of_teacher_for_class(class_id, teacher_id) do
-    Repo.all(from s in Subject, where: s.is_class_subject == true and s.teacher_id == ^teacher_id and s.class_id == ^class_id)
+    Repo.all(
+      from s in Subject,
+        where:
+          s.is_class_subject == true and s.teacher_id == ^teacher_id and s.class_id == ^class_id
+    )
   end
-
 
   @doc """
   Creates a subject.
@@ -81,7 +106,6 @@ defmodule TheArk.Subjects do
 
   """
   def create_subject(attrs \\ %{}) do
-
     %Subject{}
     |> Subject.changeset(attrs)
     |> Repo.insert()
@@ -99,7 +123,6 @@ defmodule TheArk.Subjects do
   def create_results({:error, _} = error) do
     error
   end
-
 
   @doc """
   Updates a subject.
@@ -136,8 +159,7 @@ defmodule TheArk.Subjects do
       Enum.filter(subject_options, fn subject -> subject.selected end)
       |> Enum.map(fn subject -> subject.id end)
 
-    new_subjects =
-      Enum.filter(subject_options, fn subject -> subject.selected end)
+    new_subjects = Enum.filter(subject_options, fn subject -> subject.selected end)
 
     subject_ids_to_delete =
       Enum.filter(prev_subject_ids_of_teacher_for_class, fn id ->
@@ -150,11 +172,17 @@ defmodule TheArk.Subjects do
       end)
 
     for subject <- deleted_subjects do
-      Repo.update_all(from(s in Subject, where: s.name == ^subject.label and s.class_id == ^class_id), set: [teacher_id: nil])
+      Repo.update_all(
+        from(s in Subject, where: s.name == ^subject.label and s.class_id == ^class_id),
+        set: [teacher_id: nil]
+      )
     end
 
     for subject <- new_subjects do
-      Repo.update_all(from(s in Subject, where: s.name == ^subject.label and s.class_id == ^class_id), set: [teacher_id: teacher_id])
+      Repo.update_all(
+        from(s in Subject, where: s.name == ^subject.label and s.class_id == ^class_id),
+        set: [teacher_id: teacher_id]
+      )
     end
   end
 

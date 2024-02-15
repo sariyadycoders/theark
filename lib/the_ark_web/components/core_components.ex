@@ -227,8 +227,7 @@ defmodule TheArkWeb.CoreComponents do
   slot :inner_block
 
   def button(assigns) do
-    assigns =
-      assigns |> Enum.into(%{icon: nil})
+    assigns = assigns |> Enum.into(%{icon: nil})
 
     ~H"""
     <button
@@ -236,12 +235,11 @@ defmodule TheArkWeb.CoreComponents do
       class={[
         "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center gap-1",
         "text-sm font-semibold leading-6 text-white active:text-white/80"
-
       ]}
       {@rest}
     >
       <%= if @icon do %>
-        <.icon name={@icon} class={"w-5 h-5 fill-current text-white"} />
+        <.icon name={@icon} class="w-5 h-5 fill-current text-white" />
       <% end %>
       <%= if @inner_block != [] do %>
         <span class="">
@@ -407,8 +405,8 @@ defmodule TheArkWeb.CoreComponents do
   slot :inner_block, required: true
 
   def label(assigns) do
-    assigns =
-      Enum.into(assigns, %{class: ""})
+    assigns = Enum.into(assigns, %{class: ""})
+
     ~H"""
     <label for={@for} class={"block text-sm font-semibold leading-6 text-zinc-800 #{@class}"}>
       <%= render_slot(@inner_block) %>

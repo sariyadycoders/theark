@@ -15,9 +15,9 @@ defmodule TheArkWeb.SloLive do
   @impl true
   def render(assigns) do
     ~H"""
-      <div>
-        SLOs
-      </div>
+    <div>
+      SLOs
+    </div>
     """
   end
 end

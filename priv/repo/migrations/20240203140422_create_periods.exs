@@ -11,7 +11,10 @@ defmodule TheArk.Repo.Migrations.CreatePeriods do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:periods, [:period_number, :teacher_id], name: "unique_number_teacher_index")
+    create unique_index(:periods, [:period_number, :teacher_id],
+             name: "unique_number_teacher_index"
+           )
+
     create unique_index(:periods, [:period_number, :class_id], name: "unique_number_class_index")
   end
 end

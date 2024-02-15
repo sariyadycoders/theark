@@ -1,6 +1,4 @@
 defmodule TheArk.Classes do
-
-
   import Ecto.Query, warn: false
   alias TheArk.Repo
 
@@ -16,11 +14,14 @@ defmodule TheArk.Classes do
 
   def get_class!(id) do
     Repo.get!(Class, id)
-    |> Repo.preload([[subjects: from(s in Subject, where: s.is_class_subject == true, preload: :results)], students: [subjects: :results]])
+    |> Repo.preload([
+      [subjects: from(s in Subject, where: s.is_class_subject == true, preload: :results)],
+      students: [subjects: :results]
+    ])
   end
 
   def get_any_one_class() do
-    Class |> first |> Repo.one
+    Class |> first |> Repo.one()
   end
 
   def get_class_name(id) do
@@ -44,11 +45,15 @@ defmodule TheArk.Classes do
   end
 
   def create_class_subjects({:ok, class} = success, subject_options) do
-    selected_subjects =
-      Enum.filter(subject_options, fn subject -> subject.selected end)
+    selected_subjects = Enum.filter(subject_options, fn subject -> subject.selected end)
 
     for subject <- selected_subjects do
-      Subjects.create_subject(%{"name" => subject.label, "subject_id" => subject.id, "class_id" => class.id, "is_class_subject" => "true"})
+      Subjects.create_subject(%{
+        "name" => subject.label,
+        "subject_id" => subject.id,
+        "class_id" => class.id,
+        "is_class_subject" => "true"
+      })
     end
 
     success
@@ -89,22 +94,34 @@ defmodule TheArk.Classes do
 
     subjects_to_delete =
       Enum.filter(subject_options, fn subject_option ->
-        (subject_option.id in subject_ids_to_delete)
+        subject_option.id in subject_ids_to_delete
       end)
 
     subjects_to_update =
       Enum.filter(subject_options, fn subject_option ->
-        (subject_option.id not in prev_class_subject_ids) and (subject_option.id in new_class_subject_ids)
+        subject_option.id not in prev_class_subject_ids and
+          subject_option.id in new_class_subject_ids
       end)
 
     for subject <- subjects_to_delete do
-      Subjects.delete_all_by_attributes([class_id: class.id, name: subject.label])
+      Subjects.delete_all_by_attributes(class_id: class.id, name: subject.label)
     end
 
     for subject <- subjects_to_update do
-      Subjects.create_subject(%{"name" => subject.label, "subject_id" => subject.id, "class_id" => class.id, "is_class_subject" => "true"})
+      Subjects.create_subject(%{
+        "name" => subject.label,
+        "subject_id" => subject.id,
+        "class_id" => class.id,
+        "is_class_subject" => "true"
+      })
+
       for student <- class.students do
-        Subjects.create_subject(%{"name" => subject.label, "subject_id" => subject.id, "class_id" => class.id, "student_id" => student.id})
+        Subjects.create_subject(%{
+          "name" => subject.label,
+          "subject_id" => subject.id,
+          "class_id" => class.id,
+          "student_id" => student.id
+        })
       end
     end
 
@@ -114,7 +131,6 @@ defmodule TheArk.Classes do
   def update_class_subjects({:error, _} = error, _class, _subject_options) do
     error
   end
-
 
   def delete_class(%Class{} = class) do
     Repo.delete(class)
@@ -141,10 +157,18 @@ defmodule TheArk.Classes do
     class = get_any_one_class()
 
     cond do
-      class.is_first_term_announced and class.is_second_term_announced and class.is_third_term_announced -> ["first_term", "second_term", "third_term"]
-      class.is_first_term_announced and class.is_second_term_announced -> ["first_term", "second_term"]
-      class.is_first_term_announced -> ["first_term"]
-      true -> []
+      class.is_first_term_announced and class.is_second_term_announced and
+          class.is_third_term_announced ->
+        ["first_term", "second_term", "third_term"]
+
+      class.is_first_term_announced and class.is_second_term_announced ->
+        ["first_term", "second_term"]
+
+      class.is_first_term_announced ->
+        ["first_term"]
+
+      true ->
+        []
     end
   end
 end

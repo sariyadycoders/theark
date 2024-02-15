@@ -21,7 +21,12 @@ defmodule TheArk.TeachersTest do
     end
 
     test "create_teacher/1 with valid data creates a teacher" do
-      valid_attrs = %{date_of_joining: ~D[2024-01-22], date_of_leaving: ~D[2024-01-22], name: "some name", residence: "some residence"}
+      valid_attrs = %{
+        date_of_joining: ~D[2024-01-22],
+        date_of_leaving: ~D[2024-01-22],
+        name: "some name",
+        residence: "some residence"
+      }
 
       assert {:ok, %Teacher{} = teacher} = Teachers.create_teacher(valid_attrs)
       assert teacher.date_of_joining == ~D[2024-01-22]
@@ -36,7 +41,13 @@ defmodule TheArk.TeachersTest do
 
     test "update_teacher/2 with valid data updates the teacher" do
       teacher = teacher_fixture()
-      update_attrs = %{date_of_joining: ~D[2024-01-23], date_of_leaving: ~D[2024-01-23], name: "some updated name", residence: "some updated residence"}
+
+      update_attrs = %{
+        date_of_joining: ~D[2024-01-23],
+        date_of_leaving: ~D[2024-01-23],
+        name: "some updated name",
+        residence: "some updated residence"
+      }
 
       assert {:ok, %Teacher{} = teacher} = Teachers.update_teacher(teacher, update_attrs)
       assert teacher.date_of_joining == ~D[2024-01-23]

@@ -33,7 +33,11 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
-  def handle_event("leaving_form_submission", %{"student_id" => id, "student" => student_params}, socket) do
+  def handle_event(
+        "leaving_form_submission",
+        %{"student_id" => id, "student" => student_params},
+        socket
+      ) do
     student = Students.get_student_only(String.to_integer(id))
 
     case Students.update_student_leaving(student, student_params) do
@@ -67,65 +71,87 @@ defmodule TheArkWeb.StudentsShowLive do
   @impl true
   def render(assigns) do
     ~H"""
+    <div>
       <div>
-        <div>
-          <h1 class="font-bold text-3xl"><%= @student.name %></h1>
-          <div class="ml-5">S/O <%= @student.father_name %> </div>
+        <h1 class="font-bold text-3xl"><%= @student.name %></h1>
+        <div class="ml-5">S/O <%= @student.father_name %></div>
+      </div>
+      <div class="grid grid-cols-2 p-5 border rounded-lg mt-5 gap-2">
+        <div class="border p-2">
+          <b class="capitalize"> Class:</b>
+          <%= @student.class.name %>
         </div>
-        <div class="grid grid-cols-2 p-5 border rounded-lg mt-5 gap-2">
-          <div class="border p-2">
-            <b class="capitalize"> Class:</b>
-            <%= @student.class.name %>
-          </div>
-          <%= for student_key <- get_student_keys(@student) do %>
-            <%= if student_key not in [:is_leaving, :last_attendance_date, :leaving_certificate_date, :leaving_class] do %>
+        <%= for student_key <- get_student_keys(@student) do %>
+          <%= if student_key not in [:is_leaving, :last_attendance_date, :leaving_certificate_date, :leaving_class] do %>
+            <div class="border p-2">
+              <b class="capitalize">
+                <%= Atom.to_string(student_key) |> String.replace("_", " ") %>:
+              </b>
+              <%= if Map.get(@student, student_key), do: Map.get(@student, student_key), else: "nil" %>
+            </div>
+          <% else %>
+            <%= if @student.is_leaving do %>
               <div class="border p-2">
-                <b class="capitalize"> <%= Atom.to_string(student_key) |> String.replace("_", " ") %>:</b>
+                <b class="capitalize">
+                  <%= Atom.to_string(student_key) |> String.replace("_", " ") %>:
+                </b>
                 <%= if Map.get(@student, student_key), do: Map.get(@student, student_key), else: "nil" %>
               </div>
-            <% else %>
-              <%= if @student.is_leaving do %>
-                <div class="border p-2">
-                  <b class="capitalize"> <%= Atom.to_string(student_key) |> String.replace("_", " ") %>:</b>
-                  <%= if Map.get(@student, student_key), do: Map.get(@student, student_key), else: "nil" %>
-                </div>
-              <% end %>
             <% end %>
           <% end %>
-        </div>
-        <.button :if={@is_leaving_button} phx-click="student_leaving_form" phx-value-is_leaving={if !@student.is_leaving, do: "false", else: "true"} class="mt-5">
-          <%= if !@student.is_leaving, do: "Is Leaving", else: "Re-activate" %>
-        </.button>
-        <%= if @is_leaving_form_open do %>
-          <div class="border p-5 rounded-lg mt-5">
-            <.form :let={s} for={@student_leaving_changeset} phx-submit="leaving_form_submission" phx-value-student_id={@student.id}>
-              <.input field={s[:is_leaving]} type="hidden" value={"true"} />
-              <.input field={s[:leaving_class]} type="hidden" value={@student.class.name} />
-              <.input field={s[:leaving_certificate_date]} type="date" label="Leaving Certificate Date" />
-              <.input field={s[:last_attendance_date]} type="date" label="Last Attendance Date" />
-
-              <.button class="mt-5">Submit</.button>
-            </.form>
-          </div>
-        <% end %>
-        <%= if @surety_of_reactivation do %>
-          <div class="border p-5 rounded-lg mt-5 flex justify-between items-center">
-            <div>
-              Are you sure to re-activate <%= @student.name %>?
-            </div>
-            <.button phx-click="reactivate_student" phx-value-student_id={@student.id}> Yes </.button>
-          </div>
         <% end %>
       </div>
+      <.button
+        :if={@is_leaving_button}
+        phx-click="student_leaving_form"
+        phx-value-is_leaving={if !@student.is_leaving, do: "false", else: "true"}
+        class="mt-5"
+      >
+        <%= if !@student.is_leaving, do: "Is Leaving", else: "Re-activate" %>
+      </.button>
+      <%= if @is_leaving_form_open do %>
+        <div class="border p-5 rounded-lg mt-5">
+          <.form
+            :let={s}
+            for={@student_leaving_changeset}
+            phx-submit="leaving_form_submission"
+            phx-value-student_id={@student.id}
+          >
+            <.input field={s[:is_leaving]} type="hidden" value="true" />
+            <.input field={s[:leaving_class]} type="hidden" value={@student.class.name} />
+            <.input field={s[:leaving_certificate_date]} type="date" label="Leaving Certificate Date" />
+            <.input field={s[:last_attendance_date]} type="date" label="Last Attendance Date" />
+
+            <.button class="mt-5">Submit</.button>
+          </.form>
+        </div>
+      <% end %>
+      <%= if @surety_of_reactivation do %>
+        <div class="border p-5 rounded-lg mt-5 flex justify-between items-center">
+          <div>
+            Are you sure to re-activate <%= @student.name %>?
+          </div>
+          <.button phx-click="reactivate_student" phx-value-student_id={@student.id}>Yes</.button>
+        </div>
+      <% end %>
+    </div>
     """
   end
 
   def get_student_keys(student) do
-     Map.keys(Map.from_struct(student)) |> Enum.reject(fn x -> x in [:updated_at, :inserted_at, :subjects, :class, :class_id, :__meta__, :id, :name, :father_name] end)
+    Map.keys(Map.from_struct(student))
+    |> Enum.reject(fn x ->
+      x in [
+        :updated_at,
+        :inserted_at,
+        :subjects,
+        :class,
+        :class_id,
+        :__meta__,
+        :id,
+        :name,
+        :father_name
+      ]
+    end)
   end
-
-
-
-
-
 end

@@ -15,17 +15,48 @@ alias TheArk.Classes.Class
 alias TheArk.Teachers.Teacher
 alias TheArk.Subjects.Subject
 
-for name <- ["Play Group", "Nursery", "Prep", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"] do
+for name <- [
+      "Play Group",
+      "Nursery",
+      "Prep",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten"
+    ] do
   %Class{name: name}
-  |> Repo.insert!
+  |> Repo.insert!()
 end
 
 for name <- ["Amina", "Sania", "Malaika"] do
   %Teacher{name: name}
-  |> Repo.insert!
+  |> Repo.insert!()
 end
 
-for name <- ["Urdu", "English", "Maths", "Islamiat C", "Islamiat O", "Science", "Computer", "General Knowledge", "Nazra", "Tarjuma", "Physics", "Chemistry", "Biology", "Geology", "Social Study", "Home Economics"] do
+for name <- [
+      "Urdu",
+      "English",
+      "Maths",
+      "Islamiat C",
+      "Islamiat O",
+      "Science",
+      "Computer",
+      "General Knowledge",
+      "Nazra",
+      "Tarjuma",
+      "Physics",
+      "Chemistry",
+      "Biology",
+      "Geology",
+      "Social Study",
+      "Home Economics"
+    ] do
   %Subject{name: name}
-  |> Repo.insert!
+  |> Repo.insert!()
 end

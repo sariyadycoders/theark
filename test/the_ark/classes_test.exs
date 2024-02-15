@@ -35,7 +35,12 @@ defmodule TheArk.ClassesTest do
 
     test "update_class/2 with valid data updates the class" do
       class = class_fixture()
-      update_attrs = %{incharge: "some updated incharge", name: "some updated name", total_students: 43}
+
+      update_attrs = %{
+        incharge: "some updated incharge",
+        name: "some updated name",
+        total_students: 43
+      }
 
       assert {:ok, %Class{} = class} = Classes.update_class(class, update_attrs)
       assert class.incharge == "some updated incharge"

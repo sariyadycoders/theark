@@ -25,9 +25,9 @@ defmodule TheArk.Students do
   def list_students_for_index() do
     Repo.all(
       from s in Student,
-      order_by: s.class_id,
-      order_by: s.is_leaving,
-      preload: :class
+        order_by: s.class_id,
+        order_by: s.is_leaving,
+        preload: :class
     )
   end
 
@@ -46,8 +46,8 @@ defmodule TheArk.Students do
 
   """
   def get_student!(id) do
-     Repo.get!(Student, id)
-     |> Repo.preload(:class, subjects: [:results])
+    Repo.get!(Student, id)
+    |> Repo.preload(:class, subjects: [:results])
   end
 
   def get_student_only(id) do
@@ -79,8 +79,15 @@ defmodule TheArk.Students do
   end
 
   def create_subjects({:ok, student}) do
-    for %{id: subject_id, label: name, teacher_id: teacher_id} <- Subjects.get_subjects_for_student(student.class_id) do
-      TheArk.Subjects.create_subject(%{"name" => name, "class_id" => student.class_id, "student_id" => student.id, "subject_id" => subject_id, "teacher_id" => teacher_id})
+    for %{id: subject_id, label: name, teacher_id: teacher_id} <-
+          Subjects.get_subjects_for_student(student.class_id) do
+      TheArk.Subjects.create_subject(%{
+        "name" => name,
+        "class_id" => student.class_id,
+        "student_id" => student.id,
+        "subject_id" => subject_id,
+        "teacher_id" => teacher_id
+      })
     end
 
     {:ok, student}
@@ -115,7 +122,14 @@ defmodule TheArk.Students do
   end
 
   def reactivate_student(id) do
-    Repo.update_all(from(s in Student, where: s.id == ^id), set: [is_leaving: false, leaving_class: nil, leaving_certificate_date: nil, last_attendance_date: nil])
+    Repo.update_all(from(s in Student, where: s.id == ^id),
+      set: [
+        is_leaving: false,
+        leaving_class: nil,
+        leaving_certificate_date: nil,
+        last_attendance_date: nil
+      ]
+    )
   end
 
   def replace_class_id_of_students(prev_id, new_id) do
@@ -126,7 +140,7 @@ defmodule TheArk.Students do
     students = get_students_by_class_id(new_class_id)
 
     for student <- students do
-      Subjects.delete_all_by_attributes([student_id: student.id])
+      Subjects.delete_all_by_attributes(student_id: student.id)
       create_subjects({:ok, student})
     end
   end

@@ -20,8 +20,8 @@ defmodule TheArk.Teachers do
   """
   def list_teachers do
     Repo.all(from(t in Teacher, order_by: t.id))
-    |> Repo.preload([subjects: from(s in Subject, where: s.is_class_subject == true)])
-    |> Repo.preload([subjects: :class])
+    |> Repo.preload(subjects: from(s in Subject, where: s.is_class_subject == true))
+    |> Repo.preload(subjects: :class)
   end
 
   @doc """
@@ -40,12 +40,14 @@ defmodule TheArk.Teachers do
   """
   def get_teacher!(id) do
     Repo.get!(Teacher, id)
-    |> Repo.preload([subjects: from(s in Subject, where: s.is_class_subject == true)])
+    |> Repo.preload(subjects: from(s in Subject, where: s.is_class_subject == true))
   end
 
   def get_teacher_for_result!(id) do
     Repo.get!(Teacher, id)
-    |> Repo.preload([subjects: from(s in Subject, where: s.is_class_subject == false, order_by: s.class_id)])
+    |> Repo.preload(
+      subjects: from(s in Subject, where: s.is_class_subject == false, order_by: s.class_id)
+    )
   end
 
   @doc """

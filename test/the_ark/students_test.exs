@@ -21,7 +21,12 @@ defmodule TheArk.StudentsTest do
     end
 
     test "create_student/1 with valid data creates a student" do
-      valid_attrs = %{age: 42, class: "some class", father_name: "some father_name", name: "some name"}
+      valid_attrs = %{
+        age: 42,
+        class: "some class",
+        father_name: "some father_name",
+        name: "some name"
+      }
 
       assert {:ok, %Student{} = student} = Students.create_student(valid_attrs)
       assert student.age == 42
@@ -36,7 +41,13 @@ defmodule TheArk.StudentsTest do
 
     test "update_student/2 with valid data updates the student" do
       student = student_fixture()
-      update_attrs = %{age: 43, class: "some updated class", father_name: "some updated father_name", name: "some updated name"}
+
+      update_attrs = %{
+        age: 43,
+        class: "some updated class",
+        father_name: "some updated father_name",
+        name: "some updated name"
+      }
 
       assert {:ok, %Student{} = student} = Students.update_student(student, update_attrs)
       assert student.age == 43

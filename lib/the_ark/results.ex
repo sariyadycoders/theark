@@ -40,8 +40,8 @@ defmodule TheArk.Results do
   def get_result!(id), do: Repo.get!(Result, id)
 
   def get_result_of_student(student, term, subject) do
-    subject_id = (Subjects.get_subject_for_result_edition(student, subject)).id
-    Repo.one(from r in Result, where: r.name== ^term and r.subject_id == ^subject_id)
+    subject_id = Subjects.get_subject_for_result_edition(student, subject).id
+    Repo.one(from r in Result, where: r.name == ^term and r.subject_id == ^subject_id)
   end
 
   @doc """
@@ -122,15 +122,19 @@ defmodule TheArk.Results do
       for result_name <- Classes.make_list_of_terms() do
         total_obtained_marks_of_subject =
           Enum.reduce(class.students, 0, fn student, acc ->
-            related_subject = Enum.filter(student.subjects, fn student_subject ->
-              student_subject.name == class_subject.name
-            end) |> Enum.at(0)
+            related_subject =
+              Enum.filter(student.subjects, fn student_subject ->
+                student_subject.name == class_subject.name
+              end)
+              |> Enum.at(0)
 
-            related_result = Enum.filter(related_subject.results, fn student_result ->
-              student_result.name == result_name
-            end) |> Enum.at(0)
+            related_result =
+              Enum.filter(related_subject.results, fn student_result ->
+                student_result.name == result_name
+              end)
+              |> Enum.at(0)
 
-            if (!is_nil(related_result.obtained_marks)) and (related_result.obtained_marks > 0) do
+            if !is_nil(related_result.obtained_marks) and related_result.obtained_marks > 0 do
               related_result.obtained_marks + acc
             else
               acc
@@ -139,33 +143,44 @@ defmodule TheArk.Results do
 
         count_of_present_students =
           Enum.filter(class.students, fn class_student ->
-            related_subject = Enum.filter(class_student.subjects, fn student_subject ->
-              student_subject.name == class_subject.name
-            end) |> Enum.at(0)
+            related_subject =
+              Enum.filter(class_student.subjects, fn student_subject ->
+                student_subject.name == class_subject.name
+              end)
+              |> Enum.at(0)
 
-            related_result = Enum.filter(related_subject.results, fn student_result ->
-              student_result.name == result_name
-            end) |> Enum.at(0)
+            related_result =
+              Enum.filter(related_subject.results, fn student_result ->
+                student_result.name == result_name
+              end)
+              |> Enum.at(0)
 
-            !((is_nil(related_result.obtained_marks)) or (related_result.obtained_marks == 0))
-          end) |> Enum.count()
+            !(is_nil(related_result.obtained_marks) or related_result.obtained_marks == 0)
+          end)
+          |> Enum.count()
 
         students_to_be_used =
           if count_of_present_students > 0, do: count_of_present_students, else: 1
 
         total_marks_of_subject =
           (Enum.filter(class_subject.results, fn class_result ->
-            class_result.name == result_name
-          end) |> Enum.at(0)).total_marks
+             class_result.name == result_name
+           end)
+           |> Enum.at(0)).total_marks
 
-        total_obtained_average = (total_obtained_marks_of_subject / students_to_be_used) |> round()
+        total_obtained_average =
+          (total_obtained_marks_of_subject / students_to_be_used) |> round()
 
         result =
           Enum.filter(class_subject.results, fn student_result ->
             student_result.name == result_name
-          end) |> Enum.at(0)
+          end)
+          |> Enum.at(0)
 
-        update_result(result, %{"obtained_marks" => total_obtained_average, "total_marks" => total_marks_of_subject})
+        update_result(result, %{
+          "obtained_marks" => total_obtained_average,
+          "total_marks" => total_marks_of_subject
+        })
       end
     end
   end
