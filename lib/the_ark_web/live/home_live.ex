@@ -19,6 +19,7 @@ defmodule TheArkWeb.Home do
   def mount(_, _, socket) do
     socket
     |> assign(classes: Classes.list_classes())
+    |> assign(teachers: Teachers.list_teachers)
     |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
@@ -52,11 +53,12 @@ defmodule TheArkWeb.Home do
       {:ok, _class} ->
         socket
         |> assign(class_changeset: Classes.change_class(%Class{}))
+        |> assign(classes: Classes.list_classes())
         |> assign(
           subject_options:
             Enum.map(subject_options, fn subject -> Map.delete(subject, :selected) end)
         )
-        |> put_flash(:success, message: "Class is successfully created!")
+        |> put_flash(:info, "Class is successfully created!")
         |> noreply()
 
       {:error, changeset} ->
@@ -77,9 +79,15 @@ defmodule TheArkWeb.Home do
 
   @impl true
   def handle_event("teacher_submission", %{"teacher" => params}, socket) do
+    registration_date = Date.utc_today()
+    params =
+      Map.merge(params, %{"registration_date" => registration_date})
+
     case Teachers.create_teacher(params) do
-      {:ok, _class} ->
+      {:ok, _teacher} ->
         socket
+        |> put_flash(:info, "Teacher is successfully registered!")
+        |> assign(teachers: Teachers.list_teachers)
         |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
         |> noreply()
 
@@ -111,8 +119,9 @@ defmodule TheArkWeb.Home do
       })
 
     case Students.create_student(params) do
-      {:ok, _class} ->
+      {:ok, _student} ->
         socket
+        |> put_flash(:info, "Student is successfully registered!")
         |> assign(student_changeset: Students.change_student(%Student{}))
         |> noreply()
 
@@ -126,7 +135,6 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event("terms_announcement", %{"term_name" => term_name, "type" => type}, socket) do
     type = if type == "true", do: true, else: false
-
     Classes.term_announcement(term_name, type)
 
     socket
@@ -214,7 +222,7 @@ defmodule TheArkWeb.Home do
             phx-submit="class_submission"
           >
             <.input field={f[:name]} type="text" label="Class Name" />
-            <.input field={f[:incharge]} type="text" label="Incharge Name" />
+            <.input field={f[:incharge]} type="select" label="Incharge Name" options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")} />
             <MultiSelect.multi_select
               id="subjects"
               on_change={fn opts -> send(self(), {:updated_options, opts}) end}
@@ -268,7 +276,12 @@ defmodule TheArkWeb.Home do
             phx-submit="teacher_submission"
           >
             <.input field={s[:name]} type="text" label="Teacher Name" />
-            <.input field={s[:date_of_joining]} type="date" label="Date of Joining" />
+            <.input field={s[:father_name]} type="text" label="Father Name" />
+            <.input field={s[:education]} type="select" label="Education" options={["Inter", "Bachelors", "Masters"]} />
+            <.input field={s[:address]} type="text" label="Address" />
+            <.input field={s[:cnic]} type="text" label="CNIC" />
+            <.input field={s[:sim_number]} type="text" label="Contact Number (without whatsapp)" />
+            <.input field={s[:whatsapp_number]} type="text" label="Whatsapp Number" />
 
             <.button class="mt-5">Submit</.button>
           </.form>

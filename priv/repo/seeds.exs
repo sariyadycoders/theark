@@ -14,6 +14,7 @@ alias TheArk.Repo
 alias TheArk.Classes.Class
 alias TheArk.Teachers.Teacher
 alias TheArk.Subjects.Subject
+alias TheArk.Serials.Serial
 
 for name <- [
       "Play Group",
