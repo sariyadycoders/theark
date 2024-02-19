@@ -15,6 +15,8 @@ alias TheArk.Classes.Class
 alias TheArk.Teachers.Teacher
 alias TheArk.Subjects.Subject
 alias TheArk.Serials.Serial
+alias TheArk.Organizations.Organization
+alias TheArk.Roles.Role
 
 for name <- [
       "Play Group",
@@ -71,3 +73,10 @@ for name <- ["teacher", "student"] do
   }
   |> Repo.insert()
 end
+
+organization = %Organization{name: "the_ark", number_of_students: 150, number_of_years: 6, number_of_staff: 12}
+{:ok, organization} = Repo.insert(organization)
+
+%Role{name: "Abu Bakr Yonas", role: "Principal", contact_number: "0315-6242622", organization_id: organization.id} |> Repo.insert()
+%Role{name: "Qari Abdul-Maalik Mujahid", role: "Chairman", contact_number: "0321-7401330", organization_id: organization.id} |> Repo.insert()
+%Role{name: "Saaria Mujahid", role: "Coordinator", contact_number: "0304-2728859", organization_id: organization.id} |> Repo.insert()

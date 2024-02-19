@@ -1,4 +1,5 @@
 defmodule TheArkWeb.Home do
+  alias TheArk.Organizations
   use TheArkWeb, :live_view
 
   alias TheArk.{
@@ -10,7 +11,8 @@ defmodule TheArkWeb.Home do
     Teachers.Teacher,
     Subjects,
     # Subjects,Subject
-    Serials
+    Serials,
+    Organizations
   }
 
   # import Ecto.Changeset
@@ -25,6 +27,7 @@ defmodule TheArkWeb.Home do
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
     |> assign(subject_options: Subjects.list_subject_options())
+    |> assign(organization: Organizations.get_organization_by_name("the_ark"))
     |> ok
   end
 
@@ -221,6 +224,31 @@ defmodule TheArkWeb.Home do
         <.button class="flex justify-center" phx-click={show_modal("student_registration_modal")}>
           Register New Student
         </.button>
+      </div>
+
+      <div class="border rounded-lg grid grid-cols-3 gap-2 p-4 my-5">
+        <div class="border rounded-lg p-2">
+          Number of Students
+          <%= @organization.number_of_students %> +
+        </div>
+        <div class="border rounded-lg p-2">
+          Number of Staff members
+          <%= @organization.number_of_staff %> +
+        </div>
+        <div class="border rounded-lg p-2">
+          years of Excellency
+          <%= @organization.number_of_years %> +
+        </div>
+      </div>
+
+      <div class="border rounded-lg p-5 flex flex-col gap-2">
+        <%= for role <- @organization.roles do %>
+          <div class="border rounded-lg p-2">
+            <%= role.role %>
+            <%= role.name %>
+            <%= role.contact_number %>
+          </div>
+        <% end  %>
       </div>
 
       <.modal id="class_registration_modal">
