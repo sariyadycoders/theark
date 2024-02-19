@@ -22,7 +22,6 @@ defmodule TheArkWeb.Router do
 
     get "/", PageController, :home
     live "/home", Home
-    live "/registration", RegistrationLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
     live "/classes", ClassLive

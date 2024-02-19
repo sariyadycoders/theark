@@ -8,8 +8,9 @@ defmodule TheArkWeb.Home do
     Students.Student,
     Teachers,
     Teachers.Teacher,
-    Subjects
+    Subjects,
     # Subjects,Subject
+    Serials
   }
 
   # import Ecto.Changeset
@@ -19,7 +20,7 @@ defmodule TheArkWeb.Home do
   def mount(_, _, socket) do
     socket
     |> assign(classes: Classes.list_classes())
-    |> assign(teachers: Teachers.list_teachers)
+    |> assign(teachers: Teachers.list_teachers())
     |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
@@ -80,14 +81,22 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event("teacher_submission", %{"teacher" => params}, socket) do
     registration_date = Date.utc_today()
+    serial = Serials.get_serial_by_name("teacher")
+    registration_number = generate_registration_number(serial.number)
+
+    Serials.update_serial(serial, %{"number" => registration_number})
+
     params =
-      Map.merge(params, %{"registration_date" => registration_date})
+      Map.merge(params, %{
+        "registration_date" => registration_date,
+        "registration_number" => registration_number
+      })
 
     case Teachers.create_teacher(params) do
       {:ok, _teacher} ->
         socket
         |> put_flash(:info, "Teacher is successfully registered!")
-        |> assign(teachers: Teachers.list_teachers)
+        |> assign(teachers: Teachers.list_teachers())
         |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
         |> noreply()
 
@@ -111,11 +120,16 @@ defmodule TheArkWeb.Home do
   def handle_event("student_submission", %{"student" => params}, socket) do
     enrollment_date = Date.utc_today()
     class_of_enrollment = Classes.get_class_name(String.to_integer(params["class_id"]))
+    serial = Serials.get_serial_by_name("student")
+    enrollment_number = generate_registration_number(serial.number)
+
+    Serials.update_serial(serial, %{"number" => enrollment_number})
 
     params =
       Map.merge(params, %{
         "enrollment_date" => enrollment_date,
-        "class_of_enrollment" => class_of_enrollment
+        "class_of_enrollment" => class_of_enrollment,
+        "enrollment_number" => enrollment_number
       })
 
     case Students.create_student(params) do
@@ -147,10 +161,12 @@ defmodule TheArkWeb.Home do
     <div>
       <h1 class="font-bold text-3xl mb-5">Home</h1>
       <div class="grid grid-cols-6 gap-2">
-        <.button phx-click="terms_announcement"
+        <.button
+          phx-click="terms_announcement"
           class="flex justify-center"
           phx-value-term_name="first_term"
-          phx-value-type="true">
+          phx-value-type="true"
+        >
           Announce 1st Term
         </.button>
         <.button
@@ -177,10 +193,12 @@ defmodule TheArkWeb.Home do
         >
           Finish 2nd Term
         </.button>
-        <.button phx-click="terms_announcement"
+        <.button
+          phx-click="terms_announcement"
           class="flex justify-center"
           phx-value-term_name="third_term"
-          phx-value-type="true">
+          phx-value-type="true"
+        >
           Announce 3rd Term
         </.button>
         <.button
@@ -194,20 +212,13 @@ defmodule TheArkWeb.Home do
       </div>
 
       <div class="grid grid-cols-3 gap-2 mt-2">
-        <.button phx-click={show_modal("class_registration_modal")}
-          class="flex justify-center">
+        <.button phx-click={show_modal("class_registration_modal")} class="flex justify-center">
           Register New Class
         </.button>
-        <.button
-          class="flex justify-center"
-          phx-click={show_modal("teacher_registration_modal")}
-        >
+        <.button class="flex justify-center" phx-click={show_modal("teacher_registration_modal")}>
           Register New Teacher
         </.button>
-        <.button
-          class="flex justify-center"
-          phx-click={show_modal("student_registration_modal")}
-        >
+        <.button class="flex justify-center" phx-click={show_modal("student_registration_modal")}>
           Register New Student
         </.button>
       </div>
@@ -222,7 +233,12 @@ defmodule TheArkWeb.Home do
             phx-submit="class_submission"
           >
             <.input field={f[:name]} type="text" label="Class Name" />
-            <.input field={f[:incharge]} type="select" label="Incharge Name" options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")} />
+            <.input
+              field={f[:incharge]}
+              type="select"
+              label="Incharge Name"
+              options={List.insert_at(Enum.map(@teachers, fn teacher -> teacher.name end), 0, "")}
+            />
             <MultiSelect.multi_select
               id="subjects"
               on_change={fn opts -> send(self(), {:updated_options, opts}) end}
@@ -277,7 +293,12 @@ defmodule TheArkWeb.Home do
           >
             <.input field={s[:name]} type="text" label="Teacher Name" />
             <.input field={s[:father_name]} type="text" label="Father Name" />
-            <.input field={s[:education]} type="select" label="Education" options={["Inter", "Bachelors", "Masters"]} />
+            <.input
+              field={s[:education]}
+              type="select"
+              label="Education"
+              options={["Inter", "Bachelors", "Masters"]}
+            />
             <.input field={s[:address]} type="text" label="Address" />
             <.input field={s[:cnic]} type="text" label="CNIC" />
             <.input field={s[:sim_number]} type="text" label="Contact Number (without whatsapp)" />
@@ -289,5 +310,18 @@ defmodule TheArkWeb.Home do
       </.modal>
     </div>
     """
+  end
+
+  def generate_registration_number(number) do
+    number
+    |> String.split("-")
+    |> then(fn list ->
+      list
+      |> List.update_at(-1, fn x -> ((x |> String.to_integer()) + 1) |> Integer.to_string() end)
+      |> List.update_at(-2, fn _x ->
+        Date.utc_today().year |> Integer.to_string() |> String.slice(2, 2)
+      end)
+    end)
+    |> Enum.join("-")
   end
 end

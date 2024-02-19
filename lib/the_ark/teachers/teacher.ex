@@ -10,7 +10,7 @@ defmodule TheArk.Teachers.Teacher do
     field :cnic, :string
     field :sim_number, :string
     field :whatsapp_number, :string
-    field :registration_number, :integer
+    field :registration_number, :string
     field :registration_date, :date
     field :leaving_certificate_date, :date
     field :last_attendance_date, :date
@@ -34,7 +34,7 @@ defmodule TheArk.Teachers.Teacher do
       :sim_number,
       :whatsapp_number,
       :registration_number,
-      :registration_date,
+      :registration_date
     ])
     |> validate_required([:name, :father_name, :address, :education, :cnic, :sim_number])
     |> validate_format(:cnic, ~r/^\d{5}-\d{7}-\d$/,

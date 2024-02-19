@@ -12,7 +12,7 @@ defmodule TheArk.Students.Student do
     field :sim_number, :string
     field :whatsapp_number, :string
     field :class_of_enrollment, :string
-    field :enrollment_number, :integer
+    field :enrollment_number, :string
     field :enrollment_date, :date
     field :leaving_class, :string
     field :leaving_certificate_date, :date
@@ -31,6 +31,7 @@ defmodule TheArk.Students.Student do
     |> cast(attrs, [
       :name,
       :father_name,
+      :address,
       :date_of_birth,
       :cnic,
       :guardian_cnic,
@@ -39,10 +40,6 @@ defmodule TheArk.Students.Student do
       :enrollment_number,
       :enrollment_date,
       :class_of_enrollment,
-      :leaving_class,
-      :leaving_certificate_date,
-      :last_attendance_date,
-      :is_leaving,
       :class_id
     ])
     |> validate_required([:name])

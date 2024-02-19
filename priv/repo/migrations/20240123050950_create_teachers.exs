@@ -10,7 +10,7 @@ defmodule TheArk.Repo.Migrations.CreateTeachers do
       add :cnic, :string
       add :sim_number, :string
       add :whatsapp_number, :string
-      add :registration_number, :integer
+      add :registration_number, :string
       add :registration_date, :date
       add :leaving_certificate_date, :date
       add :last_attendance_date, :date
@@ -18,5 +18,7 @@ defmodule TheArk.Repo.Migrations.CreateTeachers do
 
       timestamps(type: :utc_datetime)
     end
+
+    create unique_index(:teachers, [:cnic])
   end
 end

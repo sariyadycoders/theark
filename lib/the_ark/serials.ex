@@ -37,6 +37,10 @@ defmodule TheArk.Serials do
   """
   def get_serial!(id), do: Repo.get!(Serial, id)
 
+  def get_serial_by_name(name) do
+    Repo.get_by(Serial, name: name)
+  end
+
   @doc """
   Creates a serial.
 

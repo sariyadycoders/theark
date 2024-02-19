@@ -61,3 +61,13 @@ for name <- [
   %Subject{name: name}
   |> Repo.insert!()
 end
+
+year = Date.utc_today().year |> Integer.to_string() |> String.slice(2, 2)
+
+for name <- ["teacher", "student"] do
+  %Serial{
+    name: name,
+    number: "tams-#{if name == "teacher", do: "t", else: "s"}-#{year}-00000"
+  }
+  |> Repo.insert()
+end

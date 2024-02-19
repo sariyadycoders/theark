@@ -11,7 +11,7 @@ defmodule TheArk.Repo.Migrations.CreateStudents do
       add :guardian_cnic, :string
       add :sim_number, :string
       add :whatsapp_number, :string
-      add :enrollment_number, :integer
+      add :enrollment_number, :string
       add :enrollment_date, :date
       add :class_of_enrollment, :string
       add :leaving_class, :string

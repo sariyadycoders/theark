@@ -25,8 +25,8 @@ defmodule TheArk.Students do
   def list_students_for_index() do
     Repo.all(
       from s in Student,
-        order_by: s.class_id,
         order_by: s.is_leaving,
+        order_by: s.class_id,
         preload: :class
     )
   end
