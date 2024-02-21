@@ -23,7 +23,7 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
   mix phx.gen.context Slos Slo slos description:string
 
 defmodule TheArkWeb.Home do
-  use TheArk.Web, :live_view
+  use TheArkWeb, :live_view
   
   @impl true
   def mount(_, _, socket) do

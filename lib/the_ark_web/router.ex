@@ -29,8 +29,14 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/students", StudentLive
     live "/classes/:id/add_result", AddResultLive
     live "/classes/:id/slos", SloLive
-    live "teachers", TeacherLive
-    live "teachers/:id/result", TeacherResultLive
+    live "/teachers", TeacherLive
+    live "/teachers/:id/result", TeacherResultLive
+    live "/admissions", AdmissionLive
+    live "/finances", FinanceLive
+    live "/results", ResultLive
+    live "/time_table", TimeTableLive
+    live "/papers", PaperLive
+    live "/about_us", AboutUs
   end
 
   # Other scopes may use custom stacks.

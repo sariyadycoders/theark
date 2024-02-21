@@ -17,13 +17,19 @@ defmodule TheArkWeb.AddResultLive do
       ) do
     class = Classes.get_class!(id)
 
+    subject_id = Enum.map(class.subjects, fn subject ->
+      subject.subject_id
+    end) |> Enum.at(0)
+    subject_choosen = Subjects.get_subject_name_by_subject_id(class.id, subject_id)
+    term = Enum.map(make_term_options(), fn {_key, value} -> value end ) |> Enum.at(0)
+
     socket
     |> assign(class: class)
     |> assign(is_first_term_announced: class.is_first_term_announced)
-    |> assign(subject_choosen: nil)
+    |> assign(subject_choosen: subject_choosen)
     |> assign(total_marks: nil)
-    |> assign(term: nil)
-    |> assign(subject_id: nil)
+    |> assign(term: term)
+    |> assign(subject_id: subject_id)
     |> assign(allowed_result_student_id: 0)
     |> assign(result_changeset: Results.change_result(%Result{}))
     |> ok()
@@ -44,6 +50,7 @@ defmodule TheArkWeb.AddResultLive do
     |> assign(subject_choosen: subject_choosen)
     |> assign(subject_id: subject_id)
     |> assign(term: term)
+    |> assign(total_marks: nil)
     |> noreply()
   end
 
@@ -77,12 +84,16 @@ defmodule TheArkWeb.AddResultLive do
 
     if total_marks do
       Results.update_result(result, %{"total_marks" => total_marks})
-    end
 
-    socket
-    |> assign(total_marks: total_marks)
-    |> put_flash(:info, "Total marks added")
-    |> noreply()
+      socket
+      |> assign(total_marks: total_marks)
+      |> put_flash(:info, "Total marks added")
+      |> noreply()
+    else
+      socket
+      |> put_flash(:error, "Total marks should be greater than 0")
+      |> noreply()
+    end
   end
 
   @impl true

@@ -10,7 +10,6 @@ defmodule TheArkWeb.Home do
     Teachers,
     Teachers.Teacher,
     Subjects,
-    # Subjects,Subject
     Serials,
     Organizations
   }
@@ -84,19 +83,19 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event("teacher_submission", %{"teacher" => params}, socket) do
     registration_date = Date.utc_today()
-    serial = Serials.get_serial_by_name("teacher")
-    registration_number = generate_registration_number(serial.number)
-
-    Serials.update_serial(serial, %{"number" => registration_number})
-
     params =
       Map.merge(params, %{
-        "registration_date" => registration_date,
-        "registration_number" => registration_number
+        "registration_date" => registration_date
       })
 
     case Teachers.create_teacher(params) do
-      {:ok, _teacher} ->
+      {:ok, teacher} ->
+        serial = Serials.get_serial_by_name("teacher")
+        registration_number = generate_registration_number(serial.number)
+        Serials.update_serial(serial, %{"number" => registration_number})
+
+        Teachers.update_teacher(teacher, %{"registration_number" => registration_number})
+
         socket
         |> put_flash(:info, "Teacher is successfully registered!")
         |> assign(teachers: Teachers.list_teachers())
@@ -123,20 +122,19 @@ defmodule TheArkWeb.Home do
   def handle_event("student_submission", %{"student" => params}, socket) do
     enrollment_date = Date.utc_today()
     class_of_enrollment = Classes.get_class_name(String.to_integer(params["class_id"]))
-    serial = Serials.get_serial_by_name("student")
-    enrollment_number = generate_registration_number(serial.number)
-
-    Serials.update_serial(serial, %{"number" => enrollment_number})
-
     params =
       Map.merge(params, %{
         "enrollment_date" => enrollment_date,
-        "class_of_enrollment" => class_of_enrollment,
-        "enrollment_number" => enrollment_number
+        "class_of_enrollment" => class_of_enrollment
       })
 
     case Students.create_student(params) do
-      {:ok, _student} ->
+      {:ok, student} ->
+        serial = Serials.get_serial_by_name("student")
+        enrollment_number = generate_registration_number(serial.number)
+        Serials.update_serial(serial, %{"number" => enrollment_number})
+        Students.update_student(student, %{"enrollment_number" => enrollment_number})
+
         socket
         |> put_flash(:info, "Student is successfully registered!")
         |> assign(student_changeset: Students.change_student(%Student{}))
@@ -163,6 +161,19 @@ defmodule TheArkWeb.Home do
     ~H"""
     <div>
       <h1 class="font-bold text-3xl mb-5">Home</h1>
+
+      <div class="flex gap-4 mb-5 items-center">
+        <a href="/finances" class="ml-auto">Finances</a>
+        <a href="/admissions">Admissions</a>
+        <a href="/students">Students</a>
+        <a href="/teachers">Teachers</a>
+        <a href="/classes">Classes</a>
+        <a href="/results">Results</a>
+        <a href="/time_table">Time Table</a>
+        <a href="/papers">Papers</a>
+        <input class="rounded-lg" type="text" placeholder="Search Student"/>
+      </div>
+
       <div class="grid grid-cols-6 gap-2">
         <.button
           phx-click="terms_announcement"
@@ -240,10 +251,18 @@ defmodule TheArkWeb.Home do
           <%= @organization.number_of_years %> +
         </div>
       </div>
+      <div class="my-5 rounded-lg border flex p-2 items-center gap-2 justify-center">
+        Edit statistics
+        <.button
+          icon="hero-pencil"
+          phx-click={JS.push("edit_class_id") |> show_modal("edit_class_modal")}
+          phx-value-class_id={}
+        />
+      </div>
 
       <div class="border rounded-lg p-5 flex flex-col gap-2">
         <%= for role <- @organization.roles do %>
-          <div class="border rounded-lg p-2">
+          <div class="border rounded-lg p-2 flex items-center gap-2">
             <%= role.role %>
             <%= role.name %>
             <%= role.contact_number %>
