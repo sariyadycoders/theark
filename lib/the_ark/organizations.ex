@@ -7,6 +7,7 @@ defmodule TheArk.Organizations do
   alias TheArk.Repo
 
   alias TheArk.Organizations.Organization
+  alias TheArk.Roles.Role
 
   @doc """
   Returns the list of organizations.
@@ -39,7 +40,7 @@ defmodule TheArk.Organizations do
 
   def get_organization_by_name(name) do
     Repo.get_by(Organization, name: name)
-    |> Repo.preload(:roles)
+    |> Repo.preload([roles: from(r in Role, order_by: r.id)])
   end
 
   @doc """

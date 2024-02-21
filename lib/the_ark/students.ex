@@ -59,6 +59,10 @@ defmodule TheArk.Students do
     |> Repo.preload(subjects: [:results])
   end
 
+  def get_students_for_search_results(name) do
+    Repo.all(from(s in Student, where: ilike(s.name, ^"%#{name}%")))
+  end
+
   @doc """
   Creates a student.
 

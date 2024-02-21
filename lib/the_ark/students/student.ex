@@ -51,10 +51,10 @@ defmodule TheArk.Students.Student do
       message: "must match the pattern 00000-0000000-0"
     )
     |> validate_format(:whatsapp_number, ~r/^03\d{9}$/,
-      message: "must start with 03 and have exactly 11 characters"
+      message: "must start with 03 and have exactly 11 numbers"
     )
     |> validate_format(:sim_number, ~r/^03\d{9}$/,
-      message: "must start with 03 and have exactly 11 characters"
+      message: "must start with 03 and have exactly 11 numbers"
     )
     |> unsafe_validate_unique(:cnic, TheArk.Repo, message: "This is a duplicate CNIC")
     |> unique_constraint([:cnic])

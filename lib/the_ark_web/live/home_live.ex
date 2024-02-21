@@ -1,4 +1,5 @@
 defmodule TheArkWeb.Home do
+  alias TheArk.Organizations.Organization
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
@@ -11,7 +12,9 @@ defmodule TheArkWeb.Home do
     Teachers.Teacher,
     Subjects,
     Serials,
-    Organizations
+    Organizations,
+    Roles.Role,
+    Roles
   }
 
   # import Ecto.Changeset
@@ -19,14 +22,20 @@ defmodule TheArkWeb.Home do
 
   @impl true
   def mount(_, _, socket) do
+    organization = Organizations.get_organization_by_name("the_ark")
+
     socket
     |> assign(classes: Classes.list_classes())
     |> assign(teachers: Teachers.list_teachers())
     |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
+    |> assign(role_changeset: Roles.change_role(%Role{}))
+    |> assign(role_editing_id: 0)
+    |> assign(organization_changeset: Organizations.change_organization(organization))
     |> assign(subject_options: Subjects.list_subject_options())
-    |> assign(organization: Organizations.get_organization_by_name("the_ark"))
+    |> assign(organization: organization)
+    |> assign(students_list: nil)
     |> ok
   end
 
@@ -157,6 +166,65 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event("update_organization",
+    %{"organization" => org_params},
+    %{assigns: %{organization: organization}} = socket) do
+
+    {:ok, organization} = Organizations.update_organization(organization, org_params)
+
+    socket
+    |> assign(organization: organization)
+    |> put_flash(:info, "Stats updated!")
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("role_editing_id", %{"role_id" => id}, socket) do
+    role = Roles.get_role!(id)
+
+    socket
+    |> assign(role_editing_id: role.id)
+    |> assign(role_changeset: Roles.change_role(role))
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("edit_role", %{"role_id" => role_id, "role" => role_params}, socket) do
+    role = Roles.get_role!(role_id)
+
+    case Roles.update_role(role, role_params) do
+      {:ok, _role} ->
+        socket
+        |> assign(role_changeset: Roles.change_role(%Role{}))
+        |> assign(organization: Organizations.get_organization_by_name("the_ark"))
+        |> put_flash(:info, "Designation updated succcessfully!")
+        |> noreply()
+      {:error, changeset} ->
+        socket
+        |> assign(role_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  @impl true
+  def handle_event("seach_student",
+    %{"seach_student" => %{"student_name" => student_name}},
+    socket) do
+
+    students = Students.get_students_for_search_results(student_name)
+    students =
+      if students == [] or student_name == "" do
+        nil
+      else
+        students
+      end
+
+    socket
+    |> assign(students_list: students)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -171,7 +239,16 @@ defmodule TheArkWeb.Home do
         <a href="/results">Results</a>
         <a href="/time_table">Time Table</a>
         <a href="/papers">Papers</a>
-        <input class="rounded-lg" type="text" placeholder="Search Student"/>
+        <.form class="relative" :let={f} for={} as={:seach_student} phx-change="seach_student">
+          <.input input_class="mt-0" field={f[:student_name]} type="text"/>
+          <div :if={@students_list} class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg">
+            <%= for student <- @students_list do %>
+              <div class="border-b py-1 px-3 hover:bg-blue-200 flex items-center">
+                <a href={"/students/#{student.id}"} class=""><%= student.name %></a>
+              </div>
+            <% end %>
+          </div>
+        </.form>
       </div>
 
       <div class="grid grid-cols-6 gap-2">
@@ -247,18 +324,29 @@ defmodule TheArkWeb.Home do
           <%= @organization.number_of_staff %> +
         </div>
         <div class="border rounded-lg p-2">
-          years of Excellency
+          Years of Excellency
           <%= @organization.number_of_years %> +
         </div>
       </div>
+
       <div class="my-5 rounded-lg border flex p-2 items-center gap-2 justify-center">
         Edit statistics
         <.button
           icon="hero-pencil"
-          phx-click={JS.push("edit_class_id") |> show_modal("edit_class_modal")}
+          phx-click={show_modal("organization_editing")}
           phx-value-class_id={}
         />
       </div>
+
+      <.modal id="organization_editing">
+        <.form :let={f} for={@organization_changeset} phx-submit="update_organization">
+          <.input field={f[:number_of_students]} type="number" label="Number of Students" />
+          <.input field={f[:number_of_staff]} type="number" label="Number of Staff Members" />
+          <.input field={f[:number_of_years]} type="number" label="Years of Excellency" />
+
+          <.button class="mt-5">Submit</.button>
+        </.form>
+      </.modal>
 
       <div class="border rounded-lg p-5 flex flex-col gap-2">
         <%= for role <- @organization.roles do %>
@@ -266,7 +354,24 @@ defmodule TheArkWeb.Home do
             <%= role.role %>
             <%= role.name %>
             <%= role.contact_number %>
+            <.button
+              icon="hero-pencil"
+              phx-click={JS.push("role_editing_id") |> show_modal("role_#{role.id}_editing")}
+              phx-value-role_id={role.id}
+            />
           </div>
+
+          <.modal id={"role_#{role.id}_editing"}>
+            <%= if @role_editing_id == role.id do %>
+              <.form :let={f} for={@role_changeset} phx-submit="edit_role" phx-value-role_id={role.id}>
+                <.input field={f[:name]} type="text" label="Name" />
+                <.input field={f[:role]} type="text" label="Designation" />
+                <.input field={f[:contact_number]} type="text" label="Contact Number" />
+
+                <.button class="mt-5">Submit</.button>
+              </.form>
+            <% end %>
+          </.modal>
         <% end  %>
       </div>
 
