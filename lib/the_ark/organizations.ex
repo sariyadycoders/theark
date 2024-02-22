@@ -40,7 +40,7 @@ defmodule TheArk.Organizations do
 
   def get_organization_by_name(name) do
     Repo.get_by(Organization, name: name)
-    |> Repo.preload([roles: from(r in Role, order_by: r.id)])
+    |> Repo.preload(roles: from(r in Role, order_by: r.id))
   end
 
   @doc """

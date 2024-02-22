@@ -92,6 +92,7 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event("teacher_submission", %{"teacher" => params}, socket) do
     registration_date = Date.utc_today()
+
     params =
       Map.merge(params, %{
         "registration_date" => registration_date
@@ -131,6 +132,7 @@ defmodule TheArkWeb.Home do
   def handle_event("student_submission", %{"student" => params}, socket) do
     enrollment_date = Date.utc_today()
     class_of_enrollment = Classes.get_class_name(String.to_integer(params["class_id"]))
+
     params =
       Map.merge(params, %{
         "enrollment_date" => enrollment_date,
@@ -166,10 +168,11 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
-  def handle_event("update_organization",
-    %{"organization" => org_params},
-    %{assigns: %{organization: organization}} = socket) do
-
+  def handle_event(
+        "update_organization",
+        %{"organization" => org_params},
+        %{assigns: %{organization: organization}} = socket
+      ) do
     {:ok, organization} = Organizations.update_organization(organization, org_params)
 
     socket
@@ -199,6 +202,7 @@ defmodule TheArkWeb.Home do
         |> assign(organization: Organizations.get_organization_by_name("the_ark"))
         |> put_flash(:info, "Designation updated succcessfully!")
         |> noreply()
+
       {:error, changeset} ->
         socket
         |> assign(role_changeset: changeset)
@@ -207,11 +211,13 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
-  def handle_event("seach_student",
-    %{"seach_student" => %{"student_name" => student_name}},
-    socket) do
-
+  def handle_event(
+        "seach_student",
+        %{"seach_student" => %{"student_name" => student_name}},
+        socket
+      ) do
     students = Students.get_students_for_search_results(student_name)
+
     students =
       if students == [] or student_name == "" do
         nil
@@ -235,6 +241,7 @@ defmodule TheArkWeb.Home do
         |> assign(organization: Organizations.get_organization_by_name("the_ark"))
         |> assign(role_changeset: Roles.change_role(%Role{}))
         |> noreply()
+
       {:error, changeset} ->
         socket
         |> assign(role_changeset: changeset)
@@ -257,9 +264,17 @@ defmodule TheArkWeb.Home do
         <a href="/results">Results</a>
         <a href="/time_table">Time Table</a>
         <a href="/papers">Papers</a>
-        <.form class="relative" :let={f} for={} as={:seach_student} phx-change="seach_student">
-          <.input input_class="mt-0" field={f[:student_name]} type="text" placeholder="Search Student"/>
-          <div :if={@students_list} class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg">
+        <.form :let={f} class="relative" for={} as={:seach_student} phx-change="seach_student">
+          <.input
+            input_class="mt-0"
+            field={f[:student_name]}
+            type="text"
+            placeholder="Search Student"
+          />
+          <div
+            :if={@students_list}
+            class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg"
+          >
             <%= for student <- @students_list do %>
               <div class="border-b py-1 px-3 hover:bg-blue-200 flex items-center">
                 <a href={"/students/#{student.id}"} class=""><%= student.name %></a>
@@ -334,38 +349,33 @@ defmodule TheArkWeb.Home do
 
       <div class="border rounded-lg grid grid-cols-3 gap-2 p-4 my-5">
         <div class="border rounded-lg p-2">
-          Number of Students
-          <%= @organization.number_of_students %> +
+          Number of Students <%= @organization.number_of_students %> +
         </div>
         <div class="border rounded-lg p-2">
-          Number of Staff members
-          <%= @organization.number_of_staff %> +
+          Number of Staff members <%= @organization.number_of_staff %> +
         </div>
         <div class="border rounded-lg p-2">
-          Years of Excellency
-          <%= @organization.number_of_years %> +
+          Years of Excellency <%= @organization.number_of_years %> +
         </div>
       </div>
 
       <div class="my-5 rounded-lg border flex p-2 items-center gap-10 justify-center">
         <div class="flex items-center gap-2">
           Edit Statistics
-          <.button
-            icon="hero-pencil"
-            phx-click={show_modal("organization_editing")}
-          />
+          <.button icon="hero-pencil" phx-click={show_modal("organization_editing")} />
         </div>
         <div class="flex items-center gap-2">
-          Add Role
-          <.button
-            icon="hero-plus"
-            phx-click={show_modal("role_adding")}
-          />
+          Add Role <.button icon="hero-plus" phx-click={show_modal("role_adding")} />
         </div>
       </div>
 
-      <.modal id={"role_adding"}>
-        <.form :let={f} for={@role_changeset} phx-submit="role_adding" phx-value-org_id={@organization.id}>
+      <.modal id="role_adding">
+        <.form
+          :let={f}
+          for={@role_changeset}
+          phx-submit="role_adding"
+          phx-value-org_id={@organization.id}
+        >
           <.input field={f[:name]} type="text" label="Name" />
           <.input field={f[:role]} type="text" label="Designation" />
           <.input field={f[:contact_number]} type="text" label="Contact Number" />
@@ -408,7 +418,7 @@ defmodule TheArkWeb.Home do
               </.form>
             <% end %>
           </.modal>
-        <% end  %>
+        <% end %>
       </div>
 
       <.modal id="class_registration_modal">

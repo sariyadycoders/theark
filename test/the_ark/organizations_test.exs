@@ -8,7 +8,12 @@ defmodule TheArk.OrganizationsTest do
 
     import TheArk.OrganizationsFixtures
 
-    @invalid_attrs %{name: nil, number_of_staff: nil, number_of_students: nil, number_of_years: nil}
+    @invalid_attrs %{
+      name: nil,
+      number_of_staff: nil,
+      number_of_students: nil,
+      number_of_years: nil
+    }
 
     test "list_organizations/0 returns all organizations" do
       organization = organization_fixture()
@@ -21,9 +26,16 @@ defmodule TheArk.OrganizationsTest do
     end
 
     test "create_organization/1 with valid data creates a organization" do
-      valid_attrs = %{name: "some name", number_of_staff: 42, number_of_students: 42, number_of_years: 42}
+      valid_attrs = %{
+        name: "some name",
+        number_of_staff: 42,
+        number_of_students: 42,
+        number_of_years: 42
+      }
 
-      assert {:ok, %Organization{} = organization} = Organizations.create_organization(valid_attrs)
+      assert {:ok, %Organization{} = organization} =
+               Organizations.create_organization(valid_attrs)
+
       assert organization.name == "some name"
       assert organization.number_of_staff == 42
       assert organization.number_of_students == 42
@@ -36,9 +48,17 @@ defmodule TheArk.OrganizationsTest do
 
     test "update_organization/2 with valid data updates the organization" do
       organization = organization_fixture()
-      update_attrs = %{name: "some updated name", number_of_staff: 43, number_of_students: 43, number_of_years: 43}
 
-      assert {:ok, %Organization{} = organization} = Organizations.update_organization(organization, update_attrs)
+      update_attrs = %{
+        name: "some updated name",
+        number_of_staff: 43,
+        number_of_students: 43,
+        number_of_years: 43
+      }
+
+      assert {:ok, %Organization{} = organization} =
+               Organizations.update_organization(organization, update_attrs)
+
       assert organization.name == "some updated name"
       assert organization.number_of_staff == 43
       assert organization.number_of_students == 43
@@ -47,7 +67,10 @@ defmodule TheArk.OrganizationsTest do
 
     test "update_organization/2 with invalid data returns error changeset" do
       organization = organization_fixture()
-      assert {:error, %Ecto.Changeset{}} = Organizations.update_organization(organization, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Organizations.update_organization(organization, @invalid_attrs)
+
       assert organization == Organizations.get_organization!(organization.id)
     end
 

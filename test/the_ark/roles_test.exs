@@ -35,7 +35,12 @@ defmodule TheArk.RolesTest do
 
     test "update_role/2 with valid data updates the role" do
       role = role_fixture()
-      update_attrs = %{contact_number: "some updated contact_number", name: "some updated name", role: "some updated role"}
+
+      update_attrs = %{
+        contact_number: "some updated contact_number",
+        name: "some updated name",
+        role: "some updated role"
+      }
 
       assert {:ok, %Role{} = role} = Roles.update_role(role, update_attrs)
       assert role.contact_number == "some updated contact_number"

@@ -89,6 +89,11 @@ defmodule TheArk.Slos do
     Repo.delete(slo)
   end
 
+  def delete_slo_by_id(id) do
+    slo = get_slo!(id)
+    delete_slo(slo)
+  end
+
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking slo changes.
 

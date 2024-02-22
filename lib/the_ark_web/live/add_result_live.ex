@@ -17,11 +17,15 @@ defmodule TheArkWeb.AddResultLive do
       ) do
     class = Classes.get_class!(id)
 
-    subject_id = Enum.map(class.subjects, fn subject ->
-      subject.subject_id
-    end) |> Enum.at(0)
+    subject_id =
+      Enum.map(class.subjects, fn subject ->
+        subject.subject_id
+      end)
+      |> Enum.at(0)
+
     subject_choosen = Subjects.get_subject_name_by_subject_id(class.id, subject_id)
-    term = Enum.map(make_term_options(), fn {_key, value} -> value end ) |> Enum.at(0)
+    term =
+      Enum.map(make_term_options(), fn {_key, value} -> value end) |> Enum.at(0)
 
     socket
     |> assign(class: class)

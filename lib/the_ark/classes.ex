@@ -15,7 +15,14 @@ defmodule TheArk.Classes do
   def get_class!(id) do
     Repo.get!(Class, id)
     |> Repo.preload([
-      [subjects: from(s in Subject, where: s.is_class_subject == true, order_by: s.subject_id, preload: :results)],
+      [
+        subjects:
+          from(s in Subject,
+            where: s.is_class_subject == true,
+            order_by: s.subject_id,
+            preload: :results
+          )
+      ],
       students: [subjects: :results]
     ])
   end

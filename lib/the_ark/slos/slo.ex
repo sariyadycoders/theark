@@ -12,7 +12,7 @@ defmodule TheArk.Slos.Slo do
   @doc false
   def changeset(slo, attrs) do
     slo
-    |> cast(attrs, [:description])
+    |> cast(attrs, [:description, :class_id])
     |> validate_required([:description])
   end
 end
