@@ -1,3 +1,4 @@
 1. multiselect hook searching not working. 
 2. JS.push makes lag in modal data fetching.
 3. flash should be for some seconds
+4. Results of previous years (complete system of comparison)

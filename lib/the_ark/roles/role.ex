@@ -15,7 +15,7 @@ defmodule TheArk.Roles.Role do
   @doc false
   def changeset(role, attrs) do
     role
-    |> cast(attrs, [:name, :contact_number, :role])
+    |> cast(attrs, [:name, :contact_number, :role, :organization_id])
     |> validate_required([:name, :contact_number, :role])
     |> validate_format(:contact_number, ~r/^03\d{9}$/,
       message: "must start with 03 and have exactly 11 numbers"

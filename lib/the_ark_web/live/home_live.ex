@@ -225,6 +225,24 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event("role_adding", %{"org_id" => org_id, "role" => role_params}, socket) do
+    params = Map.merge(role_params, %{"organization_id" => org_id})
+
+    case Roles.create_role(params) do
+      {:ok, role} ->
+        socket
+        |> put_flash(:info, "Role is created successfully!")
+        |> assign(organization: Organizations.get_organization_by_name("the_ark"))
+        |> assign(role_changeset: Roles.change_role(%Role{}))
+        |> noreply()
+      {:error, changeset} ->
+        socket
+        |> assign(role_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -240,7 +258,7 @@ defmodule TheArkWeb.Home do
         <a href="/time_table">Time Table</a>
         <a href="/papers">Papers</a>
         <.form class="relative" :let={f} for={} as={:seach_student} phx-change="seach_student">
-          <.input input_class="mt-0" field={f[:student_name]} type="text"/>
+          <.input input_class="mt-0" field={f[:student_name]} type="text" placeholder="Search Student"/>
           <div :if={@students_list} class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg">
             <%= for student <- @students_list do %>
               <div class="border-b py-1 px-3 hover:bg-blue-200 flex items-center">
@@ -329,14 +347,32 @@ defmodule TheArkWeb.Home do
         </div>
       </div>
 
-      <div class="my-5 rounded-lg border flex p-2 items-center gap-2 justify-center">
-        Edit statistics
-        <.button
-          icon="hero-pencil"
-          phx-click={show_modal("organization_editing")}
-          phx-value-class_id={}
-        />
+      <div class="my-5 rounded-lg border flex p-2 items-center gap-10 justify-center">
+        <div class="flex items-center gap-2">
+          Edit Statistics
+          <.button
+            icon="hero-pencil"
+            phx-click={show_modal("organization_editing")}
+          />
+        </div>
+        <div class="flex items-center gap-2">
+          Add Role
+          <.button
+            icon="hero-plus"
+            phx-click={show_modal("role_adding")}
+          />
+        </div>
       </div>
+
+      <.modal id={"role_adding"}>
+        <.form :let={f} for={@role_changeset} phx-submit="role_adding" phx-value-org_id={@organization.id}>
+          <.input field={f[:name]} type="text" label="Name" />
+          <.input field={f[:role]} type="text" label="Designation" />
+          <.input field={f[:contact_number]} type="text" label="Contact Number" />
+
+          <.button class="mt-5">Submit</.button>
+        </.form>
+      </.modal>
 
       <.modal id="organization_editing">
         <.form :let={f} for={@organization_changeset} phx-submit="update_organization">
