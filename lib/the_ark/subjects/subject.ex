@@ -12,6 +12,7 @@ defmodule TheArk.Subjects.Subject do
     belongs_to :class, TheArk.Classes.Class
 
     has_many :results, TheArk.Results.Result, on_delete: :delete_all
+    has_many :classresults, TheArk.Classresults.Classresult, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end

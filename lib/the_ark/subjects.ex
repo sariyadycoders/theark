@@ -8,7 +8,8 @@ defmodule TheArk.Subjects do
 
   alias TheArk.Subjects.Subject
   # alias TheArk.Results.Result
-  # alias TheArk.Results
+  alias TheArk.Results
+  alias TheArk.Classresults
 
   @doc """
   Returns the list of subjects.
@@ -65,7 +66,7 @@ defmodule TheArk.Subjects do
       from s in Subject,
         where:
           s.is_class_subject == true and s.class_id == ^class_id and s.subject_id == ^subject_id,
-        preload: :results
+        preload: :classresults
     )
   end
 
@@ -112,9 +113,28 @@ defmodule TheArk.Subjects do
     |> create_results()
   end
 
+  def create_class_subject(attrs \\ %{}) do
+    %Subject{}
+    |> Subject.changeset(attrs)
+    |> Repo.insert()
+    |> create_class_results()
+  end
+
+  def create_class_results({:ok, subject}) do
+    for name <- ["first_term", "second_term", "third_term"] do
+      Classresults.create_classresult(%{"name" => name, "subject_id" => subject.id})
+    end
+
+    {:ok, subject}
+  end
+
+  def create_class_results({:error, _} = error) do
+    error
+  end
+
   def create_results({:ok, subject}) do
     for name <- ["first_term", "second_term", "third_term"] do
-      TheArk.Results.create_result(%{"name" => name, "subject_id" => subject.id})
+      Results.create_result(%{"name" => name, "subject_id" => subject.id})
     end
 
     {:ok, subject}

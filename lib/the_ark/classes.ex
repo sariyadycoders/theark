@@ -20,7 +20,7 @@ defmodule TheArk.Classes do
           from(s in Subject,
             where: s.is_class_subject == true,
             order_by: s.subject_id,
-            preload: :results
+            preload: :classresults
           )
       ],
       students: [subjects: :results]
@@ -55,7 +55,7 @@ defmodule TheArk.Classes do
     selected_subjects = Enum.filter(subject_options, fn subject -> subject.selected end)
 
     for subject <- selected_subjects do
-      Subjects.create_subject(%{
+      Subjects.create_class_subject(%{
         "name" => subject.label,
         "subject_id" => subject.id,
         "class_id" => class.id,
@@ -115,7 +115,7 @@ defmodule TheArk.Classes do
     end
 
     for subject <- subjects_to_update do
-      Subjects.create_subject(%{
+      Subjects.create_class_subject(%{
         "name" => subject.label,
         "subject_id" => subject.id,
         "class_id" => class.id,

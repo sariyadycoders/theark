@@ -2,6 +2,7 @@ defmodule TheArkWeb.StudentLive do
   use TheArkWeb, :live_view
 
   alias TheArk.{Classes, Students}
+  alias TheArkWeb.StudentIndexLive
 
   @impl true
   def mount(%{"id" => id}, _, socket) do
@@ -48,7 +49,7 @@ defmodule TheArkWeb.StudentLive do
             <%= student.father_name %>
           </div>
           <div>
-            <%!-- <%= student.age %> --%>
+            <%= StudentIndexLive.calculate_age(student.date_of_birth) %>
           </div>
           <div class="col-span-3">
             <%= for subject <- student.subjects do %>

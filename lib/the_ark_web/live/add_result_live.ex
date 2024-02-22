@@ -6,7 +6,8 @@ defmodule TheArkWeb.AddResultLive do
     Subjects,
     Results,
     Results.Result,
-    Students
+    Students,
+    Classresults
   }
 
   @impl true
@@ -24,8 +25,7 @@ defmodule TheArkWeb.AddResultLive do
       |> Enum.at(0)
 
     subject_choosen = Subjects.get_subject_name_by_subject_id(class.id, subject_id)
-    term =
-      Enum.map(make_term_options(), fn {_key, value} -> value end) |> Enum.at(0)
+    term = Enum.map(make_term_options(), fn {_key, value} -> value end) |> Enum.at(0)
 
     socket
     |> assign(class: class)
@@ -74,7 +74,7 @@ defmodule TheArkWeb.AddResultLive do
     subject = Subjects.get_subject_by_subject_id(class_id, subject_id)
 
     result =
-      Enum.filter(subject.results, fn result ->
+      Enum.filter(subject.classresults, fn result ->
         result.name == term
       end)
       |> Enum.at(0)
@@ -87,7 +87,7 @@ defmodule TheArkWeb.AddResultLive do
       end
 
     if total_marks do
-      Results.update_result(result, %{"total_marks" => total_marks})
+      Classresults.update_classresult(result, %{"total_marks" => total_marks})
 
       socket
       |> assign(total_marks: total_marks)
@@ -177,7 +177,7 @@ defmodule TheArkWeb.AddResultLive do
       <%= if is_nil(@subject_choosen) do %>
         <div class="p-2 border rounded-lg mb-5 flex items-center">
           <b class="mr-2">Attention!</b>
-          Please choose subject and term to add total marks of subject. After adding total marks, you can add results for every student.
+          Please choose subject and term to add total marks of subject (Total marks can't be be ZERO). After adding total marks, you can add results for every student.
         </div>
       <% end %>
 
