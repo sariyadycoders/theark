@@ -102,8 +102,8 @@ defmodule TheArkWeb.ClassResultLive do
               <div>
                 <b>Absentee's:</b>
                 <span>
-                  <%= for name <- get_names_of_absentees(subject.classresults, result_name) do %>
-                    <%= name %>,
+                  <%= for {name, index} <- Enum.with_index(get_names_of_absentees(subject.classresults, result_name)) do %>
+                    <%= name %><%= if index == (Enum.count(get_names_of_absentees(subject.classresults, result_name)) - 1), do: "", else: "," %>
                   <% end %>
                 </span>
               </div>
