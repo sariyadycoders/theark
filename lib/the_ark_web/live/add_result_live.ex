@@ -33,15 +33,28 @@ defmodule TheArkWeb.AddResultLive do
 
     term = Enum.map(make_term_options(), fn {_key, value} -> value end) |> Enum.at(0)
 
+    total_marks =
+      if subject_choosen do
+        subject = Subjects.get_subject_by_subject_id(class.id, subject_id)
+
+        (Enum.filter(subject.classresults, fn result ->
+           result.name == term
+         end)
+         |> Enum.at(0)).total_marks
+      else
+        nil
+      end
+
     socket
     |> assign(class: class)
     |> assign(is_first_term_announced: class.is_first_term_announced)
     |> assign(subject_choosen: subject_choosen)
-    |> assign(total_marks: nil)
+    |> assign(total_marks: total_marks)
     |> assign(term: term)
     |> assign(subject_id: subject_id)
     |> assign(allowed_result_student_id: 0)
     |> assign(result_changeset: Results.change_result(%Result{}))
+    |> assign(total_marks_submitted: false)
     |> ok()
   end
 
@@ -52,15 +65,23 @@ defmodule TheArkWeb.AddResultLive do
           "class_id" => class_id,
           "choose_subject" => %{"subject_id" => subject_id, "term" => term}
         },
-        socket
+        %{assigns: %{term: term}} = socket
       ) do
     subject_choosen = Subjects.get_subject_name_by_subject_id(class_id, subject_id)
+    subject = Subjects.get_subject_by_subject_id(class_id, subject_id)
+
+    total_marks =
+      (Enum.filter(subject.classresults, fn result ->
+         result.name == term
+       end)
+       |> Enum.at(0)).total_marks
 
     socket
     |> assign(subject_choosen: subject_choosen)
     |> assign(subject_id: subject_id)
     |> assign(term: term)
-    |> assign(total_marks: nil)
+    |> assign(total_marks: total_marks)
+    |> assign(total_marks_submitted: false)
     |> noreply()
   end
 
@@ -97,6 +118,7 @@ defmodule TheArkWeb.AddResultLive do
 
       socket
       |> assign(total_marks: total_marks)
+      |> assign(total_marks_submitted: true)
       |> put_flash(:info, "Total marks added")
       |> noreply()
     else
@@ -181,13 +203,6 @@ defmodule TheArkWeb.AddResultLive do
       <h1 class="font-bold text-3xl mb-5">Add Result for Class <%= @class.name %></h1>
 
       <div :if={Enum.count(make_term_options()) != 0 && !is_nil(@subject_choosen)}>
-        <%= if is_nil(@subject_choosen) do %>
-          <div class="p-2 border rounded-lg mb-5 flex items-center">
-            <b class="mr-2">Attention!</b>
-            Please choose subject and term to add total marks of subject (Total marks can't be be ZERO). After adding total marks, you can add results for every student.
-          </div>
-        <% end %>
-
         <.form
           :let={s}
           for={%{}}
@@ -209,28 +224,27 @@ defmodule TheArkWeb.AddResultLive do
           <.input field={s[:term]} type="select" label="Choose Term" options={make_term_options()} />
         </.form>
 
-        <%= if !is_nil(@subject_choosen) do %>
-          <.form
-            :let={m}
-            for={%{}}
-            as={:insert_total_marks}
-            phx-value-class_id={@class.id}
-            phx-submit="insert_total_marks"
-          >
-            <.input
-              field={m[:total_marks]}
-              type="number"
-              label="Total Marks"
-              placeholder="should be greater than zero"
-            />
-            <.input field={m[:subject_id]} type="hidden" label="Choose Subject" value={@subject_id} />
-            <.input field={m[:term]} type="hidden" value={@term} />
+        <.form
+          :let={m}
+          for={%{}}
+          as={:insert_total_marks}
+          phx-value-class_id={@class.id}
+          phx-submit="insert_total_marks"
+        >
+          <.input
+            field={m[:total_marks]}
+            type="number"
+            label="Total Marks"
+            placeholder="should be greater than zero"
+            value={@total_marks}
+          />
+          <.input field={m[:subject_id]} type="hidden" label="Choose Subject" value={@subject_id} />
+          <.input field={m[:term]} type="hidden" value={@term} />
 
-            <.button class="mt-2">Submit total marks</.button>
-          </.form>
-        <% end %>
+          <.button class="mt-2">Submit total marks</.button>
+        </.form>
 
-        <%= if @subject_choosen && @term && !is_nil(@total_marks) do %>
+        <%= if @total_marks_submitted do %>
           <%= for student <- @class.students do %>
             <div class="relative p-5 border rounded-lg my-3">
               <%= if !(@allowed_result_student_id == student.id) do %>

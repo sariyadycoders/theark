@@ -37,7 +37,7 @@ defmodule TheArkWeb.ClassResultLive do
       </div>
 
       <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
-        <div class="grid grid-cols-10 items-center font-bold">
+        <div class="grid grid-cols-8 items-center font-bold">
           <div class="border flex flex-col py-2">
             <div class="col-span-2 text-center">S. Name</div>
             <div class="col-span-2 text-sm font-normal text-center text-white">random</div>
@@ -52,7 +52,7 @@ defmodule TheArkWeb.ClassResultLive do
           <% end %>
         </div>
         <%= for student <- @class.students do %>
-          <div class="grid grid-cols-10 items-center">
+          <div class="grid grid-cols-8 items-center">
             <div class="border pl-2 py-1">
               <%= student.name %>
             </div>
@@ -103,7 +103,12 @@ defmodule TheArkWeb.ClassResultLive do
                 <b>Absentee's:</b>
                 <span>
                   <%= for {name, index} <- Enum.with_index(get_names_of_absentees(subject.classresults, result_name)) do %>
-                    <%= name %><%= if index == (Enum.count(get_names_of_absentees(subject.classresults, result_name)) - 1), do: "", else: "," %>
+                    <%= name %><%= if index ==
+                                        Enum.count(
+                                          get_names_of_absentees(subject.classresults, result_name)
+                                        ) - 1,
+                                      do: "",
+                                      else: "," %>
                   <% end %>
                 </span>
               </div>

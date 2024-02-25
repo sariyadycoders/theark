@@ -3,14 +3,17 @@ defmodule TheArkWeb.StudentLive do
 
   alias TheArk.{Classes, Students}
   alias TheArkWeb.StudentIndexLive
+  alias TheArkWeb.AddResultLive
 
   @impl true
-  def mount(%{"id" => id}, _, socket) do
-    class = Classes.get_class!(String.to_integer(id))
+  def mount(%{"id" => class_id}, _, socket) do
+    class = Classes.get_class!(String.to_integer(class_id))
+    students =
+      get_students_and_calculate_results(class_id)
 
     socket
     |> assign(class: class)
-    |> assign(students: Students.get_students_by_class_id(id))
+    |> assign(students: students)
     |> ok
   end
 
@@ -37,7 +40,7 @@ defmodule TheArkWeb.StudentLive do
           Age
         </div>
         <div class="col-span-3">
-          Results
+          Recent Term Result
         </div>
       </div>
       <%= for student <- @students do %>
@@ -52,13 +55,33 @@ defmodule TheArkWeb.StudentLive do
             <%= StudentIndexLive.calculate_age(student.date_of_birth) %>
           </div>
           <div class="col-span-3">
-            <%= for subject <- student.subjects do %>
-              <%= subject.name %>
+            <%= for result <- student.results do %>
+              <span class="border-r px-2"><b><%= result.subject_name |> String.slice(0, 2) %></b>: <span><%= result.result %></span></span>
             <% end %>
           </div>
         </div>
       <% end %>
     </div>
     """
+  end
+
+  def get_students_and_calculate_results(class_id) do
+    students = Students.get_students_by_class_id(class_id)
+    term = Enum.map(AddResultLive.make_term_options(), fn {_key, value} -> value end) |> List.last()
+
+    Enum.map(students, fn student ->
+      results =
+        Enum.map(student.subjects, fn subject ->
+          result =
+            (Enum.filter(subject.results, fn result ->
+              result.name == term
+            end) |> Enum.at(0)).obtained_marks
+
+          %{subject_name: subject.name, id: subject.subject_id, result: result}
+        end)
+        |> Enum.sort(& &1.id >= &2.id)
+
+      Map.put(student, :results, results)
+    end)
   end
 end
