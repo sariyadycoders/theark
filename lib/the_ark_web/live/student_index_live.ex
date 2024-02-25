@@ -6,6 +6,8 @@ defmodule TheArkWeb.StudentIndexLive do
   @impl true
   def mount(_params, _session, socket) do
     socket
+    |> assign(active_students_count: Students.get_active_students_count())
+    |> assign(total_students_count: Students.get_students_count())
     |> assign(students: Students.list_students_for_index())
     |> ok
   end
@@ -21,7 +23,15 @@ defmodule TheArkWeb.StudentIndexLive do
   def render(assigns) do
     ~H"""
     <div>
-      <h1 class="font-bold text-3xl mb-5">The Ark Students</h1>
+      <div class="flex items-center gap-5">
+        <h1 class="font-bold text-3xl mb-5">The Ark Students</h1>
+        <div class="ml-auto">
+          Total Students Listed: <b><%= @total_students_count %></b>
+        </div>
+        <div>
+          Total Active Students: <b><%= @active_students_count %></b>
+        </div>
+      </div>
       <div class="grid grid-cols-6 items-center border-b-4 pb-2 font-bold text-lg mb-2">
         <div>
           Name
@@ -46,7 +56,7 @@ defmodule TheArkWeb.StudentIndexLive do
         <div
           phx-click="show_student"
           phx-value-student_id={student.id}
-          class="grid grid-cols-6 items-center border-b mb-2"
+          class="grid grid-cols-6 items-center border-b mb-2 cursor-pointer"
         >
           <div>
             <%= student.name %>
@@ -61,8 +71,8 @@ defmodule TheArkWeb.StudentIndexLive do
             <%= student.class.name %>
           </div>
           <div class="">
-            <%= student.whatsapp_number %>
-            <%= student.sim_number %>
+            <div><b>W: </b><%= student.whatsapp_number %></div>
+            <div><b>S: </b><%= student.sim_number %></div>
           </div>
           <div>
             <%= if !student.is_leaving, do: "Yes", else: "No" %>

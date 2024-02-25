@@ -44,6 +44,11 @@ defmodule TheArk.Classes do
     |> Repo.preload(:slos)
   end
 
+  def get_class_options() do
+    Repo.all(from c in Class, select: [c.name, c.id])
+    |> Enum.flat_map(fn [name, id] -> ["#{name}": id] end)
+  end
+
   def create_class(attrs \\ %{}, subject_options) do
     %Class{}
     |> Class.changeset(attrs)

@@ -1,5 +1,4 @@
 defmodule TheArkWeb.Home do
-  alias TheArk.Organizations.Organization
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
@@ -235,7 +234,7 @@ defmodule TheArkWeb.Home do
     params = Map.merge(role_params, %{"organization_id" => org_id})
 
     case Roles.create_role(params) do
-      {:ok, role} ->
+      {:ok, _role} ->
         socket
         |> put_flash(:info, "Role is created successfully!")
         |> assign(organization: Organizations.get_organization_by_name("the_ark"))
@@ -277,7 +276,7 @@ defmodule TheArkWeb.Home do
           >
             <%= for student <- @students_list do %>
               <div class="border-b py-1 px-3 hover:bg-blue-200 flex items-center">
-                <a href={"/students/#{student.id}"} class=""><%= student.name %></a>
+                <a href={"/students/#{student.id}"} class="w-full"><%= student.name %></a>
               </div>
             <% end %>
           </div>

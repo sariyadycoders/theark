@@ -2,12 +2,14 @@ defmodule TheArkWeb.StudentsShowLive do
   use TheArkWeb, :live_view
 
   alias TheArk.Students
+  alias TheArk.Classes
   alias TheArk.Students.Student
 
   @impl true
   def mount(%{"id" => student_id}, _, socket) do
     socket
     |> assign(student: Students.get_student!(String.to_integer(student_id)))
+    |> assign(class_options: Classes.get_class_options())
     |> assign(is_leaving_form_open: false)
     |> assign(surety_of_reactivation: false)
     |> assign(student_leaving_changeset: Students.change_student_leaving(%Student{}))
@@ -69,6 +71,19 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
+  def handle_event("student_transfer_submit",
+    %{"student_id" => student_id, "student_class" => %{"class_id" => class_id}}, socket) do
+
+    student = Students.get_student!(student_id)
+    {:ok, _student} = Students.update_student(student, %{"class_id" => class_id})
+
+    socket
+    |> assign(student: Students.get_student!(student_id))
+    |> put_flash(:info, "Student updated successfully!")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -101,14 +116,22 @@ defmodule TheArkWeb.StudentsShowLive do
           <% end %>
         <% end %>
       </div>
-      <.button
-        :if={@is_leaving_button}
-        phx-click="student_leaving_form"
-        phx-value-is_leaving={if !@student.is_leaving, do: "false", else: "true"}
-        class="mt-5"
-      >
-        <%= if !@student.is_leaving, do: "Is Leaving", else: "Re-activate" %>
-      </.button>
+      <div class="flex gap-3">
+        <.button
+          phx-click={show_modal("student_transfer")}
+          class="mt-5"
+        >
+          Transfer Student
+        </.button>
+        <.button
+          :if={@is_leaving_button}
+          phx-click="student_leaving_form"
+          phx-value-is_leaving={if !@student.is_leaving, do: "false", else: "true"}
+          class="mt-5"
+        >
+          <%= if !@student.is_leaving, do: "Is Leaving", else: "Re-activate" %>
+        </.button>
+      </div>
       <%= if @is_leaving_form_open do %>
         <div class="border p-5 rounded-lg mt-5">
           <.form
@@ -134,6 +157,24 @@ defmodule TheArkWeb.StudentsShowLive do
           <.button phx-click="reactivate_student" phx-value-student_id={@student.id}>Yes</.button>
         </div>
       <% end %>
+      <.modal id="student_transfer">
+        <.form
+          :let={s}
+          for={}
+          as={:student_class}
+          phx-submit="student_transfer_submit"
+          phx-value-student_id={@student.id}
+        >
+        <.input
+            field={s[:class_id]}
+            type="select"
+            label="Class of Enrollment"
+            options={@class_options}
+          />
+
+          <.button class="mt-5">Submit</.button>
+        </.form>
+      </.modal>
     </div>
     """
   end

@@ -63,6 +63,14 @@ defmodule TheArk.Students do
     Repo.all(from(s in Student, where: ilike(s.name, ^"%#{name}%")))
   end
 
+  def get_active_students_count() do
+    Repo.aggregate(from(s in Student, where: s.is_leaving == false), :count)
+  end
+
+  def get_students_count() do
+    Repo.aggregate(from(s in Student), :count)
+  end
+
   @doc """
   Creates a student.
 

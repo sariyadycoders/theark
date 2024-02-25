@@ -22,14 +22,14 @@ defmodule TheArkWeb.Router do
 
     get "/", PageController, :home
     live "/home", Home
-    live "/students", StudentIndexLive
-    live "/students/:id", StudentsShowLive
     live "/classes", ClassLive
     live "/classes/:id/results", ClassResultLive
     live "/classes/:id/results/:subject_name", ClassSubjectResultLive
     live "/classes/:id/students", StudentLive
     live "/classes/:id/add_result", AddResultLive
     live "/classes/:id/slos", SloLive
+    live "/students", StudentIndexLive
+    live "/students/:id", StudentsShowLive
     live "/teachers", TeacherLive
     live "/teachers/:id/result", TeacherResultLive
     live "/admissions", AdmissionLive
