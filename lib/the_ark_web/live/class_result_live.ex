@@ -11,7 +11,15 @@ defmodule TheArkWeb.ClassResultLive do
 
     socket
     |> assign(class: class)
+    |> assign(term_name: nil)
     |> ok()
+  end
+
+  @impl true
+  def handle_event("choose_term", %{"term_name" => term_name}, socket) do
+    socket
+    |> assign(term_name: term_name)
+    |> noreply()
   end
 
   @impl true
@@ -19,6 +27,44 @@ defmodule TheArkWeb.ClassResultLive do
     ~H"""
     <div>
       <h1 class="font-bold text-3xl mb-5">Results for Class <%= @class.name %></h1>
+
+      <div class="flex items-center gap-2 my-5">
+        <%= for term_name <- Classes.make_list_of_terms() do %>
+          <.button phx-click="choose_term" phx-value-term_name={term_name}>
+            See <%= term_name |> String.replace("_", " ") %> Result Sheet
+          </.button>
+        <% end %>
+      </div>
+
+      <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
+        <div class="grid grid-cols-10 items-center font-bold">
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">S. Name</div>
+            <div class="col-span-2 text-sm font-normal text-center text-white">random</div>
+          </div>
+          <%= for subject <- @class.subjects do %>
+            <div class="border flex flex-col py-2">
+              <div class="col-span-2 text-center"><%= subject.name %></div>
+              <div class="col-span-2 text-sm font-normal text-center">
+                <%= get_total_marks_of_term_from_results(subject.classresults, @term_name) %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        <%= for student <- @class.students do %>
+          <div class="grid grid-cols-10 items-center">
+            <div class="border pl-2 py-1">
+              <%= student.name %>
+            </div>
+            <%= for subject <- student.subjects do %>
+              <div class="flex border justify-center py-1">
+                <%= get_obtained_marks_of_term_from_results(subject.results, @term_name) %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
       <div class="grid grid-cols-6 items-center border-b-4 pb-2 font-bold text-md">
         <div>
           Subject
@@ -79,7 +125,15 @@ defmodule TheArkWeb.ClassResultLive do
   end
 
   def get_obtained_marks_of_term_from_results(results, term_name) do
-    (Enum.filter(results, fn result -> result.name == term_name end) |> Enum.at(0)).obtained_marks
+    o_marks =
+      (Enum.filter(results, fn result -> result.name == term_name end)
+       |> Enum.at(0)).obtained_marks
+
+    if o_marks do
+      o_marks
+    else
+      0
+    end
   end
 
   def get_total_marks_of_term_from_results(results, term_name) do
@@ -95,11 +149,14 @@ defmodule TheArkWeb.ClassResultLive do
 
   def get_percentage_of_marks(results, term_name) do
     if (Enum.filter(results, fn result -> result.name == term_name end)
-        |> Enum.at(0)).total_marks do
-      (Enum.filter(results, fn result -> result.name == term_name end)
-       |> Enum.at(0)).obtained_marks /
-        (Enum.filter(results, fn result -> result.name == term_name end)
-         |> Enum.at(0)).total_marks * 100
+        |> Enum.at(0)).total_marks &&
+         (Enum.filter(results, fn result -> result.name == term_name end)
+          |> Enum.at(0)).obtained_marks do
+      ((Enum.filter(results, fn result -> result.name == term_name end)
+        |> Enum.at(0)).obtained_marks /
+         (Enum.filter(results, fn result -> result.name == term_name end)
+          |> Enum.at(0)).total_marks * 100)
+      |> round()
     else
       0
     end

@@ -71,9 +71,11 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
-  def handle_event("student_transfer_submit",
-    %{"student_id" => student_id, "student_class" => %{"class_id" => class_id}}, socket) do
-
+  def handle_event(
+        "student_transfer_submit",
+        %{"student_id" => student_id, "student_class" => %{"class_id" => class_id}},
+        socket
+      ) do
     student = Students.get_student!(student_id)
     {:ok, _student} = Students.update_student(student, %{"class_id" => class_id})
 
@@ -117,10 +119,7 @@ defmodule TheArkWeb.StudentsShowLive do
         <% end %>
       </div>
       <div class="flex gap-3">
-        <.button
-          phx-click={show_modal("student_transfer")}
-          class="mt-5"
-        >
+        <.button phx-click={show_modal("student_transfer")} class="mt-5">
           Transfer Student
         </.button>
         <.button
@@ -165,7 +164,7 @@ defmodule TheArkWeb.StudentsShowLive do
           phx-submit="student_transfer_submit"
           phx-value-student_id={@student.id}
         >
-        <.input
+          <.input
             field={s[:class_id]}
             type="select"
             label="Class of Enrollment"

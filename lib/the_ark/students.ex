@@ -6,6 +6,7 @@ defmodule TheArk.Students do
   import Ecto.Query, warn: false
   alias TheArk.Repo
   alias TheArk.Subjects
+  alias TheArk.Subjects.Subject
 
   alias TheArk.Students.Student
 
@@ -47,7 +48,10 @@ defmodule TheArk.Students do
   """
   def get_student!(id) do
     Repo.get!(Student, id)
-    |> Repo.preload(:class, subjects: [:results])
+    |> Repo.preload([
+      [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)],
+      :class
+    ])
   end
 
   def get_student_only(id) do

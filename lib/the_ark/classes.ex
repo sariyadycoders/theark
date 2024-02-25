@@ -8,8 +8,16 @@ defmodule TheArk.Classes do
 
   def list_classes do
     Repo.all(from(c in Class, order_by: c.id))
-    |> Repo.preload([:students, [subjects: from(s in Subject, where: s.is_class_subject == true)]])
-    |> Repo.preload([:students, [subjects: :results]])
+    |> Repo.preload([
+      [
+        subjects:
+          from(s in Subject,
+            where: s.is_class_subject == true,
+            order_by: s.subject_id
+          )
+      ],
+      students: [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
+    ])
   end
 
   def get_class!(id) do
@@ -23,7 +31,7 @@ defmodule TheArk.Classes do
             preload: :classresults
           )
       ],
-      students: [subjects: :results]
+      students: [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
     ])
   end
 
