@@ -19,7 +19,7 @@ defmodule TheArk.Periods.Period do
   @doc false
   def changeset(period, attrs) do
     period
-    |> cast(attrs, [:period_number, :subject, :teacher_id, :class_id])
+    |> cast(attrs, [:period_number, :subject, :teacher_id, :start_time, :end_time, :duration, :is_custom_set, :class_id])
     |> validate_required([:period_number])
     |> unsafe_validate_unique([:teacher_id, :period_number], TheArk.Repo,
       message: "teacher is busy"

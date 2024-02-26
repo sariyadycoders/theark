@@ -2,6 +2,7 @@ defmodule TheArkWeb.TimeTableLive do
   use TheArkWeb, :live_view
 
   alias TheArk.Classes
+  alias TheArk.Periods
 
   @impl true
   def mount(_, _, socket) do
@@ -113,6 +114,21 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
+  def handle_event("insert_periods",
+    _unsigned_params,
+    %{assigns: %{periods: periods}} = socket) do
+
+    for id <- Classes.get_all_class_ids() do
+      for period <- periods do
+        Periods.create_period(Map.put(period, "class_id", id))
+      end
+    end
+
+    socket
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -150,6 +166,8 @@ defmodule TheArkWeb.TimeTableLive do
             </div>
           <% end %>
         </div>
+
+        <.button phx-click="insert_periods" class="mt-5">Finalize the Periods</.button>
       </div>
       <div class="border rounded-lg my-5 p-5">
         time table
