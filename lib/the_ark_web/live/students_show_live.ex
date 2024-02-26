@@ -1,6 +1,8 @@
 defmodule TheArkWeb.StudentsShowLive do
   use TheArkWeb, :live_view
 
+  import TheArkWeb.ClassResultLive, only: [get_total_marks_of_term_from_results: 2, get_obtained_marks_of_term_from_results: 2, get_percentage_of_marks: 2]
+
   alias TheArk.Students
   alias TheArk.Classes
   alias TheArk.Students.Student
@@ -14,6 +16,7 @@ defmodule TheArkWeb.StudentsShowLive do
     |> assign(surety_of_reactivation: false)
     |> assign(student_leaving_changeset: Students.change_student_leaving(%Student{}))
     |> assign(is_leaving_button: true)
+    |> assign(term_name: nil)
     |> ok
   end
 
@@ -86,6 +89,13 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
+  def handle_event("choose_term", %{"term_name" => term_name}, socket) do
+    socket
+    |> assign(term_name: term_name)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -93,6 +103,54 @@ defmodule TheArkWeb.StudentsShowLive do
         <h1 class="font-bold text-3xl"><%= @student.name %></h1>
         <div class="ml-5">S/O <%= @student.father_name %></div>
       </div>
+
+      <div class="flex items-center gap-2 my-5">
+        <%= for term_name <- Classes.make_list_of_terms() do %>
+          <.button phx-click="choose_term" phx-value-term_name={term_name}>
+            See <%= term_name |> String.replace("_", " ") %> Result Card
+          </.button>
+        <% end %>
+      </div>
+
+      <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
+        <div class="grid grid-cols-5 items-center font-bold">
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">Subject Name</div>
+          </div>
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">Total Marks</div>
+          </div>
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">Obtained Marks</div>
+          </div>
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">Percentage</div>
+          </div>
+          <div class="border flex flex-col py-2">
+            <div class="col-span-2 text-center">Status</div>
+          </div>
+        </div>
+        <%= for subject <- @student.subjects do %>
+          <div class="grid grid-cols-5 items-center">
+            <div class="border pl-2 py-1">
+              <%= subject.name %>
+            </div>
+            <div class="border pl-2 py-1 text-center">
+              <%= get_total_marks_of_term_from_results(subject.results, @term_name) %>
+            </div>
+            <div class="border pl-2 py-1 text-center">
+              <%= get_obtained_marks_of_term_from_results(subject.results, @term_name) %>
+            </div>
+            <div class="border pl-2 py-1 text-center">
+              <%= get_percentage_of_marks(subject.results, @term_name) %>
+            </div>
+            <div class="border pl-2 py-1 text-center">
+              <%= if get_percentage_of_marks(subject.results, @term_name) > 32, do: "Pass", else: "Fail" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
       <div class="grid grid-cols-2 p-5 border rounded-lg mt-5 gap-2">
         <div class="border p-2">
           <b class="capitalize"> Class:</b>

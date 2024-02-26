@@ -46,7 +46,7 @@ defmodule TheArkWeb.StudentLive do
       <%= for student <- @students do %>
         <div class="grid grid-cols-6 items-center pb-2">
           <div>
-            <%= student.name %>
+            <a href={"/students/#{student.id}"}><%= student.name %></a>
           </div>
           <div>
             <%= student.father_name %>

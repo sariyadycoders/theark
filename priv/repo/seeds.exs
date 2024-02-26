@@ -38,7 +38,7 @@ for name <- [
 end
 
 for name <- ["Amina", "Sania", "Malaika"] do
-  %Teacher{name: name}
+  %Teacher{name: name, registration_date: Date.utc_today()}
   |> Repo.insert!()
 end
 
