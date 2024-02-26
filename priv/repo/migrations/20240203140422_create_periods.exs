@@ -5,8 +5,12 @@ defmodule TheArk.Repo.Migrations.CreatePeriods do
     create table(:periods) do
       add :period_number, :integer
       add :subject, :string
+      add :start_time, :time
+      add :end_time, :time
+      add :duration, :integer
+      add :is_custom_set, :boolean
       add :class_id, references(:classes, on_delete: :delete_all)
-      add :teacher_id, references(:teachers)
+      add :teacher_id, references(:teachers, on_delete: :nothing)
 
       timestamps(type: :utc_datetime)
     end

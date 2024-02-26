@@ -5,6 +5,10 @@ defmodule TheArk.Periods.Period do
   schema "periods" do
     field :period_number, :integer
     field :subject, :string
+    field :start_time, :time
+    field :end_time, :time
+    field :duration, :integer
+    field :is_custom_set, :boolean
 
     belongs_to :teacher, TheArk.Teachers.Teacher
     belongs_to :class, TheArk.Classes.Class
