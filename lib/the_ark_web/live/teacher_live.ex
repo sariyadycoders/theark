@@ -29,13 +29,6 @@ defmodule TheArkWeb.TeacherLive do
   end
 
   @impl true
-  def handle_event("show_subject_and_result", %{"student_id" => id}, socket) do
-    socket
-    |> redirect(to: ~p"/students/#{id}")
-    |> noreply
-  end
-
-  @impl true
   def handle_event("edit_teacher_id", %{"teacher_id" => "0"}, socket) do
     socket
     |> assign(edit_teacher_id: 0)
@@ -87,8 +80,10 @@ defmodule TheArkWeb.TeacherLive do
   end
 
   @impl true
-  def handle_event("class_of_subject", %{"class_of_subject" => %{"class" => class_id}}, socket) do
-    teacher = Teachers.get_teacher!(socket.assigns.assign_subjects_to_teacher_id)
+  def handle_event("class_of_subject", %{"class_of_subject" => %{"class" => class_id}, "teacher_id" => teacher_id}, socket) do
+    IO.inspect "challll"
+
+    teacher = Teachers.get_teacher!(teacher_id)
 
     teacher_already_subjects_ids =
       Enum.map(teacher.subjects, fn subject -> subject.subject_id end)
@@ -164,16 +159,19 @@ defmodule TheArkWeb.TeacherLive do
           Name
         </div>
         <div>
-          Address
+          Education
         </div>
         <div>
-          Date of joining
+          Service
         </div>
         <div>
-          Actions
+          Contact
         </div>
-        <div class="col-span-2">
-          Subjects
+        <div class="">
+          Is Active?
+        </div>
+        <div class="">
+          actions
         </div>
       </div>
       <%= for teacher <- @teachers do %>
@@ -182,29 +180,36 @@ defmodule TheArkWeb.TeacherLive do
             <%= teacher.name %>
           </div>
           <div>
-            <%!-- <%= student.father_name %> --%> random Address
+            <%= teacher.education %>
           </div>
           <div>
-            <%= teacher.date_of_joining %>
+            <%= get_service(teacher.registration_date) %>
+          </div>
+          <div>
+            <div><b>W: </b><%= teacher.whatsapp_number %></div>
+            <div><b>S: </b><%= teacher.sim_number %></div>
+          </div>
+          <div>
+            <%= if teacher.is_leaving, do: "No", else: "Yes" %>
           </div>
           <div>
             <.button
-              class={"#{((@edit_teacher_id == teacher.id) or (@delete_teacher_id == teacher.id) or (@assign_subjects_to_teacher_id == teacher.id)) && "hidden"}"}
+              class={""}
               phx-click="edit_teacher_id"
               phx-value-teacher_id={teacher.id}
             >
               Edit
             </.button>
             <.button
-              class={"#{((@edit_teacher_id == teacher.id) or (@delete_teacher_id == teacher.id) or (@delete_teacher_id == teacher.id) or (@assign_subjects_to_teacher_id == teacher.id)) && "hidden"}"}
+              class={""}
               phx-click="delete_teacher_id"
               phx-value-teacher_id={teacher.id}
             >
               Delete
             </.button>
             <.button
-              class={"mt-1 #{((@edit_teacher_id == teacher.id) or (@delete_teacher_id == teacher.id) or (@delete_teacher_id == teacher.id) or (@assign_subjects_to_teacher_id == teacher.id)) && "hidden"}"}
-              phx-click="assign_subjects_to_teacher_id"
+              class={""}
+              phx-click={show_modal("assign_subjects_to_teacher_#{teacher.id}")}
               phx-value-teacher_id={teacher.id}
             >
               Assign Subjects
@@ -217,61 +222,49 @@ defmodule TheArkWeb.TeacherLive do
           </div>
         </div>
 
-        <%= if @assign_subjects_to_teacher_id == teacher.id do %>
-          <div class="relative border p-3 rounded-lg">
-            <div
-              phx-click="assign_subjects_to_teacher_id"
-              phx-value-teacher_id="0"
-              class="absolute top-2 right-2 cursor-pointer"
-            >
-              &#9746;
-            </div>
-            <div class="p-2 mt-2">
-              <h2 class="font-bold mb-2">
-                Choose class and assign subjects to Miss <%= teacher.name %>
-              </h2>
-              <div class="flex gap-2">
-                <.form :let={s} for={%{}} as={:class_of_subject} phx-change="class_of_subject">
-                  <.input
-                    field={s[:class]}
-                    type="select"
-                    label="Class"
-                    options={Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
-                  />
-                </.form>
-                <%= if @is_class_choosen do %>
-                  <div>
-                    <.form
-                      :let={f}
-                      for={%{}}
-                      as={:class_of_subject}
-                      phx-value-teacher_id={teacher.id}
-                      phx-submit="assign_subjects_to_teacher"
-                    >
-                      <MultiSelect.multi_select
-                        id="subjects"
-                        on_change={fn opts -> send(self(), {:updated_options, opts}) end}
-                        form={f}
-                        options={@subject_options}
-                        max_selected={7}
-                        placeholder="Select subjects..."
-                        title="Select Subjects"
-                      />
-
-                      <.button class="mt-5">Submit</.button>
-                    </.form>
-                  </div>
-                <% else %>
-                  <div class="flex items-end">
-                    <div class="border rounded-lg p-2 flex items-end">
-                      Please choose class to show its subjects.
-                    </div>
-                  </div>
-                <% end %>
+        <.modal id={"assign_subjects_to_teacher_#{teacher.id}"}>
+          <div class="p-2 mt-2">
+            <h2 class="font-bold mb-2">
+              Choose class and assign subjects to Miss <%= teacher.name %>
+            </h2>
+            <div class="flex gap-2">
+              <.form :let={s} for={%{}} as={:class_of_subject} phx-change="class_of_subject" phx-value-teacher_id={teacher.id}>
+                <.input
+                  field={s[:class]}
+                  type="select"
+                  label="Class"
+                  options={Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
+                />
+              </.form>
+              <div :if={!@is_class_choosen} class="flex items-end">
+                <div class="border rounded-lg p-2 flex items-end">
+                  Please choose class to show its subjects.
+                </div>
               </div>
             </div>
+            <div :if={@is_class_choosen}>
+              <.form
+                :let={f}
+                for={%{}}
+                as={:class_of_subject}
+                phx-value-teacher_id={teacher.id}
+                phx-submit="assign_subjects_to_teacher"
+              >
+                <MultiSelect.multi_select
+                  id={"subjects_#{teacher.id}"}
+                  on_change={fn opts -> send(self(), {:updated_options, opts}) end}
+                  form={f}
+                  options={@subject_options}
+                  max_selected={7}
+                  placeholder="Select subjects..."
+                  title="Select Subjects"
+                />
+
+                <.button class="mt-5">Submit</.button>
+              </.form>
+            </div>
           </div>
-        <% end %>
+        </.modal>
 
         <%= if @delete_teacher_id == teacher.id do %>
           <div class="relative border p-3 rounded-lg w-1/2">
@@ -333,5 +326,21 @@ defmodule TheArkWeb.TeacherLive do
       <% end %>
     </div>
     """
+  end
+
+  def get_service(registration_date) do
+    days_till_joining = Date.diff(Date.utc_today(), registration_date)
+
+    if days_till_joining > 365 do
+      number_of_years = (days_till_joining/365) |> floor()
+      extra_days = rem(days_till_joining, 365)
+      number_of_months = (extra_days/30) |> floor()
+
+      "#{number_of_years} Years #{if number_of_months > 0, do: "and #{number_of_months} Months"}"
+    else
+      number_of_months = (days_till_joining/30) |> floor()
+
+      "#{number_of_months} Months"
+    end
   end
 end
