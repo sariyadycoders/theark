@@ -61,6 +61,15 @@ defmodule TheArk.Subjects do
     )
   end
 
+  def get_subject_options_for_select(class_id) do
+    Repo.all(
+      from s in Subject,
+        where:
+          s.is_class_subject == true and s.class_id == ^class_id,
+        select: s.name
+    )
+  end
+
   def get_subject_by_subject_id(class_id, subject_id) do
     Repo.one(
       from s in Subject,

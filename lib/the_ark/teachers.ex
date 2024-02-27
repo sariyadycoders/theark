@@ -50,6 +50,10 @@ defmodule TheArk.Teachers do
     )
   end
 
+  def get_teacher_options() do
+    Repo.all(from(t in Teacher, select: t.name))
+  end
+
   @doc """
   Creates a teacher.
 

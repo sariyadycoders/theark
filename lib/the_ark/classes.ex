@@ -5,16 +5,19 @@ defmodule TheArk.Classes do
   alias TheArk.Classes.Class
   alias TheArk.Subjects
   alias TheArk.Subjects.Subject
+  alias TheArk.Periods.Period
 
   def list_classes do
     Repo.all(from(c in Class, order_by: c.id))
     |> Repo.preload([
       [
-        subjects:
-          from(s in Subject,
-            where: s.is_class_subject == true,
-            order_by: s.subject_id
-          )
+      :slos,
+      periods: from(p in Period, order_by: p.period_number),
+      subjects:
+        from(s in Subject,
+          where: s.is_class_subject == true,
+          order_by: s.subject_id
+        )
       ],
       students: [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
     ])
@@ -24,6 +27,8 @@ defmodule TheArk.Classes do
     Repo.get!(Class, id)
     |> Repo.preload([
       [
+        :slos,
+        periods: from(p in Period, order_by: p.period_number),
         subjects:
           from(s in Subject,
             where: s.is_class_subject == true,
