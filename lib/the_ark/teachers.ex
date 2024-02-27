@@ -51,7 +51,10 @@ defmodule TheArk.Teachers do
   end
 
   def get_teacher_options() do
-    Repo.all(from(t in Teacher, select: t.name))
+    Repo.all(from(t in Teacher, select: %{name: t.name, id: t.id}))
+    |> Enum.flat_map(fn teacher ->
+      ["#{teacher.name}": teacher.id]
+    end)
   end
 
   @doc """

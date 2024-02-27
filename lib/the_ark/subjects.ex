@@ -68,6 +68,9 @@ defmodule TheArk.Subjects do
           s.is_class_subject == true and s.class_id == ^class_id,
         select: s.name
     )
+    |> Enum.flat_map(fn subject ->
+      ["#{subject}": subject]
+    end)
   end
 
   def get_subject_by_subject_id(class_id, subject_id) do

@@ -204,8 +204,8 @@ defmodule TheArkWeb.TimeTableLive do
 
     socket
     |> assign(subject_options: subject_options)
-    |> assign(period_changeset: period_changeset)
     |> assign(allow_period_population: String.to_integer(period_id))
+    |> assign(period_changeset: period_changeset)
     |> noreply()
   end
 
@@ -219,6 +219,7 @@ defmodule TheArkWeb.TimeTableLive do
       {:ok, _period} ->
         socket
         |> put_flash(:info, "Period updated successfully!")
+        |> assign(period_changeset: Periods.change_period(%Period{}))
         |> assign(classes: Classes.list_classes())
         |> noreply()
       {:error, period_changeset} ->
@@ -226,7 +227,6 @@ defmodule TheArkWeb.TimeTableLive do
         |> assign(period_changeset: period_changeset)
         |> noreply()
     end
-
   end
 
   @impl true
@@ -294,13 +294,13 @@ defmodule TheArkWeb.TimeTableLive do
             <%= for period <- class.periods do %>
               <div phx-click={JS.push("allow_period_population") |> show_modal("edit_period_#{period.id}")} phx-value-class_id={class.id} phx-value-period_id={period.id} class="border p-1 text-center cursor-pointer">
                 <div class=""><%= if period.subject, do: period.subject, else: "N/A" %></div>
-                <div class=""><%= if period.teacher, do: period.teacher, else: "N/A" %></div>
+                <div class=""><%= if period.teacher, do: period.teacher.name, else: "N/A" %></div>
               </div>
               <.modal id={"edit_period_#{period.id}"}>
                 <%= if @allow_period_population == period.id do %>
                   <.form :let={f} for={@period_changeset} phx-value-period_id={period.id} phx-submit="period_population">
                     <.input field={f[:subject]} type="select" options={@subject_options} label="Subject"/>
-                    <.input field={f[:teacher]} type="select" options={@teacher_options} label="Teacher"/>
+                    <.input field={f[:teacher_id]} type="select" options={@teacher_options} label="Teacher"/>
 
                     <.button class="mt-5">Populate</.button>
                   </.form>
