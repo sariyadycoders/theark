@@ -34,7 +34,10 @@ defmodule TheArk.Teachers.Teacher do
       :sim_number,
       :whatsapp_number,
       :registration_number,
-      :registration_date
+      :registration_date,
+      :leaving_certificate_date,
+      :last_attendance_date,
+      :is_leaving
     ])
     |> validate_required([:name, :father_name, :address, :education, :cnic, :sim_number])
     |> validate_format(:cnic, ~r/^\d{5}-\d{7}-\d$/,

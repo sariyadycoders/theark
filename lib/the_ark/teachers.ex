@@ -8,6 +8,7 @@ defmodule TheArk.Teachers do
 
   alias TheArk.Teachers.Teacher
   alias TheArk.Subjects.Subject
+  alias TheArk.Periods.Period
 
   @doc """
   Returns the list of teachers.
@@ -22,6 +23,7 @@ defmodule TheArk.Teachers do
     Repo.all(from(t in Teacher, order_by: t.id))
     |> Repo.preload(subjects: from(s in Subject, where: s.is_class_subject == true))
     |> Repo.preload(subjects: :class)
+    |> Repo.preload(periods: from(p in Period, order_by: p.period_number, preload: :class))
   end
 
   @doc """
