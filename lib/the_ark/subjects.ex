@@ -64,8 +64,7 @@ defmodule TheArk.Subjects do
   def get_subject_options_for_select(class_id) do
     Repo.all(
       from s in Subject,
-        where:
-          s.is_class_subject == true and s.class_id == ^class_id,
+        where: s.is_class_subject == true and s.class_id == ^class_id,
         select: s.name
     )
     |> Enum.flat_map(fn subject ->

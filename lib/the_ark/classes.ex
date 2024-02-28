@@ -11,12 +11,12 @@ defmodule TheArk.Classes do
     Repo.all(from(c in Class, order_by: c.id))
     |> Repo.preload([
       [
-      periods: from(p in Period, order_by: p.period_number, preload: :teacher),
-      subjects:
-        from(s in Subject,
-          where: s.is_class_subject == true,
-          order_by: s.subject_id
-        )
+        periods: from(p in Period, order_by: p.period_number, preload: :teacher),
+        subjects:
+          from(s in Subject,
+            where: s.is_class_subject == true,
+            order_by: s.subject_id
+          )
       ],
       students: [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
     ])

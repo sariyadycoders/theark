@@ -25,6 +25,7 @@ defmodule TheArkWeb.TimeTableLive do
     |> assign(allow_period_population: 0)
     |> ok
   end
+
   @impl true
   def handle_event("allow_periods_creation", _unsigned_params, socket) do
     socket
@@ -33,10 +34,17 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
-  def handle_event("periods_creation",
-    %{"periods_creation" => %{"number" => number, "start_time" => start_time, "end_time" => end_time}},
-    socket) do
-
+  def handle_event(
+        "periods_creation",
+        %{
+          "periods_creation" => %{
+            "number" => number,
+            "start_time" => start_time,
+            "end_time" => end_time
+          }
+        },
+        socket
+      ) do
     periods = []
 
     {:ok, start_time} = Time.from_iso8601(start_time <> ":00")
@@ -47,7 +55,16 @@ defmodule TheArkWeb.TimeTableLive do
 
     periods =
       for number <- 1..String.to_integer(number) do
-        periods ++ [%{"period_number" => number, "start_time" => Time.add(start_time, (time_of_slot)*(number-1)), "end_time" => Time.add(Time.add(start_time, (time_of_slot)*(number-1)), time_of_slot), "is_custom_set" => false}]
+        periods ++
+          [
+            %{
+              "period_number" => number,
+              "start_time" => Time.add(start_time, time_of_slot * (number - 1)),
+              "end_time" =>
+                Time.add(Time.add(start_time, time_of_slot * (number - 1)), time_of_slot),
+              "is_custom_set" => false
+            }
+          ]
       end
 
     socket
@@ -58,12 +75,13 @@ defmodule TheArkWeb.TimeTableLive do
     |> noreply()
   end
 
-
   @impl true
-  def handle_event("edit_period_duration",
-    %{"period_duration" => %{"duration" => duration}, "period_number" => period_number},
-    %{assigns: %{periods: periods, time_difference: time_difference, start_time: start_time}} = socket) do
-
+  def handle_event(
+        "edit_period_duration",
+        %{"period_duration" => %{"duration" => duration}, "period_number" => period_number},
+        %{assigns: %{periods: periods, time_difference: time_difference, start_time: start_time}} =
+          socket
+      ) do
     periods =
       Enum.map(periods, fn period ->
         if Map.get(period, "period_number") == String.to_integer(period_number) do
@@ -77,7 +95,7 @@ defmodule TheArkWeb.TimeTableLive do
     duration_to_be_subtracted =
       Enum.reduce(periods, 0, fn period, acc ->
         if Map.get(period, "is_custom_set") do
-          acc + (Map.get(period, "duration")*60)
+          acc + Map.get(period, "duration") * 60
         else
           acc
         end
@@ -89,24 +107,30 @@ defmodule TheArkWeb.TimeTableLive do
       end)
       |> Enum.count()
 
-    remaining_time =
-      time_difference - duration_to_be_subtracted
+    remaining_time = time_difference - duration_to_be_subtracted
 
-    new_slot_time =
-      (remaining_time / non_custom_periods_count) |> round()
+    new_slot_time = (remaining_time / non_custom_periods_count) |> round()
 
-    accumulator =
-      %{"start_time" => start_time}
+    accumulator = %{"start_time" => start_time}
 
     periods =
       Enum.scan(periods, accumulator, fn period, acc ->
         if Map.get(period, "period_number") == 1 do
           period = Map.put(period, "start_time", Map.get(acc, "start_time"))
+
           if Map.get(period, "period_number") == String.to_integer(period_number) do
-            Map.put(period, "end_time", Time.add(Map.get(acc, "start_time"), String.to_integer(duration)*60))
+            Map.put(
+              period,
+              "end_time",
+              Time.add(Map.get(acc, "start_time"), String.to_integer(duration) * 60)
+            )
           else
             if Map.get(period, "is_custom_set") do
-              Map.put(period, "end_time", Time.add(Map.get(acc, "start_time"), Map.get(period, "duration")*60))
+              Map.put(
+                period,
+                "end_time",
+                Time.add(Map.get(acc, "start_time"), Map.get(period, "duration") * 60)
+              )
             else
               Map.put(period, "end_time", Time.add(Map.get(acc, "start_time"), new_slot_time))
             end
@@ -114,7 +138,10 @@ defmodule TheArkWeb.TimeTableLive do
         else
           if Map.get(period, "is_custom_set") do
             Map.put(period, "start_time", Map.get(acc, "end_time"))
-            |> Map.put("end_time", Time.add(Map.get(acc, "end_time"), Map.get(period, "duration")*60))
+            |> Map.put(
+              "end_time",
+              Time.add(Map.get(acc, "end_time"), Map.get(period, "duration") * 60)
+            )
           else
             Map.put(period, "start_time", Map.get(acc, "end_time"))
             |> Map.put("end_time", Time.add(Map.get(acc, "end_time"), new_slot_time))
@@ -128,10 +155,11 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
-  def handle_event("insert_periods",
-    _unsigned_params,
-    %{assigns: %{periods: periods}} = socket) do
-
+  def handle_event(
+        "insert_periods",
+        _unsigned_params,
+        %{assigns: %{periods: periods}} = socket
+      ) do
     {_, is_nil} = Periods.delete_all_periods()
 
     if !is_nil do
@@ -155,19 +183,32 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
-  def handle_event("edit_old_periods",
-    _unsigned_params,
-    %{assigns: %{periods: periods, class: class}} = socket) do
-
+  def handle_event(
+        "edit_old_periods",
+        _unsigned_params,
+        %{assigns: %{periods: periods, class: class}} = socket
+      ) do
     new_period_numbers = Enum.map(periods, fn period -> Map.get(period, "period_number") end)
     old_period_numbers = Enum.map(class.periods, fn period -> period.period_number end)
 
-    period_numbers_to_be_deleted = Enum.filter(old_period_numbers, fn number -> number not in new_period_numbers end)
-    period_numbers_to_be_inserted = Enum.filter(new_period_numbers, fn number -> number not in old_period_numbers end)
-    periods_to_be_inserted = Enum.filter(periods, fn period -> Map.get(period, "period_number") in period_numbers_to_be_inserted end)
-    period_numbers_to_be_updated = Enum.filter(new_period_numbers, fn number -> number in old_period_numbers end)
-    periods_to_be_updated = Enum.filter(periods, fn period -> Map.get(period, "period_number") in period_numbers_to_be_updated end)
+    period_numbers_to_be_deleted =
+      Enum.filter(old_period_numbers, fn number -> number not in new_period_numbers end)
 
+    period_numbers_to_be_inserted =
+      Enum.filter(new_period_numbers, fn number -> number not in old_period_numbers end)
+
+    periods_to_be_inserted =
+      Enum.filter(periods, fn period ->
+        Map.get(period, "period_number") in period_numbers_to_be_inserted
+      end)
+
+    period_numbers_to_be_updated =
+      Enum.filter(new_period_numbers, fn number -> number in old_period_numbers end)
+
+    periods_to_be_updated =
+      Enum.filter(periods, fn period ->
+        Map.get(period, "period_number") in period_numbers_to_be_updated
+      end)
 
     Periods.delete_periods_with_period_numbers(period_numbers_to_be_deleted)
 
@@ -179,6 +220,7 @@ defmodule TheArkWeb.TimeTableLive do
 
     for period <- periods_to_be_updated do
       old_periods = Periods.get_periods_by_number(Map.get(period, "period_number"))
+
       for old_period <- old_periods do
         Periods.update_period(old_period, period)
       end
@@ -197,7 +239,11 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
-  def handle_event("allow_period_population", %{"period_id" => period_id, "class_id" => class_id}, socket) do
+  def handle_event(
+        "allow_period_population",
+        %{"period_id" => period_id, "class_id" => class_id},
+        socket
+      ) do
     subject_options = Subjects.get_subject_options_for_select(String.to_integer(class_id))
     period = Periods.get_period!(period_id)
     period_changeset = Periods.change_period(period)
@@ -210,18 +256,21 @@ defmodule TheArkWeb.TimeTableLive do
   end
 
   @impl true
-  def handle_event("period_population",
-    %{"period_id" => period_id, "period" => params}, socket) do
-
+  def handle_event(
+        "period_population",
+        %{"period_id" => period_id, "class_id" => class_id, "period" => params},
+        socket
+      ) do
     period = Periods.get_period!(period_id)
 
-    case Periods.update_period(period, params) do
+    case Periods.update_period_on_population(period, params, String.to_integer(class_id)) do
       {:ok, _period} ->
         socket
         |> put_flash(:info, "Period updated successfully!")
         |> assign(period_changeset: Periods.change_period(%Period{}))
         |> assign(classes: Classes.list_classes())
         |> noreply()
+
       {:error, period_changeset} ->
         socket
         |> assign(period_changeset: period_changeset)
@@ -239,9 +288,9 @@ defmodule TheArkWeb.TimeTableLive do
       </div>
       <div :if={@allow_periods_creation} class="my-5 border rounded-lg p-5">
         <.form :let={f} for={} as={:periods_creation} phx-submit="periods_creation">
-          <.input field={f[:number]} type="number" label="How many periods, you want to create?"/>
-          <.input field={f[:start_time]} type="time" label="Opening Time of School"/>
-          <.input field={f[:end_time]} type="time" label="Closing Time of School"/>
+          <.input field={f[:number]} type="number" label="How many periods, you want to create?" />
+          <.input field={f[:start_time]} type="time" label="Opening Time of School" />
+          <.input field={f[:end_time]} type="time" label="Closing Time of School" />
 
           <.button class="mt-5">Create Periods</.button>
         </.form>
@@ -258,8 +307,14 @@ defmodule TheArkWeb.TimeTableLive do
               />
 
               <.modal id={"edit_period_#{Map.get(period, "period_number")}"}>
-                <.form :let={f} for={} as={:period_duration} phx-value-period_number={Map.get(period, "period_number")} phx-submit="edit_period_duration">
-                  <.input field={f[:duration]} type="number" min="10" label="Duration"/>
+                <.form
+                  :let={f}
+                  for={}
+                  as={:period_duration}
+                  phx-value-period_number={Map.get(period, "period_number")}
+                  phx-submit="edit_period_duration"
+                >
+                  <.input field={f[:duration]} type="number" min="10" label="Duration" />
 
                   <.button class="mt-5">Add Duration</.button>
                 </.form>
@@ -281,7 +336,9 @@ defmodule TheArkWeb.TimeTableLive do
           <%= for period <- @class.periods do %>
             <div class="border p-1 text-center">
               <div class=""><%= period.period_number %></div>
-              <div class="text-sm "><%= make_time_string(period.start_time) %> to <%= make_time_string(period.end_time) %></div>
+              <div class="text-sm ">
+                <%= make_time_string(period.start_time) %> to <%= make_time_string(period.end_time) %>
+              </div>
             </div>
           <% end %>
         </div>
@@ -292,15 +349,38 @@ defmodule TheArkWeb.TimeTableLive do
               <div class="text-sm"><%= class.incharge %></div>
             </div>
             <%= for period <- class.periods do %>
-              <div phx-click={JS.push("allow_period_population") |> show_modal("edit_period_#{period.id}")} phx-value-class_id={class.id} phx-value-period_id={period.id} class="border p-1 text-center cursor-pointer">
+              <div
+                phx-click={
+                  JS.push("allow_period_population") |> show_modal("edit_period_#{period.id}")
+                }
+                phx-value-class_id={class.id}
+                phx-value-period_id={period.id}
+                class="border p-1 text-center cursor-pointer"
+              >
                 <div class=""><%= if period.subject, do: period.subject, else: "N/A" %></div>
                 <div class=""><%= if period.teacher, do: period.teacher.name, else: "N/A" %></div>
               </div>
               <.modal id={"edit_period_#{period.id}"}>
                 <%= if @allow_period_population == period.id do %>
-                  <.form :let={f} for={@period_changeset} phx-value-period_id={period.id} phx-submit="period_population">
-                    <.input field={f[:subject]} type="select" options={@subject_options} label="Subject"/>
-                    <.input field={f[:teacher_id]} type="select" options={@teacher_options} label="Teacher"/>
+                  <.form
+                    :let={f}
+                    for={@period_changeset}
+                    phx-value-class_id={class.id}
+                    phx-value-period_id={period.id}
+                    phx-submit="period_population"
+                  >
+                    <.input
+                      field={f[:subject]}
+                      type="select"
+                      options={@subject_options}
+                      label="Subject"
+                    />
+                    <.input
+                      field={f[:teacher_id]}
+                      type="select"
+                      options={@teacher_options}
+                      label="Teacher"
+                    />
 
                     <.button class="mt-5">Populate</.button>
                   </.form>
@@ -308,8 +388,6 @@ defmodule TheArkWeb.TimeTableLive do
               </.modal>
             <% end %>
           </div>
-
-
         <% end %>
       </div>
     </div>

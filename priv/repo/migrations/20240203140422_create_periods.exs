@@ -19,9 +19,7 @@ defmodule TheArk.Repo.Migrations.CreatePeriods do
              name: "unique_number_teacher_index"
            )
 
-    create unique_index(:periods, [:subject, :class_id],
-              name: "unique_class_subject_index"
-            )
+    create unique_index(:periods, [:subject, :class_id], name: "unique_class_subject_index")
 
     create unique_index(:periods, [:period_number, :class_id], name: "unique_number_class_index")
   end

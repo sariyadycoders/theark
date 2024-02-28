@@ -8,8 +8,7 @@ defmodule TheArkWeb.StudentLive do
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     class = Classes.get_class!(String.to_integer(class_id))
-    students =
-      get_students_and_calculate_results(class_id)
+    students = get_students_and_calculate_results(class_id)
 
     socket
     |> assign(class: class)
@@ -56,7 +55,10 @@ defmodule TheArkWeb.StudentLive do
           </div>
           <div class="col-span-3">
             <%= for result <- student.results do %>
-              <span class="border-r px-2"><b><%= result.subject_name |> String.slice(0, 2) %></b>: <span><%= result.result %></span></span>
+              <span class="border-r px-2">
+                <b><%= result.subject_name |> String.slice(0, 2) %></b>:
+                <span><%= result.result %></span>
+              </span>
             <% end %>
           </div>
         </div>
@@ -67,19 +69,22 @@ defmodule TheArkWeb.StudentLive do
 
   def get_students_and_calculate_results(class_id) do
     students = Students.get_students_by_class_id(class_id)
-    term = Enum.map(AddResultLive.make_term_options(), fn {_key, value} -> value end) |> List.last()
+
+    term =
+      Enum.map(AddResultLive.make_term_options(), fn {_key, value} -> value end) |> List.last()
 
     Enum.map(students, fn student ->
       results =
         Enum.map(student.subjects, fn subject ->
           result =
             (Enum.filter(subject.results, fn result ->
-              result.name == term
-            end) |> Enum.at(0)).obtained_marks
+               result.name == term
+             end)
+             |> Enum.at(0)).obtained_marks
 
           %{subject_name: subject.name, id: subject.subject_id, result: result}
         end)
-        |> Enum.sort(& &1.id >= &2.id)
+        |> Enum.sort(&(&1.id >= &2.id))
 
       Map.put(student, :results, results)
     end)

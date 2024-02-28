@@ -1,7 +1,12 @@
 defmodule TheArkWeb.StudentsShowLive do
   use TheArkWeb, :live_view
 
-  import TheArkWeb.ClassResultLive, only: [get_total_marks_of_term_from_results: 2, get_obtained_marks_of_term_from_results: 2, get_percentage_of_marks: 2]
+  import TheArkWeb.ClassResultLive,
+    only: [
+      get_total_marks_of_term_from_results: 2,
+      get_obtained_marks_of_term_from_results: 2,
+      get_percentage_of_marks: 2
+    ]
 
   alias TheArk.Students
   alias TheArk.Classes
@@ -145,7 +150,9 @@ defmodule TheArkWeb.StudentsShowLive do
               <%= get_percentage_of_marks(subject.results, @term_name) %>
             </div>
             <div class="border pl-2 py-1 text-center">
-              <%= if get_percentage_of_marks(subject.results, @term_name) > 32, do: "Pass", else: "Fail" %>
+              <%= if get_percentage_of_marks(subject.results, @term_name) > 32,
+                do: "Pass",
+                else: "Fail" %>
             </div>
           </div>
         <% end %>

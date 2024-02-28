@@ -2,7 +2,7 @@ defmodule TheArkWeb.TeacherLive do
   use TheArkWeb, :live_view
 
   alias TheArk.{
-    Teachers,
+    Teachers
   }
 
   @impl true
@@ -11,7 +11,6 @@ defmodule TheArkWeb.TeacherLive do
     |> assign(teachers: Teachers.list_teachers())
     |> ok
   end
-
 
   @impl true
   def render(assigns) do
@@ -40,7 +39,12 @@ defmodule TheArkWeb.TeacherLive do
           <div class="">
             <div class="flex items-center">
               <a href={"teachers/#{teacher.id}"}><%= teacher.name %></a>
-              <span :if={teacher.is_leaving} class="ml-2 text-xs p-0.5 px-1 border bg-red-200 rounded-lg">non-active</span>
+              <span
+                :if={teacher.is_leaving}
+                class="ml-2 text-xs p-0.5 px-1 border bg-red-200 rounded-lg"
+              >
+                non-active
+              </span>
             </div>
           </div>
           <div>
@@ -55,7 +59,9 @@ defmodule TheArkWeb.TeacherLive do
           </div>
           <div class="col-span-3 flex flex-wrap gap-2">
             <%= for period <- teacher.periods do %>
-              <div><b><%= period.period_number %></b>) <%= period.class.name %>: <%= period.subject %></div>
+              <div>
+                <b><%= period.period_number %></b>) <%= period.class.name %>: <%= period.subject %>
+              </div>
             <% end %>
           </div>
         </div>
@@ -68,13 +74,13 @@ defmodule TheArkWeb.TeacherLive do
     days_till_joining = Date.diff(Date.utc_today(), registration_date)
 
     if days_till_joining > 365 do
-      number_of_years = (days_till_joining/365) |> floor()
+      number_of_years = (days_till_joining / 365) |> floor()
       extra_days = rem(days_till_joining, 365)
-      number_of_months = (extra_days/30) |> floor()
+      number_of_months = (extra_days / 30) |> floor()
 
       "#{number_of_years} Years #{if number_of_months > 0, do: "and #{number_of_months} Months"}"
     else
-      number_of_months = (days_till_joining/30) |> floor()
+      number_of_months = (days_till_joining / 30) |> floor()
 
       "#{number_of_months} Months"
     end
