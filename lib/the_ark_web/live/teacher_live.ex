@@ -3,27 +3,13 @@ defmodule TheArkWeb.TeacherLive do
 
   alias TheArk.{
     Teachers,
-    Subjects,
-    Classes
   }
 
   @impl true
   def mount(_, _, socket) do
     socket
     |> assign(teachers: Teachers.list_teachers())
-    |> assign(classes: Classes.list_classes())
-    |> assign(edit_teacher_id: 0)
-    |> assign(assign_subjects_to_teacher_id: 0)
-    |> assign(delete_teacher_id: 0)
-    |> assign(is_class_choosen: false)
     |> ok
-  end
-
-  @impl true
-  def handle_info({:updated_options, opts}, socket) do
-    socket
-    |> assign(subject_options: opts)
-    |> noreply
   end
 
 
@@ -67,13 +53,12 @@ defmodule TheArkWeb.TeacherLive do
             <div><b>W: </b><%= teacher.whatsapp_number %></div>
             <div><b>S: </b><%= teacher.sim_number %></div>
           </div>
-          <div class="col-span-3 grid grid-cols-3">
+          <div class="col-span-3 flex flex-wrap gap-2">
             <%= for period <- teacher.periods do %>
-              <div><%= period.period_number %>) <%= period.class.name %>: <%= period.subject %></div>
+              <div><b><%= period.period_number %></b>) <%= period.class.name %>: <%= period.subject %></div>
             <% end %>
           </div>
         </div>
-
       <% end %>
     </div>
     """

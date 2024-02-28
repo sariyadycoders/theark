@@ -20,7 +20,7 @@ defmodule TheArk.Teachers do
 
   """
   def list_teachers do
-    Repo.all(from(t in Teacher, order_by: t.id))
+    Repo.all(from(t in Teacher, order_by: t.is_leaving, order_by: t.id))
     |> Repo.preload(subjects: from(s in Subject, where: s.is_class_subject == true))
     |> Repo.preload(subjects: :class)
     |> Repo.preload(periods: from(p in Period, order_by: p.period_number, preload: :class))

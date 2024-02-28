@@ -61,7 +61,7 @@ defmodule TheArkWeb.TeacherShowLive do
 
   @impl true
   def handle_event("re_avtive_teacher", _, %{assigns: %{teacher: teacher}} = socket) do
-    {:ok, teacher} = Teachers.update_teacher(teacher, %{"is_leaving" => nil, "leaving_certificate_date" => nil, "last_attendance_date" => nil})
+    {:ok, teacher} = Teachers.update_teacher(teacher, %{"is_leaving" => false, "leaving_certificate_date" => nil, "last_attendance_date" => nil})
 
     socket
     |> assign(teacher: teacher)
