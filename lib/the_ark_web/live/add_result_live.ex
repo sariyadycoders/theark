@@ -186,6 +186,7 @@ defmodule TheArkWeb.AddResultLive do
       {:ok, _result} ->
         socket
         |> put_flash(:info, "result added")
+        |> assign(allowed_result_student_id: 0)
         |> noreply()
 
       {:error, changeset} ->

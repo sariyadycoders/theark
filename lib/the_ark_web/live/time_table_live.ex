@@ -303,10 +303,10 @@ defmodule TheArkWeb.TimeTableLive do
 
               <.button
                 icon="hero-pencil"
-                phx-click={show_modal("edit_period_#{Map.get(period, "period_number")}")}
+                phx-click={show_modal("edit_temp_period_#{Map.get(period, "period_number")}")}
               />
 
-              <.modal id={"edit_period_#{Map.get(period, "period_number")}"}>
+              <.modal id={"edit_temp_period_#{Map.get(period, "period_number")}"}>
                 <.form
                   :let={f}
                   for={}

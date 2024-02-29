@@ -2,3 +2,4 @@
 2. JS.push makes lag in modal data fetching.
 3. flash should be for some seconds
 4. Results of previous years (complete system of comparison)
+5. show indication for result added or not (on add result page)

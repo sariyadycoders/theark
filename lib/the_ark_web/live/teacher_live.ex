@@ -31,7 +31,7 @@ defmodule TheArkWeb.TeacherLive do
           Contact
         </div>
         <div class="col-span-3">
-          Subjects
+          Time Table
         </div>
       </div>
       <%= for teacher <- @teachers do %>
@@ -57,10 +57,12 @@ defmodule TheArkWeb.TeacherLive do
             <div><b>W: </b><%= teacher.whatsapp_number %></div>
             <div><b>S: </b><%= teacher.sim_number %></div>
           </div>
-          <div class="col-span-3 flex flex-wrap gap-2">
+          <div class="col-span-3 flex flex-wrap">
             <%= for period <- teacher.periods do %>
-              <div>
-                <b><%= period.period_number %></b>) <%= period.class.name %>: <%= period.subject %>
+              <div class="border flex flex-col items-center justify-center px-2 py-1 w-28">
+                <div class="font-bold"><%= period.period_number %> </div>
+                <div><%= period.class.name %> </div>
+                <div><%= period.subject %> </div>
               </div>
             <% end %>
           </div>
