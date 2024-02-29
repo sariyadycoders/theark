@@ -36,7 +36,10 @@ defmodule TheArkWeb.TeacherResultLive do
       <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
         <%= for class <- @classes do %>
           <div class="my-5 border rounded-lg p-5">
-            <div class="grid grid-cols-6">
+            <div class="grid grid-cols-4">
+              <div class="border col-span-4 text-center">
+                <%= class.name %>
+              </div>
               <div class="flex items-center text-center border">
                 -
               </div>
@@ -47,7 +50,7 @@ defmodule TheArkWeb.TeacherResultLive do
               <% end %>
             </div>
             <%= for subject <- class.subjects do %>
-              <div class="grid grid-cols-6">
+              <div class="grid grid-cols-4">
                 <div class="flex items-center text-center border">
                   <%= subject.name %>
                   <%= get_total_marks_of_term_from_results(subject.classresults, @term_name) %>

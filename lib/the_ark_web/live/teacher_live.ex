@@ -13,6 +13,13 @@ defmodule TheArkWeb.TeacherLive do
   end
 
   @impl true
+  def handle_event("go_to_teacher_result", %{"teacher_id" => teacher_id}, socket) do
+    socket
+    |> redirect(to: "/teachers/#{String.to_integer(teacher_id)}/result")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -65,6 +72,9 @@ defmodule TheArkWeb.TeacherLive do
                 <div><%= period.subject %></div>
               </div>
             <% end %>
+              <div class="flex ml-2 items-center">
+                <.button phx-value-teacher_id={teacher.id} phx-click="go_to_teacher_result">See Results</.button>
+              </div>
           </div>
         </div>
       <% end %>
