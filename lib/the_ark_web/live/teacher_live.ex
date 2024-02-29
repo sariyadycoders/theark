@@ -60,9 +60,9 @@ defmodule TheArkWeb.TeacherLive do
           <div class="col-span-3 flex flex-wrap">
             <%= for period <- teacher.periods do %>
               <div class="border flex flex-col items-center justify-center px-2 py-1 w-28">
-                <div class="font-bold"><%= period.period_number %> </div>
-                <div><%= period.class.name %> </div>
-                <div><%= period.subject %> </div>
+                <div class="font-bold"><%= period.period_number %></div>
+                <div><%= period.class.name %></div>
+                <div><%= period.subject %></div>
               </div>
             <% end %>
           </div>

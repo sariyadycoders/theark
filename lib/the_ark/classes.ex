@@ -49,7 +49,14 @@ defmodule TheArk.Classes do
             preload: :classresults
           )
       ],
-      students: [subjects: from(s in Subject, where: s.is_class_subject == false and s.teacher_id == ^teacher_id, order_by: s.subject_id, preload: :results)]
+      students: [
+        subjects:
+          from(s in Subject,
+            where: s.is_class_subject == false and s.teacher_id == ^teacher_id,
+            order_by: s.subject_id,
+            preload: :results
+          )
+      ]
     ])
   end
 

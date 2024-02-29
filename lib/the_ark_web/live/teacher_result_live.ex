@@ -7,7 +7,6 @@ defmodule TheArkWeb.TeacherResultLive do
 
   @impl true
   def mount(%{"id" => teacher_id}, _session, socket) do
-
     socket
     |> assign_related_classes(teacher_id)
     |> assign(term_name: nil)
@@ -25,7 +24,7 @@ defmodule TheArkWeb.TeacherResultLive do
   def render(assigns) do
     ~H"""
     <div>
-      <h1 class="font-bold text-3xl mb-5">Results for  <%= @teacher_name %></h1>
+      <h1 class="font-bold text-3xl mb-5">Results for <%= @teacher_name %></h1>
       <div class="flex items-center gap-2 my-5">
         <%= for term_name <- Classes.make_list_of_terms() do %>
           <.button phx-click="choose_term" phx-value-term_name={term_name}>
@@ -55,7 +54,11 @@ defmodule TheArkWeb.TeacherResultLive do
                 </div>
                 <%= for student <- class.students do %>
                   <div class="flex items-center text-center border">
-                    <%= get_obtained_marks_of_term_from_subjects(student.subjects, subject.name, @term_name) %>
+                    <%= get_obtained_marks_of_term_from_subjects(
+                      student.subjects,
+                      subject.name,
+                      @term_name
+                    ) %>
                   </div>
                 <% end %>
               </div>
@@ -86,48 +89,47 @@ defmodule TheArkWeb.TeacherResultLive do
           <div class="col-span-6 capitalize font-bold my-2">
             <%= String.replace(result_name, "_", " ") %>
           </div>
-        <%= for class <- @classes do %>
-          <div class="col-span-6 capitalize font-bold my-2">
-            <%= class.name %>
-          </div>
-          <%= for subject <- class.subjects do %>
-            <div>
-              <a href={"/classes/#{class.id}/results/#{subject.name}/?term=#{result_name}"}>
-                <%= subject.name %>
-              </a>
+          <%= for class <- @classes do %>
+            <div class="col-span-6 capitalize font-bold my-2">
+              <%= class.name %>
             </div>
-            <div class="col-span-2">
+            <%= for subject <- class.subjects do %>
               <div>
-                <%= get_number_of_students_appeared(subject.classresults, result_name) %> out of <%= Enum.count(
-                  class.students
-                ) %>
+                <a href={"/classes/#{class.id}/results/#{subject.name}/?term=#{result_name}"}>
+                  <%= subject.name %>
+                </a>
+              </div>
+              <div class="col-span-2">
+                <div>
+                  <%= get_number_of_students_appeared(subject.classresults, result_name) %> out of <%= Enum.count(
+                    class.students
+                  ) %>
+                </div>
+                <div>
+                  <b>Absentee's:</b>
+                  <span>
+                    <%= for {name, index} <- Enum.with_index(get_names_of_absentees(subject.classresults, result_name)) do %>
+                      <%= name %><%= if index ==
+                                          Enum.count(
+                                            get_names_of_absentees(subject.classresults, result_name)
+                                          ) - 1,
+                                        do: "",
+                                        else: "," %>
+                    <% end %>
+                  </span>
+                </div>
               </div>
               <div>
-                <b>Absentee's:</b>
-                <span>
-                  <%= for {name, index} <- Enum.with_index(get_names_of_absentees(subject.classresults, result_name)) do %>
-                    <%= name %><%= if index ==
-                                        Enum.count(
-                                          get_names_of_absentees(subject.classresults, result_name)
-                                        ) - 1,
-                                      do: "",
-                                      else: "," %>
-                  <% end %>
-                </span>
+                <%= get_total_marks_of_term_from_results(subject.classresults, result_name) %>
               </div>
-            </div>
-            <div>
-              <%= get_total_marks_of_term_from_results(subject.classresults, result_name) %>
-            </div>
-            <div>
-              <%= get_obtained_marks_of_term_from_results(subject.classresults, result_name) %>
-            </div>
-            <div>
-              <%= get_percentage_of_marks(subject.classresults, result_name) %>
-            </div>
+              <div>
+                <%= get_obtained_marks_of_term_from_results(subject.classresults, result_name) %>
+              </div>
+              <div>
+                <%= get_percentage_of_marks(subject.classresults, result_name) %>
+              </div>
+            <% end %>
           <% end %>
-
-        <% end %>
         </div>
       <% end %>
     </div>
@@ -136,6 +138,7 @@ defmodule TheArkWeb.TeacherResultLive do
 
   defp assign_related_classes(socket, teacher_id) do
     teacher = Teachers.get_teacher_for_collective_result!(teacher_id)
+
     teacher_class_ids =
       teacher.subjects
       |> Enum.filter(fn subject ->
@@ -148,6 +151,7 @@ defmodule TheArkWeb.TeacherResultLive do
     end
 
     teacher = Teachers.get_teacher!(teacher_id)
+
     classes =
       Enum.map(teacher_class_ids, fn class_id ->
         Classes.get_class_for_teacher_collective_result(class_id, teacher.id)
@@ -173,8 +177,9 @@ defmodule TheArkWeb.TeacherResultLive do
   def get_obtained_marks_of_term_from_subjects(subjects, subject_name, term_name) do
     results =
       (Enum.filter(subjects, fn subject ->
-        subject.name == subject_name
-      end) |> Enum.at(0)).results
+         subject.name == subject_name
+       end)
+       |> Enum.at(0)).results
 
     o_marks =
       (Enum.filter(results, fn result -> result.name == term_name end)

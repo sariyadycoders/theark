@@ -46,7 +46,10 @@ defmodule TheArk.Teachers do
 
   def get_teacher_for_collective_result!(id) do
     Repo.get!(Teacher, id)
-    |> Repo.preload(subjects: from(s in Subject, where: s.is_class_subject == true, preload: [:classresults, :class]))
+    |> Repo.preload(
+      subjects:
+        from(s in Subject, where: s.is_class_subject == true, preload: [:classresults, :class])
+    )
   end
 
   def get_teacher_for_result!(id) do
