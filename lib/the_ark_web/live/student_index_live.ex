@@ -40,6 +40,9 @@ defmodule TheArkWeb.StudentIndexLive do
           Father's Name
         </div>
         <div>
+          Address
+        </div>
+        <div>
           Age
         </div>
         <div>
@@ -48,9 +51,6 @@ defmodule TheArkWeb.StudentIndexLive do
         <div class="">
           Contact
         </div>
-        <div>
-          Active?
-        </div>
       </div>
       <%= for student <- @students do %>
         <div
@@ -58,11 +58,22 @@ defmodule TheArkWeb.StudentIndexLive do
           phx-value-student_id={student.id}
           class="grid grid-cols-6 items-center border-b mb-2 cursor-pointer"
         >
-          <div>
-            <%= student.name %>
+          <div class="">
+            <div class="flex items-center">
+              <a><%= student.name %></a>
+              <span
+                :if={student.is_leaving}
+                class="ml-2 text-xs p-0.5 px-1 border bg-red-200 rounded-lg"
+              >
+                non-active
+              </span>
+            </div>
           </div>
           <div>
             <%= student.father_name %>
+          </div>
+          <div>
+            <%= student.address %>
           </div>
           <div>
             <%= calculate_age(student.date_of_birth) %>
@@ -73,9 +84,6 @@ defmodule TheArkWeb.StudentIndexLive do
           <div class="">
             <div><b>W: </b><%= student.whatsapp_number %></div>
             <div><b>S: </b><%= student.sim_number %></div>
-          </div>
-          <div>
-            <%= if !student.is_leaving, do: "Yes", else: "No" %>
           </div>
         </div>
       <% end %>
