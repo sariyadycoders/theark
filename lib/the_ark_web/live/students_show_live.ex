@@ -163,6 +163,12 @@ defmodule TheArkWeb.StudentsShowLive do
     end
   end
 
+  def handle_event("go_to_finance", _unsigned_params, %{assigns: %{student: student}} = socket) do
+    socket
+    |> redirect(to: "/students/#{student.id}/finances")
+    |> noreply()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -172,7 +178,10 @@ defmodule TheArkWeb.StudentsShowLive do
           <h1 class="font-bold text-3xl"><%= @student.name %></h1>
           <div class="ml-5">S/O <%= @student.father_name %></div>
         </div>
-        <div>
+        <div class="flex gap-2">
+          <.button phx-click="go_to_finance">
+            See Finances
+          </.button>
           <.button phx-click={show_modal("add_student_finance")}>
             Add Finance
           </.button>
