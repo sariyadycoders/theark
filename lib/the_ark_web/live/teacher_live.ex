@@ -72,9 +72,11 @@ defmodule TheArkWeb.TeacherLive do
                 <div><%= period.subject %></div>
               </div>
             <% end %>
-              <div class="flex ml-2 items-center">
-                <.button phx-value-teacher_id={teacher.id} phx-click="go_to_teacher_result">See Results</.button>
-              </div>
+            <div class="flex ml-2 items-center">
+              <.button phx-value-teacher_id={teacher.id} phx-click="go_to_teacher_result">
+                See Results
+              </.button>
+            </div>
           </div>
         </div>
       <% end %>

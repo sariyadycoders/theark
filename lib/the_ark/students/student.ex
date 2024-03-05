@@ -21,6 +21,7 @@ defmodule TheArk.Students.Student do
 
     belongs_to :class, TheArk.Classes.Class
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
+    has_many :finances, TheArk.Finances.Finance
 
     timestamps(type: :utc_datetime)
   end

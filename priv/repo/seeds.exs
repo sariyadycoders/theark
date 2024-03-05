@@ -33,8 +33,7 @@ for name <- [
       "Nine",
       "Ten"
     ] do
-  %Class{name: name}
-  |> Repo.insert!()
+  class = %Class{name: name} |> Repo.insert!()
 end
 
 for name <- ["Amina", "Sania", "Malaika"] do
@@ -73,6 +72,8 @@ for name <- ["teacher", "student"] do
   }
   |> Repo.insert()
 end
+
+%Serial{name: "finance", number: "tams-f-#{year}-00000"} |> Repo.insert()
 
 organization = %Organization{
   name: "the_ark",
