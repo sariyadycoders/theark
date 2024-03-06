@@ -7,6 +7,7 @@ defmodule TheArk.Finances do
   alias TheArk.Repo
 
   alias TheArk.Finances.Finance
+  alias TheArk.Transaction_details.Transaction_detail
 
   @doc """
   Returns the list of finances.
@@ -19,6 +20,44 @@ defmodule TheArk.Finances do
   """
   def list_finances do
     Repo.all(Finance)
+  end
+
+  def get_finances_for_student(student_id, title, type, order, t_id) do
+    date_order = if order == "asc", do: [asc: :inserted_at], else: [desc: :inserted_at]
+
+    detail_conditions =
+      if title == "All" and type == "All" do
+        []
+      else
+        if title == "All" and type != "All" do
+          if type == "Only Due" do
+            dynamic([d], d.due_amount > 0)
+          else
+            dynamic([d], d.paid_amount == d.total_amount)
+          end
+        else
+          if title != "All" and type == "All" do
+            dynamic([d], d.title == ^title)
+          else
+            if title != "All" and type == "Only Due" do
+              dynamic([d], d.title == ^title and d.due_amount > 0)
+            else
+              dynamic([d], d.title == ^title and d.paid_amount == d.total_amount)
+            end
+          end
+        end
+      end
+
+    Repo.all(
+      from(f in Finance,
+        where: f.student_id == ^student_id and ilike(f.transaction_id, ^"%#{t_id}%"),
+        order_by: ^date_order
+      )
+    )
+    |> Repo.preload(transaction_details: from(d in Transaction_detail, where: ^detail_conditions))
+    |> Enum.reject(fn finance ->
+      Enum.count(finance.transaction_details) == 0
+    end)
   end
 
   @doc """

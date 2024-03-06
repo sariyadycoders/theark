@@ -197,15 +197,25 @@ defmodule TheArkWeb.StudentsShowLive do
           phx-submit="add_finance"
         >
           <.input field={f[:student_id]} type="hidden" value={@student.id} />
-
-          <div class="text-lg font-bold">Details</div>
           <.inputs_for :let={n} field={f[:transaction_details]}>
             <%= for number <- 1..@number_of_details do %>
-              <div class="grid grid-cols-3 gap-2 pl-5">
+              <div class="grid grid-cols-3 gap-2">
                 <.input
                   field={n["title_#{number}" |> String.to_atom()]}
                   label="Title"
-                  type="text"
+                  type="select"
+                  options={[
+                    "Books",
+                    "Copies",
+                    "Monthly Fee",
+                    "Paper Fund",
+                    "Anual Charges",
+                    "Tour Fund",
+                    "Party Fund",
+                    "Registration Fee",
+                    "Admission Fee",
+                    "Remainings"
+                  ]}
                   value={Map.get(@transaction_details, "title_#{number}")}
                 />
                 <.input
