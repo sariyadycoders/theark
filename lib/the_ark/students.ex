@@ -80,6 +80,10 @@ defmodule TheArk.Students do
     Repo.aggregate(from(s in Student), :count)
   end
 
+  def get_student_name(id) do
+    Repo.one(from(s in Student, where: s.id == ^id, select: s.name))
+  end
+
   @doc """
   Creates a student.
 

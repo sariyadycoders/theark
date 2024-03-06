@@ -6,17 +6,17 @@ defmodule TheArkWeb.StudentFinanceLive do
 
   @impl true
   def mount(%{"id" => student_id}, _, socket) do
-    student = Students.get_student_for_finance(student_id)
+    student_name = Students.get_student_name(student_id)
 
     socket
-    |> assign(student: student)
+    |> assign(student_name: student_name)
     |> assign(student_id: String.to_integer(student_id))
     |> assign(title: "All")
     |> assign(type: "All")
     |> assign(sort: "Descending")
     |> assign(t_id: "")
-    |> assign_finances(student.id)
-    |> assign(due_amount: calculate_total_due_amout(student.finances))
+    |> assign_finances(String.to_integer(student_id))
+    |> assign_total_due_amout()
     |> ok
   end
 
@@ -46,7 +46,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     ~H"""
     <div>
       <div class="flex justify-between items-center">
-        <h1 class="font-bold text-3xl">Transactions for <%= @student.name %></h1>
+        <h1 class="font-bold text-3xl">Transactions for <%= @student_name %></h1>
         <div><b>Total Amount Due: </b> <%= @due_amount %> Rs.</div>
       </div>
       <div class="my-5 border rounded-lg px-3 pb-3">
@@ -119,14 +119,18 @@ defmodule TheArkWeb.StudentFinanceLive do
     """
   end
 
-  defp calculate_total_due_amout(finances) do
-    Enum.map(finances, fn fin ->
-      Enum.map(fin.transaction_details, fn detail ->
-        detail.due_amount
+  defp assign_total_due_amout(%{assigns: %{finances: finances}} = socket) do
+    due_amount =
+      Enum.map(finances, fn fin ->
+        Enum.map(fin.transaction_details, fn detail ->
+          detail.due_amount
+        end)
+        |> Enum.sum()
       end)
       |> Enum.sum()
-    end)
-    |> Enum.sum()
+
+    socket
+    |> assign(due_amount: due_amount)
   end
 
   defp assign_finances(
