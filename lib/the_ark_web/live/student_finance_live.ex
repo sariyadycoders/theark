@@ -139,13 +139,23 @@ defmodule TheArkWeb.StudentFinanceLive do
             <% end %>
           </div>
           <div>
-            Status
+            <span class={"p-1 rounded-md #{if get_status(finance) == "due", do: "bg-red-300", else: "bg-green-300"}"}><%= get_status(finance) %> </span>
           </div>
         </div>
         <hr />
       <% end %>
     </div>
     """
+  end
+
+  def get_status(finance) do
+    if Enum.all?(finance.transaction_details, fn detail ->
+      detail.total_amount == detail.paid_amount
+    end) do
+      "paid"
+    else
+      "due"
+    end
   end
 
   defp assign_total_due_amout(%{assigns: %{finances: finances}} = socket) do
