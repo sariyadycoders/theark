@@ -95,27 +95,55 @@ defmodule TheArkWeb.StudentFinanceLive do
           </div>
         </.form>
       </div>
-      <div class="grid grid-cols-5 gap-3">
-        <%= for finance <- @finances do %>
-          <div class="border rounded-lg p-4">
-            <div>
-              <div><b>T. ID: </b><%= finance.transaction_id %></div>
-              <div><b>T. Date: </b><%= finance.inserted_at |> DateTime.to_string() %></div>
-            </div>
-            <div class="my-2 font-bold text-lg">
-              Transction Details
-            </div>
+
+      <div class="grid grid-cols-7 items-center border-b-4 pb-2 font-bold text-lg mb-2">
+        <div class="pl-4">
+          T. ID
+        </div>
+        <div>
+          T. Date
+        </div>
+        <div>
+          No. of Payments
+        </div>
+        <div class="col-span-3">
+          Details
+        </div>
+        <div>
+          Status
+        </div>
+      </div>
+
+      <%= for {finance, index} <- Enum.with_index(@finances) do %>
+        <div class="grid grid-cols-7 items-center my-2">
+          <div>
+            <b><%= index + 1 %></b> | <%= finance.transaction_id %>
+          </div>
+          <div>
+            <%= finance.inserted_at |> DateTime.to_string() %>
+          </div>
+          <div class="pl-16">
+            <%= Enum.count(finance.transaction_details) %>
+          </div>
+          <div class="col-span-3">
             <%= for detail <- finance.transaction_details do %>
-              <div class="border my-2 p-2">
-                <div><b>Title:</b> <%= detail.title %></div>
-                <div><b>Total Amount:</b> <%= detail.total_amount %></div>
-                <div><b>Paid:</b> <%= detail.paid_amount %></div>
-                <div><b>Due:</b> <%= detail.due_amount %></div>
+              <div class="flex items-center">
+                <div class="mr-1"><b>Title:</b> <%= detail.title %></div>
+                |
+                <div class="mx-1"><b>T. Amount:</b> <%= detail.total_amount %></div>
+                |
+                <div class="mx-1"><b>Paid:</b> <%= detail.paid_amount %></div>
+                |
+                <div class="ml-1"><b>Due:</b> <%= detail.due_amount %></div>
               </div>
             <% end %>
           </div>
-        <% end %>
-      </div>
+          <div>
+            Status
+          </div>
+        </div>
+        <hr />
+      <% end %>
     </div>
     """
   end
