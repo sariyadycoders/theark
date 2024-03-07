@@ -34,6 +34,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         %{assigns: %{student_id: student_id}} = socket
       ) do
     sort = if order == "Descending", do: "desc", else: "asc"
+    t_id = "-" <> t_id
     finances = Finances.get_finances_for_student(student_id, title, type, sort, t_id)
 
     socket
