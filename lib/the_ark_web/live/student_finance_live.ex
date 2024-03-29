@@ -1,15 +1,34 @@
 defmodule TheArkWeb.StudentFinanceLive do
   use TheArkWeb, :live_view
+  use Timex
 
   alias TheArk.Students
   alias TheArk.Finances
 
+  @options [
+    "All",
+    "Books",
+    "Copies",
+    "Monthly Fee",
+    "1st Term Paper Fund",
+    "2nd Term Paper Fund",
+    "3rd Term Paper Fund",
+    "Anual Charges",
+    "Tour Fund",
+    "Party Fund",
+    "Registration Fee",
+    "Admission Fee",
+    "Remainings"
+  ]
+
   @impl true
   def mount(%{"id" => student_id}, _, socket) do
-    student_name = Students.get_student_name(student_id)
+    student = Students.get_student_for_finance(student_id)
 
     socket
-    |> assign(student_name: student_name)
+    |> assign(options: @options)
+    |> assign(student_name: student.name)
+    |> assign(class: student.class.name)
     |> assign(student_id: String.to_integer(student_id))
     |> assign(title: "All")
     |> assign(type: "All")
@@ -47,7 +66,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     ~H"""
     <div>
       <div class="flex justify-between items-center">
-        <h1 class="font-bold text-3xl">Transactions for <%= @student_name %></h1>
+        <h1 class="font-bold text-3xl">Transactions for <%= @student_name %> of Class <%= @class %></h1>
         <div><b>Total Amount Due: </b> <%= @due_amount %> Rs.</div>
       </div>
       <div class="my-5 border rounded-lg px-3 pb-3">
@@ -66,19 +85,7 @@ defmodule TheArkWeb.StudentFinanceLive do
               field={f[:title]}
               type="select"
               label="Filter by Title"
-              options={[
-                "All",
-                "Books",
-                "Copies",
-                "Monthly Fee",
-                "Paper Fund",
-                "Anual Charges",
-                "Tour Fund",
-                "Party Fund",
-                "Registration Fee",
-                "Admission Fee",
-                "Remainings"
-              ]}
+              options={@options}
             />
             <.input
               field={f[:type]}
@@ -120,7 +127,7 @@ defmodule TheArkWeb.StudentFinanceLive do
             <b><%= index + 1 %></b> | <%= finance.transaction_id %>
           </div>
           <div>
-            <%= finance.inserted_at |> DateTime.to_string() %>
+            <%= Calendar.strftime(finance.inserted_at, "%d %B, %Y - %I:%M %P") %>
           </div>
           <div class="pl-16">
             <%= Enum.count(finance.transaction_details) %>
@@ -148,7 +155,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     """
   end
 
-  def get_status(finance) do
+  defp get_status(finance) do
     if Enum.all?(finance.transaction_details, fn detail ->
       detail.total_amount == detail.paid_amount
     end) do

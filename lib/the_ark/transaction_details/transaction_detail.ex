@@ -7,6 +7,7 @@ defmodule TheArk.Transaction_details.Transaction_detail do
     field :total_amount, :integer
     field :paid_amount, :integer
     field :due_amount, :integer
+    field :is_accected, :boolean
 
     belongs_to :finance, TheArk.Finances.Finance
 
@@ -16,7 +17,7 @@ defmodule TheArk.Transaction_details.Transaction_detail do
   @doc false
   def changeset(transaction_detail, attrs) do
     transaction_detail
-    |> cast(attrs, [:title, :total_amount, :paid_amount, :due_amount, :finance_id])
+    |> cast(attrs, [:title, :total_amount, :paid_amount, :due_amount, :finance_id, :is_accected])
     |> validate_required([:title, :total_amount, :paid_amount, :due_amount, :finance_id])
   end
 end

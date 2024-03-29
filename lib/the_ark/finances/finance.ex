@@ -4,6 +4,7 @@ defmodule TheArk.Finances.Finance do
 
   schema "finances" do
     field :transaction_id, :string
+    field :is_bill, :boolean, default: :false
 
     has_many :transaction_details, TheArk.Transaction_details.Transaction_detail
     belongs_to :student, TheArk.Students.Student

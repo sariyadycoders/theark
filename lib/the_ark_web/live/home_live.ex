@@ -275,8 +275,9 @@ defmodule TheArkWeb.Home do
             class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg"
           >
             <%= for student <- @students_list do %>
-              <div class="border-b py-1 px-3 hover:bg-blue-200 flex items-center">
-                <a href={"/students/#{student.id}"} class="w-full"><%= student.name %></a>
+              <div class="border-b py-1 px-3 hover:bg-blue-200 flex justify-between items-center">
+                <a href={"/students/#{student.id}"} class=""><%= student.name %></a>
+                <a href={"/students/#{student.id}/finances"} class="text-sm p-1 hover:text-black hover:bg-white rounded cursor-pointer text-white bg-black border border-black">Finance</a>
               </div>
             <% end %>
           </div>

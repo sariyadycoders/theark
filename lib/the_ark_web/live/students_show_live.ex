@@ -15,9 +15,25 @@ defmodule TheArkWeb.StudentsShowLive do
   alias TheArk.Transaction_details
   alias TheArk.Serials
 
+  @options [
+    "Books",
+    "Copies",
+    "Monthly Fee",
+    "1st Term Paper Fund",
+    "2nd Term Paper Fund",
+    "3rd Term Paper Fund",
+    "Anual Charges",
+    "Tour Fund",
+    "Party Fund",
+    "Registration Fee",
+    "Admission Fee",
+    "Remainings"
+  ]
+
   @impl true
   def mount(%{"id" => student_id}, _, socket) do
     socket
+    |> assign(options: @options)
     |> assign(student: Students.get_student!(String.to_integer(student_id)))
     |> assign(class_options: Classes.get_class_options())
     |> assign(is_leaving_form_open: false)
@@ -199,37 +215,34 @@ defmodule TheArkWeb.StudentsShowLive do
           <.input field={f[:student_id]} type="hidden" value={@student.id} />
           <.inputs_for :let={n} field={f[:transaction_details]}>
             <%= for number <- 1..@number_of_details do %>
-              <div class="grid grid-cols-3 gap-2">
+              <div class="grid grid-cols-4 gap-2 items-end">
                 <.input
                   field={n["title_#{number}" |> String.to_atom()]}
                   label="Title"
                   type="select"
-                  options={[
-                    "Books",
-                    "Copies",
-                    "Monthly Fee",
-                    "Paper Fund",
-                    "Anual Charges",
-                    "Tour Fund",
-                    "Party Fund",
-                    "Registration Fee",
-                    "Admission Fee",
-                    "Remainings"
-                  ]}
+                  options={@options}
                   value={Map.get(@transaction_details, "title_#{number}")}
                 />
                 <.input
                   field={n["total_amount_#{number}" |> String.to_atom()]}
-                  label="Total Amount (Rupees)"
+                  label="Total Amount"
                   type="number"
                   value={Map.get(@transaction_details, "total_amount_#{number}")}
                 />
                 <.input
                   field={n["paid_amount_#{number}" |> String.to_atom()]}
-                  label="Paid Amount (Rupees)"
+                  label="Paid Amount"
                   type="number"
                   value={Map.get(@transaction_details, "paid_amount_#{number}")}
                 />
+                <.input
+                  main_class="pb-3 pl-2"
+                  field={n["is_accected_#{number}" |> String.to_atom()]}
+                  label="Is Accepted?"
+                  type="checkbox"
+                  value={Map.get(@transaction_details, "is_accected_#{number}")}
+                />
+
                 <hr :if={number < @number_of_details} class="mt-2 col-span-3" />
               </div>
             <% end %>

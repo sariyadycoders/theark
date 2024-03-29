@@ -279,6 +279,7 @@ defmodule TheArkWeb.CoreComponents do
   attr :name, :any
   attr :label, :string, default: nil
   attr :value, :any
+  attr :main_class, :string
 
   attr :type, :string,
     default: "text",
@@ -315,9 +316,10 @@ defmodule TheArkWeb.CoreComponents do
       assign_new(assigns, :checked, fn ->
         Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
       end)
+      |> Enum.into(%{main_class: ""})
 
     ~H"""
-    <div phx-feedback-for={@name} class="mt-2">
+    <div phx-feedback-for={@name} class={"mt-2 #{@main_class}"}>
       <label class="flex items-center gap-4 text-sm leading-6 text-zinc-600">
         <input type="hidden" name={@name} value="false" />
         <input

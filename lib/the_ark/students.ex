@@ -56,7 +56,7 @@ defmodule TheArk.Students do
 
   def get_student_for_finance(id) do
     Repo.get!(Student, id)
-    |> Repo.preload(finances: :transaction_details)
+    |> Repo.preload(:class)
   end
 
   def get_student_only(id) do
