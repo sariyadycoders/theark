@@ -74,7 +74,16 @@ defmodule TheArk.Finances do
       ** (Ecto.NoResultsError)
 
   """
-  def get_finance!(id), do: Repo.get!(Finance, id)
+  def get_finance!(id) do
+    Repo.get!(Finance, id)
+    |> Repo.preload(:transaction_details)
+  end
+
+  def get_finance_for_reciept(id) do
+    Repo.get!(Finance, id)
+    |> Repo.preload(:transaction_details)
+    |> Repo.preload(student: :class)
+  end
 
   @doc """
   Creates a finance.
@@ -88,10 +97,8 @@ defmodule TheArk.Finances do
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_finance(attrs \\ %{}) do
-    %Finance{}
-    |> Finance.changeset(attrs)
-    |> Repo.insert()
+  def create_finance(changeset) do
+    Repo.insert_or_update(changeset)
   end
 
   @doc """
@@ -112,6 +119,10 @@ defmodule TheArk.Finances do
     |> Repo.update()
   end
 
+  def update_finance(changeset) do
+    Repo.update(changeset)
+  end
+
   @doc """
   Deletes a finance.
 
@@ -126,6 +137,11 @@ defmodule TheArk.Finances do
   """
   def delete_finance(%Finance{} = finance) do
     Repo.delete(finance)
+  end
+
+  def delete_finance_by_id(id) do
+    finance = get_finance!(id)
+    delete_finance(finance)
   end
 
   @doc """

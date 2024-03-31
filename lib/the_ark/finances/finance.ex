@@ -4,7 +4,8 @@ defmodule TheArk.Finances.Finance do
 
   schema "finances" do
     field :transaction_id, :string
-    field :is_bill, :boolean, default: :false
+    field :is_bill, :boolean, default: false
+    # field :student_id, :integer
 
     has_many :transaction_details, TheArk.Transaction_details.Transaction_detail
     belongs_to :student, TheArk.Students.Student
@@ -16,6 +17,9 @@ defmodule TheArk.Finances.Finance do
   def changeset(finance, attrs) do
     finance
     |> cast(attrs, [:transaction_id, :student_id])
+    |> cast_assoc(:transaction_details,
+      with: &TheArk.Transaction_details.Transaction_detail.changeset/2
+    )
     |> validate_required([:student_id])
   end
 end

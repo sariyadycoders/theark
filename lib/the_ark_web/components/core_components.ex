@@ -339,8 +339,12 @@ defmodule TheArkWeb.CoreComponents do
   end
 
   def input(%{type: "select"} = assigns) do
+    assigns =
+      assigns
+      |> Enum.into(%{main_class: ""})
+
     ~H"""
-    <div phx-feedback-for={@name} class="mt-2">
+    <div phx-feedback-for={@name} class={"mt-2 #{@main_class}"}>
       <.label for={@id}><%= @label %></.label>
       <select
         id={@id}

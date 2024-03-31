@@ -4,6 +4,7 @@ defmodule TheArk.Repo.Migrations.CreateTransactionDetails do
   def change do
     create table(:transaction_details) do
       add :title, :string
+      add :month, :string
       add :total_amount, :integer
       add :paid_amount, :integer
       add :due_amount, :integer

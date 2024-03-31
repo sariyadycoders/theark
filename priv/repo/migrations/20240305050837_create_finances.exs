@@ -5,7 +5,7 @@ defmodule TheArk.Repo.Migrations.CreateFinances do
     create table(:finances) do
       add :transaction_id, :string
       add :student_id, references(:students, on_delete: :delete_all)
-      add :is_bill, :boolean, default: :false
+      add :is_bill, :boolean, default: false
 
       timestamps(type: :utc_datetime)
     end
