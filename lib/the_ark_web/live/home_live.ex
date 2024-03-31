@@ -258,6 +258,7 @@ defmodule TheArkWeb.Home do
         <a href="/finances" class="ml-auto">Finances</a>
         <a href="/admissions">Admissions</a>
         <a href="/students">Students</a>
+        <a href="/groups">Groups</a>
         <a href="/teachers">Teachers</a>
         <a href="/classes">Classes</a>
         <a href="/results">Results</a>

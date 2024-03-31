@@ -1,5 +1,4 @@
 defmodule TheArkWeb.Router do
-  alias TheArkWeb.Reciept
   use TheArkWeb, :router
 
   import TheArkWeb.UserAuth
@@ -32,6 +31,7 @@ defmodule TheArkWeb.Router do
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
     live "/students/:id/finances", StudentFinanceLive
+    live "/groups", GroupsLive
     live "/teachers", TeacherLive
     live "/teachers/:id", TeacherShowLive
     live "/teachers/:id/result", TeacherResultLive

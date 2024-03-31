@@ -4,9 +4,11 @@ defmodule TheArk.Students do
   """
 
   import Ecto.Query, warn: false
+
   alias TheArk.Repo
   alias TheArk.Subjects
   alias TheArk.Subjects.Subject
+  alias TheArk.Groups
 
   alias TheArk.Students.Student
 
@@ -101,6 +103,18 @@ defmodule TheArk.Students do
     |> Student.changeset(attrs)
     |> Repo.insert()
     |> create_subjects()
+    |> create_group()
+  end
+
+  def create_group({:ok, student}) do
+    {:ok, group} = Groups.create_group(%{name: student.name, is_main: true})
+    {:ok, student} = update_student(student, %{group_id: group.id})
+
+    {:ok, student}
+  end
+
+  def create_group({:error, _changeset} = error) do
+    error
   end
 
   def create_subjects({:ok, student}) do

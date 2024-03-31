@@ -8,7 +8,7 @@ defmodule TheArk.Finances.Finance do
     # field :student_id, :integer
 
     has_many :transaction_details, TheArk.Transaction_details.Transaction_detail
-    belongs_to :student, TheArk.Students.Student
+    belongs_to :group, TheArk.Groups.Group
 
     timestamps(type: :utc_datetime)
   end
@@ -16,7 +16,7 @@ defmodule TheArk.Finances.Finance do
   @doc false
   def changeset(finance, attrs) do
     finance
-    |> cast(attrs, [:transaction_id, :student_id])
+    |> cast(attrs, [:transaction_id, :group_id])
     |> cast_assoc(:transaction_details,
       with: &TheArk.Transaction_details.Transaction_detail.changeset/2
     )

@@ -20,8 +20,8 @@ defmodule TheArk.Students.Student do
     field :is_leaving, :boolean, default: false
 
     belongs_to :class, TheArk.Classes.Class
+    belongs_to :group, TheArk.Groups.Group
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
-    has_many :finances, TheArk.Finances.Finance
 
     timestamps(type: :utc_datetime)
   end
@@ -41,7 +41,8 @@ defmodule TheArk.Students.Student do
       :enrollment_number,
       :enrollment_date,
       :class_of_enrollment,
-      :class_id
+      :class_id,
+      :group_id
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)
