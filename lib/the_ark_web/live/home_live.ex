@@ -273,13 +273,13 @@ defmodule TheArkWeb.Home do
           />
           <div
             :if={@students_list}
-            class="absolute end-0 left-0 bg-white py-2 border break-words rounded-lg"
+            class="absolute end-0 right-0 bg-white py-2 border break-words rounded-lg w-80"
           >
             <%= for student <- @students_list do %>
               <div class="border-b py-1 px-3 hover:bg-blue-200 flex justify-between items-center">
-                <a href={"/students/#{student.id}"} class=""><%= student.name %></a>
+                <a href={"/students/#{student.id}"} class=""><%= student.name <> " " <> "(#{student.class.name})" %></a>
                 <a
-                  href={"/students/#{student.id}/finances"}
+                  href={"/groups/#{student.group_id}/finances"}
                   class="text-sm p-1 hover:text-black hover:bg-white rounded cursor-pointer text-white bg-black border border-black"
                 >
                   Finance

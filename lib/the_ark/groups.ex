@@ -18,8 +18,12 @@ defmodule TheArk.Groups do
 
   """
   def list_groups do
-    Repo.all(Group)
-    |> Repo.preload([:students, :finances])
+    Repo.all(from(g in Group, order_by: not g.is_main))
+    |> Repo.preload([:students, [finances: :transaction_details]])
+  end
+
+  def list_groups_for_assign() do
+    Repo.all(from(g in Group, where: g.is_main == true, select: %{name: g.name, id: g.id}))
   end
 
   @doc """
@@ -36,7 +40,10 @@ defmodule TheArk.Groups do
       ** (Ecto.NoResultsError)
 
   """
-  def get_group!(id), do: Repo.get!(Group, id)
+  def get_group!(id) do
+    Repo.get!(Group, id)
+    |> Repo.preload([:finances, [students: :class]])
+  end
 
   @doc """
   Creates a group.
@@ -88,6 +95,11 @@ defmodule TheArk.Groups do
   """
   def delete_group(%Group{} = group) do
     Repo.delete(group)
+  end
+
+  def delete_group_by_id(id) do
+    get_group!(id)
+    |> Repo.delete()
   end
 
   @doc """

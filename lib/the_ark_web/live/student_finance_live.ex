@@ -3,13 +3,13 @@ defmodule TheArkWeb.StudentFinanceLive do
   use Timex
 
   import Ecto.Changeset
-  import TheArkWeb.StudentsShowLive, only: [finance_form_fields: 1]
+  import Phoenix.HTML.Form
 
   alias TheArk.{
-    Students,
     Finances,
     Finances.Finance,
-    Serials
+    Serials,
+    Groups
   }
 
   @options [
@@ -29,8 +29,8 @@ defmodule TheArkWeb.StudentFinanceLive do
   ]
 
   @impl true
-  def mount(%{"id" => student_id}, _, socket) do
-    student = Students.get_student_for_finance(student_id)
+  def mount(%{"id" => id}, _, socket) do
+    group = Groups.get_group!(id)
 
     socket
     |> assign(options: @options)
@@ -38,17 +38,22 @@ defmodule TheArkWeb.StudentFinanceLive do
       finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
     )
     |> assign(finance_params: nil)
-    |> assign(student: student)
-    |> assign(student_name: student.name)
-    |> assign(class: student.class.name)
-    |> assign(student_id: String.to_integer(student_id))
+    |> assign(group: group)
+    |> assign(group_name: group.name)
+    |> assign(group_id: String.to_integer(id))
     |> assign(title: "All")
     |> assign(type: "All")
     |> assign(sort: "Descending")
     |> assign(t_id: "")
-    |> assign_finances(String.to_integer(student_id))
+    |> assign_finances(String.to_integer(id))
     |> assign_total_due_amout()
     |> ok
+  end
+
+  def handle_event("prind_reciept", %{"finance_id" => id}, socket) do
+    socket
+    |> redirect(to: "/reciept/#{String.to_integer(id)}")
+    |> noreply()
   end
 
   @impl true
@@ -62,8 +67,8 @@ defmodule TheArkWeb.StudentFinanceLive do
     finance_changeset =
       put_change(
         finance_changeset,
-        :student_id,
-        Map.get(finance_params, "student_id") |> String.to_integer()
+        :group_id,
+        Map.get(finance_params, "group_id") |> String.to_integer()
       )
 
     case Finances.create_finance(finance_changeset) do
@@ -78,7 +83,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         |> assign(
           finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
         )
-        |> assign_finances(finance.student_id)
+        |> assign_finances(finance.group_id)
         |> assign(finance_params: nil)
         |> then(fn socket ->
           if Map.get(finance_params, "is_print") == "true" do
@@ -109,8 +114,8 @@ defmodule TheArkWeb.StudentFinanceLive do
     finance_changeset =
       put_change(
         finance_changeset,
-        :student_id,
-        Map.get(finance_params, "student_id") |> String.to_integer()
+        :group_id,
+        Map.get(finance_params, "group_id") |> String.to_integer()
       )
 
     case Finances.update_finance(finance_changeset) do
@@ -120,7 +125,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         |> assign(
           finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
         )
-        |> assign_finances(finance.student_id)
+        |> assign_finances(finance.group_id)
         |> assign(finance_params: nil)
         |> then(fn socket ->
           if Map.get(finance_params, "is_print") == "true" do
@@ -200,12 +205,12 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "delete",
         %{"finance_id" => id},
-        %{assigns: %{student_id: student_id}} = socket
+        %{assigns: %{group_id: group_id}} = socket
       ) do
     Finances.delete_finance_by_id(id)
 
     socket
-    |> assign_finances(student_id)
+    |> assign_finances(group_id)
     |> noreply()
   end
 
@@ -238,11 +243,11 @@ defmodule TheArkWeb.StudentFinanceLive do
             "order" => order
           }
         },
-        %{assigns: %{student_id: student_id}} = socket
+        %{assigns: %{group_id: group_id}} = socket
       ) do
     sort = if order == "Descending", do: "desc", else: "asc"
     t_id = "-" <> t_id
-    finances = Finances.get_finances_for_student(student_id, title, type, sort, t_id)
+    finances = Finances.get_finances_for_group(group_id, title, type, sort, t_id)
 
     socket
     |> assign(finances: finances)
@@ -255,7 +260,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     <div>
       <div class="flex justify-between items-center">
         <h1 class="font-bold text-3xl">
-          Transactions for <%= @student_name %> of Class <%= @class %>
+          Transactions for <%= @group_name %> <%= if !String.ends_with?(@group_name, "roup") and @group.is_main, do: "Group" %>
         </h1>
         <div class="flex items-center gap-2">
           <div><b>Total Amount Due: </b> <%= @due_amount %> Rs.</div>
@@ -273,7 +278,7 @@ defmodule TheArkWeb.StudentFinanceLive do
           phx-change="finance_validate"
           phx-submit="add_finance"
         >
-          <.finance_form_fields form={f} student={@student} options={@options} />
+          <.finance_form_fields form={f} group={@group} options={@options} />
           <div class="flex justify-end mt-5">
             <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
               Add one more detail
@@ -372,8 +377,8 @@ defmodule TheArkWeb.StudentFinanceLive do
               <.button icon="hero-trash" phx-click="delete" phx-value-finance_id={finance.id} />
               <.button
                 icon="hero-document-text"
-                phx-click={JS.push("assign_changeset") |> show_modal("delete_class_modal")}
-                phx-value-class_id={nil}
+                phx-click="prind_reciept"
+                phx-value-finance_id={finance.id}
               />
             </div>
           </div>
@@ -387,7 +392,7 @@ defmodule TheArkWeb.StudentFinanceLive do
             phx-submit="update_finance"
             phx-value-finance_id={finance.id}
           >
-            <.finance_form_fields form={f} student={@student} options={@options} />
+            <.finance_form_fields form={f} group={@group} options={@options} />
             <div class="flex justify-end mt-5">
               <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
                 Add one more detail
@@ -431,12 +436,72 @@ defmodule TheArkWeb.StudentFinanceLive do
 
   defp assign_finances(
          %{assigns: %{title: title, type: type, sort: sort, t_id: t_id}} = socket,
-         student_id
+         group_id
        ) do
     sort = if sort == "Descending", do: "desc", else: "asc"
-    finances = Finances.get_finances_for_student(student_id, title, type, sort, t_id)
+    finances = Finances.get_finances_for_group(group_id, title, type, sort, t_id)
 
     socket
     |> assign(finances: finances)
+  end
+
+  defp finance_form_fields(assigns) do
+    ~H"""
+    <.input field={@form[:group_id]} type="hidden" value={@group.id} />
+    <.inputs_for :let={n} field={@form[:transaction_details]}>
+      <div class="grid grid-cols-4 gap-2 items-end">
+        <.input
+          field={n[:title]}
+          label="Title"
+          type="select"
+          options={@options -- ["All"]}
+          value={input_value(n, :title)}
+        />
+        <.input
+          field={n[:month]}
+          label="Month"
+          type="select"
+          options={[
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec"
+          ]}
+          value={input_value(n, :month)}
+          main_class={if input_value(n, :title) != "Monthly Fee", do: "hidden"}
+        />
+        <.input
+          field={n[:total_amount]}
+          label="Total"
+          type="number"
+          value={input_value(n, :total_amount)}
+        />
+        <.input
+          field={n[:paid_amount]}
+          label="Paid"
+          type="number"
+          value={input_value(n, :paid_amount)}
+        />
+        <div class="col-span-4 flex justify-end">
+          <.input
+            main_class="pb-3 pl-2"
+            field={n[:is_accected]}
+            label="Is Accepted?"
+            type="checkbox"
+            value={input_value(n, :is_accected)}
+          />
+        </div>
+      </div>
+      <hr :if={true} class="mt-2" />
+    </.inputs_for>
+    """
   end
 end

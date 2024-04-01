@@ -18,6 +18,7 @@ defmodule TheArk.Students.Student do
     field :leaving_certificate_date, :date
     field :last_attendance_date, :date
     field :is_leaving, :boolean, default: false
+    field :first_group_id, :integer
 
     belongs_to :class, TheArk.Classes.Class
     belongs_to :group, TheArk.Groups.Group
@@ -42,7 +43,8 @@ defmodule TheArk.Students.Student do
       :enrollment_date,
       :class_of_enrollment,
       :class_id,
-      :group_id
+      :group_id,
+      :first_group_id
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)

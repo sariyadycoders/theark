@@ -22,7 +22,7 @@ defmodule TheArk.Finances do
     Repo.all(Finance)
   end
 
-  def get_finances_for_student(student_id, title, type, order, t_id) do
+  def get_finances_for_group(group_id, title, type, order, t_id) do
     date_order = if order == "asc", do: [asc: :inserted_at], else: [desc: :inserted_at]
 
     detail_conditions =
@@ -50,7 +50,7 @@ defmodule TheArk.Finances do
 
     Repo.all(
       from(f in Finance,
-        where: f.student_id == ^student_id and ilike(f.transaction_id, ^"%#{t_id}%"),
+        where: f.group_id == ^group_id and ilike(f.transaction_id, ^"%#{t_id}%"),
         order_by: ^date_order
       )
     )
@@ -82,7 +82,7 @@ defmodule TheArk.Finances do
   def get_finance_for_reciept(id) do
     Repo.get!(Finance, id)
     |> Repo.preload(:transaction_details)
-    |> Repo.preload(student: :class)
+    |> Repo.preload(group: [students: :class])
   end
 
   @doc """

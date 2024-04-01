@@ -16,10 +16,10 @@ defmodule TheArk.Finances.Finance do
   @doc false
   def changeset(finance, attrs) do
     finance
-    |> cast(attrs, [:transaction_id, :group_id])
+    |> cast(attrs, [:transaction_id, :group_id, :is_bill])
     |> cast_assoc(:transaction_details,
       with: &TheArk.Transaction_details.Transaction_detail.changeset/2
     )
-    |> validate_required([:student_id])
+    |> validate_required([:group_id])
   end
 end

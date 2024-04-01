@@ -18,6 +18,7 @@ defmodule TheArk.Repo.Migrations.CreateStudents do
       add :leaving_certificate_date, :date
       add :last_attendance_date, :date
       add :is_leaving, :boolean, default: false
+      add :first_group_id, :integer
       add :class_id, references(:classes, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)

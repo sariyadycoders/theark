@@ -8,7 +8,6 @@ defmodule TheArkWeb.ClassLive do
     Subjects,
     Teachers
   }
-
   alias Phoenix.LiveView.Components.MultiSelect
   alias Phoenix.LiveView.JS
 

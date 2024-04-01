@@ -30,7 +30,7 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/slos", SloLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
-    live "/students/:id/finances", StudentFinanceLive
+    live "/groups/:id/finances", StudentFinanceLive
     live "/groups", GroupsLive
     live "/teachers", TeacherLive
     live "/teachers/:id", TeacherShowLive

@@ -72,6 +72,7 @@ defmodule TheArk.Students do
 
   def get_students_for_search_results(name) do
     Repo.all(from(s in Student, where: ilike(s.name, ^"%#{name}%")))
+    |> Repo.preload(:class)
   end
 
   def get_active_students_count() do
@@ -107,8 +108,8 @@ defmodule TheArk.Students do
   end
 
   def create_group({:ok, student}) do
-    {:ok, group} = Groups.create_group(%{name: student.name, is_main: true})
-    {:ok, student} = update_student(student, %{group_id: group.id})
+    {:ok, group} = Groups.create_group(%{name: student.name, is_main: false})
+    {:ok, student} = update_student(student, %{group_id: group.id, first_group_id: group.id})
 
     {:ok, student}
   end
