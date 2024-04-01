@@ -12,7 +12,9 @@ defmodule TheArkWeb.StudentsShowLive do
     Students,
     Classes,
     Students.Student,
-    Groups
+    Groups,
+    Notes,
+    Notes.Note
   }
 
   @options [
@@ -41,6 +43,7 @@ defmodule TheArkWeb.StudentsShowLive do
 
     socket
     |> assign(options: @options)
+    |> assign(note_changeset: Notes.change_note(%Note{}))
     |> assign(group_options: group_options)
     |> assign(student: Students.get_student!(String.to_integer(student_id)))
     |> assign(class_options: Classes.get_class_options())
@@ -137,6 +140,26 @@ defmodule TheArkWeb.StudentsShowLive do
     |> noreply()
   end
 
+  def handle_event("add_note", %{"note" => params, "student_id" => id}, socket) do
+    case Notes.create_note(Map.put(params, "student_id", id)) do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Note added successfully!")
+        |> assign(note_changeset: Notes.change_note(%Note{}))
+        |> noreply()
+      {:error, changeset} ->
+        socket
+        |> assign(note_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  def handle_event("validate_note", %{"note" => params, "student_id" => id}, socket) do
+    socket
+    |> assign(note_changeset: Notes.change_note(%Note{}, Map.put(params, "student_id", id)))
+    |> noreply()
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -146,17 +169,28 @@ defmodule TheArkWeb.StudentsShowLive do
           <h1 class="font-bold text-3xl"><%= @student.name %></h1>
           <div class="ml-5">S/O <%= @student.father_name %></div>
         </div>
-        <.form :let={f} for={} as={:assign_group} phx-submit="assign_group" class="flex items-end gap-2">
-          <.input
-            field={f[:group_id]}
-            type="select"
-            label={"Assign Group to #{@student.name}"}
-            options={@group_options}
-          />
+        <div class="flex gap-2">
+          <.form :let={f} for={} as={:assign_group} phx-submit="assign_group" class="flex items-end gap-2">
+            <.input
+              field={f[:group_id]}
+              type="select"
+              label={"Assign Group to #{@student.name}"}
+              options={@group_options}
+            />
 
-          <.button>Confirm Submit</.button>
-        </.form>
+            <.button>Confirm Group</.button>
+          </.form>
+          <div class="flex items-end"><.button phx-click={show_modal("add_note")}>Add Note</.button></div>
+        </div>
       </div>
+      <.modal id="add_note">
+        <.form :let={f} for={@note_changeset} phx-submit="add_note" phx-change="validate_note" phx-value-student_id={@student.id}>
+          <.input field={f[:title]} type="text" label="Title"/>
+          <.input field={f[:description]} type="textarea" label="Important Note"/>
+
+          <.button class="mt-5">Add</.button>
+        </.form>
+      </.modal>
 
       <div class="flex items-center gap-2 my-5">
         <%= for term_name <- Classes.make_list_of_terms() do %>
