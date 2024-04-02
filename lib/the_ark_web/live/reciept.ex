@@ -42,7 +42,7 @@ defmodule TheArkWeb.RecieptPrint do
             <b><%= if Enum.count(@finance.group.students) > 1, do: "Names", else: "Name" %>:</b>
             <%= for {student, index} <- Enum.with_index(@finance.group.students) do %>
               <span class="capitalize"><%= student.name %></span><span :if={
-                (index + 1 < Enum.count(@finance.group.students))
+                index + 1 < Enum.count(@finance.group.students)
               }>, </span>
             <% end %>
           </div>
@@ -50,7 +50,7 @@ defmodule TheArkWeb.RecieptPrint do
             <b><%= if Enum.count(@finance.group.students) > 1, do: "Classes", else: "Class" %>:</b>
             <%= for {student, index} <- Enum.with_index(@finance.group.students) do %>
               <span><%= student.class.name %></span><span :if={
-                (index + 1 < Enum.count(@finance.group.students))
+                index + 1 < Enum.count(@finance.group.students)
               }>, </span>
             <% end %>
           </div>

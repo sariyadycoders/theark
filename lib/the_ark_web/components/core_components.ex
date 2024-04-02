@@ -616,6 +616,18 @@ defmodule TheArkWeb.CoreComponents do
     """
   end
 
+  attr :icon, :string, required: true
+  attr :class, :string, default: nil
+  attr :rest, :global
+
+  def icon_button(%{icon: "hero-" <> _} = assigns) do
+    ~H"""
+    <div class="px-2 py-1.5 flex items-center rounded-lg bg-black" {@rest}>
+      <span class={[@icon, "text-white", @class]} />
+    </div>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

@@ -9,7 +9,9 @@ defmodule TheArkWeb.StudentFinanceLive do
     Finances,
     Finances.Finance,
     Serials,
-    Groups
+    Groups,
+    Notes,
+    Notes.Note
   }
 
   @options [
@@ -38,9 +40,12 @@ defmodule TheArkWeb.StudentFinanceLive do
       finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
     )
     |> assign(finance_params: nil)
+    |> assign(collapsed_sections: [])
+    |> assign(edit_note_id: 0)
     |> assign(group: group)
     |> assign(group_name: group.name)
     |> assign(group_id: String.to_integer(id))
+    |> assign(note_changeset: Notes.change_note(%Note{}))
     |> assign(title: "All")
     |> assign(type: "All")
     |> assign(sort: "Descending")
@@ -255,12 +260,112 @@ defmodule TheArkWeb.StudentFinanceLive do
   end
 
   @impl true
+  def handle_event(
+        "add_note",
+        %{"note" => params, "finance_id" => id},
+        %{assigns: %{group_id: group_id}} = socket
+      ) do
+    case Notes.create_note(Map.put(params, "finance_id", id)) do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Note added successfully!")
+        |> assign(note_changeset: Notes.change_note(%Note{}))
+        |> assign_finances(group_id)
+        |> noreply()
+
+      {:error, changeset} ->
+        socket
+        |> assign(note_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  @impl true
+  def handle_event("validate_note", %{"note" => params}, socket) do
+    socket
+    |> assign(note_changeset: Notes.change_note(%Note{}, params))
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "collapse",
+        %{"section_id" => id},
+        %{assigns: %{collapsed_sections: collapsed_sections}} = socket
+      ) do
+    collapsed_sections =
+      if id in collapsed_sections,
+        do: collapsed_sections -- [id],
+        else: collapsed_sections ++ [id]
+
+    socket
+    |> assign(collapsed_sections: collapsed_sections)
+    |> noreply()
+  end
+
+  def handle_event("edit_note_id", %{"note_id" => id}, socket) do
+    note = Notes.get_note!(id)
+    changeset = Notes.change_note(note)
+
+    socket
+    |> assign(note_changeset: changeset)
+    |> assign(edit_note_id: String.to_integer(id))
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "edit_note",
+        %{"note" => params, "note_id" => id},
+        %{assigns: %{group_id: group_id}} = socket
+      ) do
+    note = Notes.get_note!(id)
+
+    case Notes.update_note(note, params) do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Note updated successfully!")
+        |> assign(note_changeset: Notes.change_note(%Note{}))
+        |> assign_finances(group_id)
+        |> noreply()
+
+      {:error, changeset} ->
+        socket
+        |> assign(note_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  @impl true
+  def handle_event(
+        "delete_note",
+        %{"note_id" => id},
+        %{assigns: %{group_id: group_id}} = socket
+      ) do
+    Notes.delete_note_by_id(id)
+
+    socket
+    |> put_flash(:info, "Note deleted successfully!")
+    |> assign_finances(group_id)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("empty_note", _unsigned_params, socket) do
+    socket
+    |> assign(note_changeset: Notes.change_note(%Note{}))
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div class="flex justify-between items-center">
         <h1 class="font-bold text-3xl">
-          Transactions for <%= @group_name %> <%= if !String.ends_with?(@group_name, "roup") and @group.is_main, do: "Group" %>
+          Transactions for <%= @group_name %> <%= if !String.ends_with?(@group_name, "roup") and
+                                                       @group.is_main,
+                                                     do: "Group" %>
         </h1>
         <div class="flex items-center gap-2">
           <div><b>Total Amount Due: </b> <%= @due_amount %> Rs.</div>
@@ -317,7 +422,8 @@ defmodule TheArkWeb.StudentFinanceLive do
       </div>
 
       <div class="grid grid-cols-12 items-center border-b-4 pb-2 font-bold text-lg mb-2">
-        <div class="pl-4 col-span-2">
+        <div class="pl-8
+         col-span-2">
           T. ID
         </div>
         <div class="col-span-2">
@@ -336,8 +442,15 @@ defmodule TheArkWeb.StudentFinanceLive do
 
       <%= for {finance, index} <- Enum.with_index(@finances) do %>
         <div class="grid grid-cols-12 items-center my-2">
-          <div class="col-span-2">
-            <b><%= index + 1 %></b> | <%= finance.transaction_id %>
+          <div class="col-span-2 flex items-center gap-2">
+            <div
+              phx-click="collapse"
+              phx-value-section_id={"notes_#{finance.id}"}
+              class="cursor-pointer"
+            >
+              <.icon name="hero-arrows-up-down" class="w-6 h-6" />
+            </div>
+            <div><b><%= index + 1 %></b> | <%= finance.transaction_id %></div>
           </div>
           <div class="col-span-2">
             <%= Calendar.strftime(finance.inserted_at, "%d %B, %Y - %I:%M %P") %>
@@ -363,27 +476,87 @@ defmodule TheArkWeb.StudentFinanceLive do
             <% end %>
           </div>
           <div class="flex items-center justify-between col-span-2">
-            <span class={"p-1 rounded-md #{if get_status(finance) == "due", do: "bg-red-300", else: "bg-green-300"}"}>
-              <%= get_status(finance) %>
+            <span class={"p-1 rounded-full w-5 h-5 #{if get_status(finance) == "due", do: "bg-red-700", else: "bg-green-700"}"}>
+              <%!-- <%= get_status(finance) %> --%>
             </span>
             <div class="flex gap-1">
-              <.button
+              <.icon_button
                 icon="hero-pencil"
                 phx-click={
                   JS.push("assign_changeset") |> show_modal("edit_student_finance_#{finance.id}")
                 }
                 phx-value-finance_id={finance.id}
               />
-              <.button icon="hero-trash" phx-click="delete" phx-value-finance_id={finance.id} />
-              <.button
+              <.icon_button icon="hero-trash" phx-click="delete" phx-value-finance_id={finance.id} />
+              <.icon_button
                 icon="hero-document-text"
                 phx-click="prind_reciept"
                 phx-value-finance_id={finance.id}
               />
+              <.icon_button
+                icon="hero-plus"
+                phx-click={JS.push("empty_note") |> show_modal("add_note_#{finance.id}")}
+              />
             </div>
           </div>
         </div>
+
+        <div
+          :if={"notes_#{finance.id}" in @collapsed_sections}
+          class="border rounded-lg my-3 flex items-center"
+        >
+          <div class="flex flex-col gap-2 p-5">
+            <%= for note <- finance.notes do %>
+              <div>
+                <span class="font-bold capitalize gap-2"><%= note.title %>:</span>
+                <span><%= note.description %></span>
+                <span>[Date: <%= Calendar.strftime(note.updated_at, "%d %B, %Y - %I:%M %P") %>]</span>
+                <span
+                  phx-click={JS.push("edit_note_id") |> show_modal("edit_note_#{note.id}")}
+                  phx-value-note_id={note.id}
+                  class="cursor-pointer"
+                >
+                  <.icon name="hero-pencil" class="h-4 w-4" />
+                </span>
+                <span phx-click="delete_note" phx-value-note_id={note.id} class="cursor-pointer">
+                  <.icon name="hero-trash" class="h-4 w-4" />
+                </span>
+              </div>
+              <.modal id={"edit_note_#{note.id}"}>
+                <%= if @edit_note_id == note.id do %>
+                  <.form
+                    :let={f}
+                    for={@note_changeset}
+                    phx-submit="edit_note"
+                    phx-value-note_id={note.id}
+                  >
+                    <.input field={f[:title]} type="text" label="Title" />
+                    <.input field={f[:description]} type="textarea" label="Important Note" />
+
+                    <.button class="mt-5">Add</.button>
+                  </.form>
+                <% end %>
+              </.modal>
+            <% end %>
+            <span :if={Enum.count(finance.notes) == 0}>No notes available for this finance</span>
+          </div>
+        </div>
+
         <hr />
+        <.modal id={"add_note_#{finance.id}"}>
+          <.form
+            :let={f}
+            for={@note_changeset}
+            phx-submit="add_note"
+            phx-change="validate_note"
+            phx-value-finance_id={finance.id}
+          >
+            <.input field={f[:title]} type="text" label="Title" />
+            <.input field={f[:description]} type="textarea" label="Important Note" />
+
+            <.button class="mt-5">Add</.button>
+          </.form>
+        </.modal>
         <.modal id={"edit_student_finance_#{finance.id}"}>
           <.form
             :let={f}

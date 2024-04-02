@@ -5,7 +5,6 @@ defmodule TheArkWeb.GroupsLive do
   alias TheArk.Students
   alias Phoenix.LiveView.Components.MultiSelect
 
-
   @impl true
   def mount(_, _, socket) do
     groups = list_groups()
@@ -20,8 +19,6 @@ defmodule TheArkWeb.GroupsLive do
 
   @impl true
   def handle_info({:updated_options, options}, socket) do
-    IO.inspect options
-
     socket
     |> assign(options: options)
     |> noreply()
@@ -29,9 +26,16 @@ defmodule TheArkWeb.GroupsLive do
 
   def handle_event("edit_data", %{"group_id" => id}, socket) do
     group = Groups.get_group!(id)
-    options = Enum.map(group.students, fn student ->
-      %{id: student.id, label: student.name <> " " <> student.father_name <> " " <> " " <> "(#{student.class.name})", selected: true}
-    end)
+
+    options =
+      Enum.map(group.students, fn student ->
+        %{
+          id: student.id,
+          label:
+            student.name <> " " <> student.father_name <> " " <> " " <> "(#{student.class.name})",
+          selected: true
+        }
+      end)
 
     socket
     |> assign(group_changeset: Groups.change_group(group))
@@ -63,24 +67,27 @@ defmodule TheArkWeb.GroupsLive do
   end
 
   def handle_event("show_finances", %{"group_id" => id}, socket) do
-
     socket
     |> redirect(to: "/groups/#{String.to_integer(id)}/finances")
     |> noreply()
   end
 
-  def handle_event("submit_group_edit", %{"group" => params, "group_id" => group_id}, %{assigns: %{options: options}} = socket) do
-
+  def handle_event(
+        "submit_group_edit",
+        %{"group" => params, "group_id" => group_id},
+        %{assigns: %{options: options}} = socket
+      ) do
     group = Groups.get_group!(group_id)
 
     case Groups.update_group(group, params) do
       {:ok, _} ->
-        non_selected_student_ids = Enum.filter(options, fn option ->
-          !option.selected
-        end)
-        |> Enum.map(fn option ->
-          option.id
-        end)
+        non_selected_student_ids =
+          Enum.filter(options, fn option ->
+            !option.selected
+          end)
+          |> Enum.map(fn option ->
+            option.id
+          end)
 
         for id <- non_selected_student_ids do
           student = Students.get_student!(id)
@@ -92,6 +99,7 @@ defmodule TheArkWeb.GroupsLive do
         |> assign(groups: list_groups())
         |> assign(options: [])
         |> noreply()
+
       {:error, changeset} ->
         socket
         |> assign(group_changeset: changeset)
@@ -146,12 +154,13 @@ defmodule TheArkWeb.GroupsLive do
         </div>
       </div>
       <%= for group <- @groups do %>
-        <div
-          class="grid grid-cols-7 items-center border-b py-2"
-        >
+        <div class="grid grid-cols-7 items-center border-b py-2">
           <div class="">
             <div class="flex items-center">
-              <a class="capitalize"><%= group.name %> <%= if !String.ends_with?(group.name, "roup") and group.is_main, do: "Group" %></a>
+              <a class="capitalize">
+                <%= group.name %> <%= if !String.ends_with?(group.name, "roup") and group.is_main,
+                  do: "Group" %>
+              </a>
               <span :if={false} class="ml-2 text-xs p-0.5 px-1 border bg-red-200 rounded-lg">
                 non-active
               </span>
@@ -162,7 +171,11 @@ defmodule TheArkWeb.GroupsLive do
           </div>
           <div class="col-span-2 flex flex-wrap">
             <%= for {student, index} <- Enum.with_index(group.students) do %>
-              <a href={"/students/#{student.id}"} class="mr-1.5 capitalize"><%= student.name <> " " <> student.father_name %> <%= if index + 1 < Enum.count(group.students), do: "|" %></a>
+              <a href={"/students/#{student.id}"} class="mr-1.5 capitalize">
+                <%= student.name <> " " <> student.father_name %> <%= if index + 1 <
+                                                                           Enum.count(group.students),
+                                                                         do: "|" %>
+              </a>
             <% end %>
           </div>
           <div class="text-center">
@@ -175,10 +188,19 @@ defmodule TheArkWeb.GroupsLive do
           </div>
           <div class="flex gap-1">
             <.button phx-click="show_finances" phx-value-group_id={group.id} icon="hero-eye" />
-            <.button phx-click={JS.push("edit_data") |> show_modal("edit_group_#{group.id}")} phx-value-group_id={group.id} icon="hero-pencil" />
+            <.button
+              phx-click={JS.push("edit_data") |> show_modal("edit_group_#{group.id}")}
+              phx-value-group_id={group.id}
+              icon="hero-pencil"
+            />
           </div>
           <.modal id={"edit_group_#{group.id}"}>
-            <.form :let={f} for={@group_changeset} phx-value-group_id={group.id} phx-submit="submit_group_edit">
+            <.form
+              :let={f}
+              for={@group_changeset}
+              phx-value-group_id={group.id}
+              phx-submit="submit_group_edit"
+            >
               <%= if @group_edit_id == group.id do %>
                 <.input field={f[:name]} type="text" label="Name of Group" />
                 <.input field={f[:monthly_fee]} type="number" label="Monthly Fee" />

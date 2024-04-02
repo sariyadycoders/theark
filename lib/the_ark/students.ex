@@ -9,6 +9,7 @@ defmodule TheArk.Students do
   alias TheArk.Subjects
   alias TheArk.Subjects.Subject
   alias TheArk.Groups
+  alias TheArk.Notes.Note
 
   alias TheArk.Students.Student
 
@@ -52,6 +53,7 @@ defmodule TheArk.Students do
     Repo.get!(Student, id)
     |> Repo.preload([
       [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)],
+      [notes: from(n in Note, order_by: [desc: n.updated_at])],
       :class
     ])
   end

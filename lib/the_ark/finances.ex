@@ -8,6 +8,7 @@ defmodule TheArk.Finances do
 
   alias TheArk.Finances.Finance
   alias TheArk.Transaction_details.Transaction_detail
+  alias TheArk.Notes.Note
 
   @doc """
   Returns the list of finances.
@@ -54,7 +55,10 @@ defmodule TheArk.Finances do
         order_by: ^date_order
       )
     )
-    |> Repo.preload(transaction_details: from(d in Transaction_detail, where: ^detail_conditions))
+    |> Repo.preload(
+      transaction_details: from(d in Transaction_detail, where: ^detail_conditions),
+      notes: from(n in Note, order_by: [desc: n.updated_at])
+    )
     |> Enum.reject(fn finance ->
       Enum.count(finance.transaction_details) == 0
     end)

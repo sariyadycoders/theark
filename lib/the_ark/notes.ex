@@ -18,7 +18,7 @@ defmodule TheArk.Notes do
 
   """
   def list_notes do
-    Repo.all(Note)
+    Repo.all(from(n in Note, order_by: [desc: n.id]))
   end
 
   @doc """
@@ -87,6 +87,11 @@ defmodule TheArk.Notes do
   """
   def delete_note(%Note{} = note) do
     Repo.delete(note)
+  end
+
+  def delete_note_by_id(id) do
+    get_note!(id)
+    |> delete_note()
   end
 
   @doc """

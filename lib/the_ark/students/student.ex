@@ -23,6 +23,7 @@ defmodule TheArk.Students.Student do
     belongs_to :class, TheArk.Classes.Class
     belongs_to :group, TheArk.Groups.Group
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
+    has_many :notes, TheArk.Notes.Note
 
     timestamps(type: :utc_datetime)
   end
