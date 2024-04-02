@@ -9,6 +9,7 @@ defmodule TheArk.Finances do
   alias TheArk.Finances.Finance
   alias TheArk.Transaction_details.Transaction_detail
   alias TheArk.Notes.Note
+  alias TheArk.Groups.Group
 
   @doc """
   Returns the list of finances.
@@ -21,9 +22,21 @@ defmodule TheArk.Finances do
   """
   def list_finances do
     Repo.all(Finance)
+    |> Repo.preload([
+      [group: from(g in Group, preload: :students)],
+      :transaction_details
+    ])
   end
 
-  def get_finances_for_group(group_id, title, type, order, t_id) do
+  def list_finances_of_students do
+    Repo.all(from(f in Finance, where: f.is_bill != true))
+    |> Repo.preload([
+      [group: from(g in Group, preload: :students)],
+      :transaction_details
+    ])
+  end
+
+  def get_finances_for_group(is_bill, group_id, title, type, order, t_id) do
     date_order = if order == "asc", do: [asc: :inserted_at], else: [desc: :inserted_at]
 
     detail_conditions =
@@ -49,9 +62,16 @@ defmodule TheArk.Finances do
         end
       end
 
+    group_id_or_bill =
+      if is_bill do
+        dynamic([f], f.is_bill == true and ilike(f.transaction_id, ^"%#{t_id}%"))
+      else
+        dynamic([f], f.group_id == ^group_id and ilike(f.transaction_id, ^"%#{t_id}%"))
+      end
+
     Repo.all(
       from(f in Finance,
-        where: f.group_id == ^group_id and ilike(f.transaction_id, ^"%#{t_id}%"),
+        where: ^group_id_or_bill,
         order_by: ^date_order
       )
     )

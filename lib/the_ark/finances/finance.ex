@@ -20,6 +20,5 @@ defmodule TheArk.Finances.Finance do
     |> cast_assoc(:transaction_details,
       with: &TheArk.Transaction_details.Transaction_detail.changeset/2
     )
-    |> validate_required([:group_id])
   end
 end
