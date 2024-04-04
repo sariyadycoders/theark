@@ -8,16 +8,13 @@ defmodule TheArkWeb.StudentsShowLive do
       get_percentage_of_marks: 2
     ]
 
-  import Ecto.Changeset
-  import Phoenix.HTML.Form
-
   alias TheArk.{
     Students,
     Classes,
     Students.Student,
-    Finances,
-    Finances.Finance,
-    Serials
+    Groups,
+    Notes,
+    Notes.Note
   }
 
   @options [
@@ -37,30 +34,30 @@ defmodule TheArkWeb.StudentsShowLive do
 
   @impl true
   def mount(%{"id" => student_id}, _, socket) do
+    groups = Groups.list_groups_for_assign()
+    student = Students.get_student!(String.to_integer(student_id))
+
+    group_options =
+      Enum.flat_map(groups, fn group ->
+        ["#{group.name}": group.id]
+      end)
+
     socket
     |> assign(options: @options)
-    |> assign(student: Students.get_student!(String.to_integer(student_id)))
-    |> assign(
-      finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
-    )
-    |> assign(finance_params: nil)
+    |> assign(student_id: student_id)
+    |> assign(collapsed_sections: ["notes"])
+    |> assign(note_changeset: Notes.change_note(%Note{}))
+    |> assign(group_options: group_options)
+    |> assign(student: student)
+    |> assign(group_id: student.group_id)
     |> assign(class_options: Classes.get_class_options())
     |> assign(is_leaving_form_open: false)
     |> assign(surety_of_reactivation: false)
     |> assign(student_leaving_changeset: Students.change_student_leaving(%Student{}))
     |> assign(is_leaving_button: true)
     |> assign(term_name: nil)
-    |> assign(transaction_details: %{})
+    |> assign(edit_note_id: 0)
     |> ok
-  end
-
-  @impl true
-  def handle_event("assign_finance_empty_changeset", _, socket) do
-    socket
-    |> assign(
-      finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
-    )
-    |> noreply()
   end
 
   @impl true
@@ -141,87 +138,120 @@ defmodule TheArkWeb.StudentsShowLive do
 
   @impl true
   def handle_event(
-        "finance_validate",
-        %{"finance" => finance_params} = _params,
-        socket
+        "assign_group",
+        %{"assign_group" => %{"group_id" => id}},
+        %{assigns: %{student: student}} = socket
       ) do
-    finance_changeset = Finances.change_finance(%Finance{}, finance_params)
+    group = Groups.get_group!(id)
+    {:ok, _student} = Students.update_student(student, %{group_id: String.to_integer(id)})
 
     socket
-    |> assign(finance_changeset: finance_changeset)
-    |> assign(finance_params: finance_params)
+    |> put_flash(:info, "Student successfully registered in #{group.name}")
     |> noreply()
   end
 
   @impl true
   def handle_event(
-        "add_more_detail",
-        _unsigned_params,
-        %{assigns: %{finance_params: finance_params}} = socket
+        "add_note",
+        %{"note" => params, "student_id" => id},
+        %{assigns: %{student_id: student_id}} = socket
       ) do
-    if finance_params do
-      {_, finance_params} =
-        get_and_update_in(finance_params["transaction_details"], fn data ->
-          no_of_details = length(Map.keys(data))
+    case Notes.create_note(Map.put(params, "student_id", id)) do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Note added successfully!")
+        |> assign(note_changeset: Notes.change_note(%Note{}))
+        |> assign(student: Students.get_student!(String.to_integer(student_id)))
+        |> noreply()
 
-          new_key = no_of_details |> Integer.to_string()
-          option = %{new_key => %{}}
-          {option, Map.merge(data, option)}
-        end)
+      {:error, changeset} ->
+        socket
+        |> assign(note_changeset: changeset)
+        |> noreply()
+    end
+  end
 
-      finance_changeset = Finances.change_finance(%Finance{}, finance_params)
+  @impl true
+  def handle_event("validate_note", %{"note" => params}, socket) do
+    socket
+    |> assign(note_changeset: Notes.change_note(%Note{}, params))
+    |> noreply()
+  end
 
-      socket
-      |> assign(finance_changeset: finance_changeset)
-      |> noreply()
-    else
-      socket
-      |> noreply()
+  @impl true
+  def handle_event(
+        "collapse",
+        %{"section_id" => id},
+        %{assigns: %{collapsed_sections: collapsed_sections}} = socket
+      ) do
+    collapsed_sections =
+      if id in collapsed_sections,
+        do: collapsed_sections -- [id],
+        else: collapsed_sections ++ [id]
+
+    socket
+    |> assign(collapsed_sections: collapsed_sections)
+    |> noreply()
+  end
+
+  def handle_event("edit_note_id", %{"note_id" => id}, socket) do
+    note = Notes.get_note!(id)
+    changeset = Notes.change_note(note)
+
+    socket
+    |> assign(note_changeset: changeset)
+    |> assign(edit_note_id: String.to_integer(id))
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "edit_note",
+        %{"note" => params, "note_id" => id},
+        %{assigns: %{student_id: student_id}} = socket
+      ) do
+    note = Notes.get_note!(id)
+
+    case Notes.update_note(note, params) do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Note updated successfully!")
+        |> assign(note_changeset: Notes.change_note(%Note{}))
+        |> assign(student: Students.get_student!(String.to_integer(student_id)))
+        |> noreply()
+
+      {:error, changeset} ->
+        socket
+        |> assign(note_changeset: changeset)
+        |> noreply()
     end
   end
 
   @impl true
   def handle_event(
-        "add_finance",
-        %{
-          "finance" => finance_params
-        } = _params,
-        %{assigns: %{finance_changeset: finance_changeset}} = socket
+        "delete_note",
+        %{"note_id" => id},
+        %{assigns: %{student_id: student_id}} = socket
       ) do
-    finance_changeset =
-      put_change(
-        finance_changeset,
-        :student_id,
-        Map.get(finance_params, "student_id") |> String.to_integer()
-      )
+    Notes.delete_note_by_id(id)
 
-    case Finances.create_finance(finance_changeset) do
-      {:ok, finance} ->
-        serial = Serials.get_serial_by_name("finance")
-        transaction_id = TheArkWeb.Home.generate_registration_number(serial.number)
-        Serials.update_serial(serial, %{"number" => transaction_id})
-        Finances.update_finance(finance, %{"transaction_id" => transaction_id})
-
-        socket
-        |> put_flash(:info, "Transaction successfully added!")
-        |> assign(
-          finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
-        )
-        |> assign(finance_params: nil)
-        |> noreply()
-
-      {:error, changeset} ->
-        socket
-        |> put_flash(:error, "Please fill details of transaction")
-        |> assign(finance_changeset: changeset)
-        |> noreply()
-    end
+    socket
+    |> put_flash(:info, "Note deleted successfully!")
+    |> assign(student: Students.get_student!(String.to_integer(student_id)))
+    |> noreply()
   end
 
   @impl true
-  def handle_event("go_to_finance", _unsigned_params, %{assigns: %{student: student}} = socket) do
+  def handle_event("empty_note", _unsigned_params, socket) do
     socket
-    |> redirect(to: "/students/#{student.id}/finances")
+    |> assign(note_changeset: Notes.change_note(%Note{}))
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("go_to_finance", _unsigned_params, %{assigns: %{group_id: group_id}} = socket) do
+    socket
+    |> redirect(to: "/groups/#{group_id}/finances")
     |> noreply()
   end
 
@@ -235,32 +265,42 @@ defmodule TheArkWeb.StudentsShowLive do
           <div class="ml-5">S/O <%= @student.father_name %></div>
         </div>
         <div class="flex gap-2">
-          <.button phx-click="go_to_finance">
-            See Finances
-          </.button>
-          <.button phx-click={
-            JS.push("assign_finance_empty_changeset") |> show_modal("add_student_finance")
-          }>
-            Add Finance
-          </.button>
+          <.form
+            :let={f}
+            for={}
+            as={:assign_group}
+            phx-submit="assign_group"
+            class="flex items-end gap-2"
+          >
+            <.input
+              field={f[:group_id]}
+              type="select"
+              label={"Assign Group to #{@student.name}"}
+              options={@group_options}
+            />
+
+            <.button>Confirm Group</.button>
+          </.form>
+          <div class="flex items-end">
+            <.button phx-click={JS.push("empty_note") |> show_modal("add_note")}>Add Note</.button>
+          </div>
+          <div class="flex items-end">
+            <.button phx-click="go_to_finance">See Finances</.button>
+          </div>
         </div>
       </div>
-
-      <.modal id="add_student_finance">
+      <.modal id="add_note">
         <.form
           :let={f}
-          for={@finance_changeset}
-          phx-change="finance_validate"
-          phx-submit="add_finance"
+          for={@note_changeset}
+          phx-submit="add_note"
+          phx-change="validate_note"
+          phx-value-student_id={@student.id}
         >
-          <.finance_form_fields form={f} options={@options} student={@student} />
-          <div class="flex justify-end mt-5">
-            <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
-              Add one more detail
-            </.button>
-          </div>
+          <.input field={f[:title]} type="text" label="Title" />
+          <.input field={f[:description]} type="textarea" label="Important Note" />
 
-          <.button class="mt-5" type="submit">Submit Finance</.button>
+          <.button class="mt-5">Add</.button>
         </.form>
       </.modal>
 
@@ -400,6 +440,51 @@ defmodule TheArkWeb.StudentsShowLive do
           </div>
         <% end %>
       </div>
+
+      <div class="border rounded-lg mt-5">
+        <div class="rounded-t-lg bg-gray-300 p-3 font-bold flex justify-between items-center">
+          <div>Important Notes</div>
+          <div phx-click="collapse" phx-value-section_id="notes" class="cursor-pointer">
+            <.icon name="hero-arrows-up-down" class="w-6 h-6" />
+          </div>
+        </div>
+        <div :if={"notes" not in @collapsed_sections} class="flex flex-col gap-2 p-5">
+          <%= for note <- @student.notes do %>
+            <div>
+              <span class="font-bold capitalize gap-2"><%= note.title %>:</span>
+              <span><%= note.description %></span>
+              <span>[Date: <%= Calendar.strftime(note.updated_at, "%d %B, %Y - %I:%M %P") %>]</span>
+              <span
+                phx-click={JS.push("edit_note_id") |> show_modal("edit_note_#{note.id}")}
+                phx-value-note_id={note.id}
+                class="cursor-pointer"
+              >
+                <.icon name="hero-pencil" class="h-4 w-4" />
+              </span>
+              <span phx-click="delete_note" phx-value-note_id={note.id} phx class="cursor-pointer">
+                <.icon name="hero-trash" class="h-4 w-4" />
+              </span>
+            </div>
+            <.modal id={"edit_note_#{note.id}"}>
+              <%= if @edit_note_id == note.id do %>
+                <.form
+                  :let={f}
+                  for={@note_changeset}
+                  phx-submit="edit_note"
+                  phx-value-note_id={note.id}
+                >
+                  <.input field={f[:title]} type="text" label="Title" />
+                  <.input field={f[:description]} type="textarea" label="Important Note" />
+
+                  <.button class="mt-5">Add</.button>
+                </.form>
+              <% end %>
+            </.modal>
+          <% end %>
+          <div :if={Enum.count(@student.notes) == 0}>No notes available for this student</div>
+        </div>
+      </div>
+
       <div class="flex gap-3">
         <.button phx-click={show_modal("student_transfer")} class="mt-5">
           Transfer Student
@@ -457,66 +542,6 @@ defmodule TheArkWeb.StudentsShowLive do
         </.form>
       </.modal>
     </div>
-    """
-  end
-
-  def finance_form_fields(assigns) do
-    ~H"""
-    <.input field={@form[:student_id]} type="hidden" value={@student.id} />
-    <.inputs_for :let={n} field={@form[:transaction_details]}>
-      <div class="grid grid-cols-4 gap-2 items-end">
-        <.input
-          field={n[:title]}
-          label="Title"
-          type="select"
-          options={@options -- ["All"]}
-          value={input_value(n, :title)}
-        />
-        <.input
-          field={n[:month]}
-          label="Month"
-          type="select"
-          options={[
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec"
-          ]}
-          value={input_value(n, :month)}
-          main_class={if input_value(n, :title) != "Monthly Fee", do: "hidden"}
-        />
-        <.input
-          field={n[:total_amount]}
-          label="Total"
-          type="number"
-          value={input_value(n, :total_amount)}
-        />
-        <.input
-          field={n[:paid_amount]}
-          label="Paid"
-          type="number"
-          value={input_value(n, :paid_amount)}
-        />
-        <div class="col-span-4 flex justify-end">
-          <.input
-            main_class="pb-3 pl-2"
-            field={n[:is_accected]}
-            label="Is Accepted?"
-            type="checkbox"
-            value={input_value(n, :is_accected)}
-          />
-        </div>
-      </div>
-      <hr :if={true} class="mt-2" />
-    </.inputs_for>
     """
   end
 end

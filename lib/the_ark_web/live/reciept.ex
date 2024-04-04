@@ -37,9 +37,23 @@ defmodule TheArkWeb.RecieptPrint do
         <div class="">
           <b>Date:</b> <%= Calendar.strftime(@finance.updated_at, "%d %B, %Y - %I:%M %P") %>
         </div>
-        <div class="grid grid-cols-5 p-2 border mt-2">
-          <div class="col-span-3"><b>Name: </b><%= get_student_full_name(@finance) %></div>
-          <div class="col-span-2"><b>Class: </b><%= @finance.student.class.name %></div>
+        <div class="p-2 border mt-2 text-sm">
+          <div class="col-span-3">
+            <b><%= if Enum.count(@finance.group.students) > 1, do: "Names", else: "Name" %>:</b>
+            <%= for {student, index} <- Enum.with_index(@finance.group.students) do %>
+              <span class="capitalize"><%= student.name %></span><span :if={
+                index + 1 < Enum.count(@finance.group.students)
+              }>, </span>
+            <% end %>
+          </div>
+          <div class="col-span-2">
+            <b><%= if Enum.count(@finance.group.students) > 1, do: "Classes", else: "Class" %>:</b>
+            <%= for {student, index} <- Enum.with_index(@finance.group.students) do %>
+              <span><%= student.class.name %></span><span :if={
+                index + 1 < Enum.count(@finance.group.students)
+              }>, </span>
+            <% end %>
+          </div>
         </div>
         <div class="mt-2 font-bold">Details:</div>
         <div class="grid grid-cols-6 font-bold text-sm pb-1 border-b-2">
@@ -104,12 +118,5 @@ defmodule TheArkWeb.RecieptPrint do
       detail.due_amount
     end)
     |> Enum.sum()
-  end
-
-  def get_student_full_name(finance) do
-    name = finance.student.name
-    father = finance.student.father_name
-
-    name <> " " <> father
   end
 end
