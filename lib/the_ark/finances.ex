@@ -37,16 +37,13 @@ defmodule TheArk.Finances do
     ])
   end
 
-  def detailed_indiv_finances(title, month) do
-    month = if month, do: month, else: "random"
-
+  def detailed_indiv_finances() do
     Repo.all(from(f in Class))
     |> Repo.preload(
       students: [
         group: [
           finances: [
-            transaction_details:
-              from(t in Transaction_detail, where: t.title == ^title and t.month == ^month)
+            transaction_details: from(t in Transaction_detail)
           ]
         ]
       ]
