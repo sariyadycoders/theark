@@ -10,6 +10,7 @@ defmodule TheArk.Finances do
   alias TheArk.Transaction_details.Transaction_detail
   alias TheArk.Notes.Note
   alias TheArk.Groups.Group
+  alias TheArk.Classes.Class
 
   @doc """
   Returns the list of finances.
@@ -34,6 +35,32 @@ defmodule TheArk.Finances do
       [group: from(g in Group, preload: :students)],
       :transaction_details
     ])
+  end
+
+  def detailed_indiv_finances(title, month) do
+    month = if month, do: month, else: "random"
+
+    Repo.all(from(f in Class))
+    |> Repo.preload(
+      students: [
+        group: [
+          finances: [
+            transaction_details:
+              from(t in Transaction_detail, where: t.title == ^title and t.month == ^month)
+          ]
+        ]
+      ]
+    )
+    |> Enum.map(fn class ->
+      Map.put(
+        class,
+        :students,
+        Enum.map(class.students, fn student ->
+          Map.put(student, :finances, student.group.finances)
+          |> Map.delete(:group)
+        end)
+      )
+    end)
   end
 
   def get_finances_for_group(is_bill, group_id, title, type, order, t_id) do

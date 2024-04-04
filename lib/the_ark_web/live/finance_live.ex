@@ -23,18 +23,36 @@ defmodule TheArkWeb.FinanceLive do
     "All"
   ]
 
+  @month_options [
+    "none",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
+  ]
+
   @impl true
   def mount(_, _, socket) do
-    students_finances = Finances.list_finances_of_students()
+    students_total_finances = Finances.list_finances_of_students()
 
     socket
-    |> assign(students_finances: students_finances)
+    |> assign(students_total_finances: students_total_finances)
+    |> assign(month_options: @month_options)
     |> assign(is_bill: true)
     |> assign(group_id: nil)
     |> assign(edit_note_id: 0)
     |> assign(edit_finance_id: 0)
     |> assign(group: nil)
     |> assign(finance_params: nil)
+    |> assign(month_choosen_for_fee_description: nil)
     |> assign(options: @options)
     |> assign(title: "All")
     |> assign(type: "All")
@@ -45,10 +63,24 @@ defmodule TheArkWeb.FinanceLive do
     |> assign(
       finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
     )
+    # having only bill
     |> assign_finances()
     |> assign_total_paid()
-    |> assign_total_due()
+    |> assign_total_student_due()
+    |> assign_due_bills()
+    |> assign_monthly_fee_desctiption()
     |> ok
+  end
+
+  def handle_event(
+        "choose_month_fee_description",
+        %{"choose_month" => %{"month" => month}},
+        socket
+      ) do
+    socket
+    |> assign(month_choosen_for_fee_description: month)
+    |> assign_monthly_fee_desctiption()
+    |> noreply()
   end
 
   @impl true
@@ -80,6 +112,44 @@ defmodule TheArkWeb.FinanceLive do
           <.button class="mt-5" type="submit">Submit Finance</.button>
         </.form>
       </.modal>
+
+      <div class="rounded-lg border border-4 p-5 mt-5">
+        <h1 class="font-bold text-2xl">Total Finances Calculations</h1>
+        <div class="grid grid-cols-4 gap-5 mt-5">
+          <div class="rounded-lg border-2 p-5">
+            <div>
+              Total Income
+            </div>
+            <div class="text-5xl font-bold text-center">
+              <%= @total_paid %>
+            </div>
+          </div>
+          <div class="rounded-lg border-2 p-5">
+            <div>
+              Total Due from Students
+            </div>
+            <div class="text-5xl font-bold text-center">
+              <%= @total_student_due %>
+            </div>
+          </div>
+          <div class="rounded-lg border-2 p-5">
+            <div>
+              Total Due Bills
+            </div>
+            <div class="text-5xl font-bold text-center">
+              <%= @due_bills %>
+            </div>
+          </div>
+          <div class="rounded-lg border-2 p-5">
+            <div>
+              Net Due
+            </div>
+            <div class="text-5xl font-bold text-center">
+              <%= @net_due %>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="border rounded-lg my-5">
         <div class="rounded-t-lg bg-gray-300 p-3 font-bold flex justify-between items-center">
@@ -127,22 +197,47 @@ defmodule TheArkWeb.FinanceLive do
         </div>
       </div>
 
-      <h1 class="font-bold text-2xl mby-5">Total Student's Finances Calculations</h1>
-      <div class="grid grid-cols-2 gap-5 mt-5 pl-5">
-        <div class="rounded-lg border-2 p-5">
-          <div>
-            Total Income
-          </div>
-          <div class="text-5xl font-bold text-center">
-            <%= @total_paid %>
+      <div class="border rounded-lg my-5">
+        <div class="rounded-t-lg bg-gray-300 p-3 font-bold flex justify-between items-center">
+          <div>Students Fee Description</div>
+          <div phx-click="collapse" phx-value-section_id="students_fee" class="cursor-pointer">
+            <.icon name="hero-arrows-up-down" class="w-6 h-6" />
           </div>
         </div>
-        <div class="rounded-lg border-2 p-5">
-          <div>
-            Total Due from Students
+
+        <div :if={"students_fee" in @collapsed_sections} class="flex flex-col p-5">
+          <div class="flex justify-end p-2 rounded-lg border">
+            <.form :let={f} for={} as={:choose_month} phx-change="choose_month_fee_description">
+              <.input
+                field={f[:month]}
+                type="select"
+                label="Choose month"
+                options={@month_options}
+                main_class="!mt-0"
+              />
+            </.form>
           </div>
-          <div class="text-5xl font-bold text-center">
-            <%= @total_due %>
+          <div>
+            <div class="my-5 font-bold text-xl mx-8">
+              Non-Payee Students
+            </div>
+            <%= for class <- @indiv_fee_description do %>
+              <div
+                :if={
+                  Enum.count(get_non_payee_students(class, @month_choosen_for_fee_description)) > 0
+                }
+                class="my-5 rounded-lg border mx-8 p-5"
+              >
+                <div class="text-lg font-bold"><%= class.name %></div>
+                <div class="grid grid-cols-3 border mt-5">
+                  <%= for student <- get_non_payee_students(class, @month_choosen_for_fee_description) do %>
+                    <div class="p-2 border capitalize">
+                      <%= student.name <> " " <> student.father_name %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
           </div>
         </div>
       </div>
@@ -150,7 +245,7 @@ defmodule TheArkWeb.FinanceLive do
     """
   end
 
-  defp assign_total_paid(%{assigns: %{students_finances: finances}} = socket) do
+  defp assign_total_paid(%{assigns: %{students_total_finances: finances}} = socket) do
     total_paid =
       Enum.filter(finances, fn finance ->
         !finance.is_bill
@@ -167,7 +262,7 @@ defmodule TheArkWeb.FinanceLive do
     |> assign(total_paid: total_paid)
   end
 
-  defp assign_total_due(%{assigns: %{students_finances: finances}} = socket) do
+  defp assign_total_student_due(%{assigns: %{students_total_finances: finances}} = socket) do
     total_paid =
       Enum.filter(finances, fn finance ->
         !finance.is_bill
@@ -181,7 +276,47 @@ defmodule TheArkWeb.FinanceLive do
       |> Enum.sum()
 
     socket
-    |> assign(total_due: total_paid)
+    |> assign(total_student_due: total_paid)
+  end
+
+  defp assign_due_bills(
+         %{assigns: %{finances: finances, total_student_due: total_student_due}} = socket
+       ) do
+    due_bills =
+      Enum.map(finances, fn finance ->
+        Enum.map(finance.transaction_details, fn detail ->
+          detail.due_amount
+        end)
+        |> Enum.sum()
+      end)
+      |> Enum.sum()
+
+    net_due = total_student_due - due_bills
+
+    socket
+    |> assign(due_bills: due_bills)
+    |> assign(net_due: net_due)
+  end
+
+  defp assign_monthly_fee_desctiption(
+         %{assigns: %{month_choosen_for_fee_description: month_choosen_for_fee_description}} =
+           socket
+       ) do
+    indiv_fee_description =
+      Finances.detailed_indiv_finances("Monthly Fee", month_choosen_for_fee_description)
+
+    socket
+    |> assign(indiv_fee_description: indiv_fee_description)
+  end
+
+  defp get_non_payee_students(class, month_choosen_for_fee_description) do
+    Enum.reject(class.students, fn student ->
+      Enum.any?(student.finances, fn finance ->
+        Enum.any?(finance.transaction_details, fn detail ->
+          detail.title == "Monthly Fee" and detail.month == month_choosen_for_fee_description
+        end)
+      end)
+    end)
   end
 
   @impl true

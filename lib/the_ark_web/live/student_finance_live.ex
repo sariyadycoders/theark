@@ -125,7 +125,6 @@ defmodule TheArkWeb.StudentFinanceLive do
         } = _params,
         %{assigns: %{finance_changeset: finance_changeset}} = socket
       ) do
-
     case Finances.update_finance(finance_changeset) do
       {:ok, _finance} ->
         socket
@@ -287,7 +286,9 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "collapse",
         %{"section_id" => id},
-        %{assigns: %{collapsed_sections: collapsed_sections, finance_changeset: finance_changeset}} = socket
+        %{
+          assigns: %{collapsed_sections: collapsed_sections, finance_changeset: finance_changeset}
+        } = socket
       ) do
     collapsed_sections =
       if id in collapsed_sections,
@@ -570,7 +571,7 @@ defmodule TheArkWeb.StudentFinanceLive do
           phx-value-finance_id={finance.id}
         >
           <%= if @edit_finance_id == finance.id do %>
-            <.finance_form_fields form={f} group={@group} is_bill={@is_bill}  options={@options} />
+            <.finance_form_fields form={f} group={@group} is_bill={@is_bill} options={@options} />
           <% end %>
           <div class="flex justify-end mt-5">
             <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
