@@ -14,7 +14,6 @@ defmodule TheArkWeb.FinanceLive do
   @student_finance_options [
     "All",
     "Books",
-    "Copies",
     "Monthly Fee",
     "1st Term Paper Fund",
     "2nd Term Paper Fund",
@@ -23,8 +22,7 @@ defmodule TheArkWeb.FinanceLive do
     "Tour Fund",
     "Party Fund",
     "Registration Fee",
-    "Admission Fee",
-    "Remainings"
+    "Admission Fee"
   ]
 
   @options [
@@ -71,6 +69,7 @@ defmodule TheArkWeb.FinanceLive do
     |> assign(finance_params: nil)
     |> assign(non_payee_type: "All")
     |> assign(month_choosen_for_non_payee_description: nil)
+    |> assign(year_choosen_for_non_payee_description: Date.utc_today().year)
     |> assign(options: @options)
     |> assign(title: "All")
     |> assign(type: "All")
@@ -92,22 +91,24 @@ defmodule TheArkWeb.FinanceLive do
 
   def handle_event(
         "choose_non_payee_description",
-        %{"choose_filter" => %{"type" => type, "month" => month}},
+        %{"choose_filter" => %{"type" => type, "month" => month, "year" => year}},
         socket
       ) do
     socket
     |> assign(month_choosen_for_non_payee_description: month)
+    |> assign(year_choosen_for_non_payee_description: String.to_integer(year))
     |> assign(non_payee_type: type)
     |> noreply()
   end
 
   def handle_event(
         "choose_non_payee_description",
-        %{"choose_filter" => %{"type" => type}},
+        %{"choose_filter" => %{"type" => type, "year" => year}},
         socket
       ) do
     socket
     |> assign(non_payee_type: type)
+    |> assign(year_choosen_for_non_payee_description: String.to_integer(year))
     |> noreply()
   end
 
@@ -221,7 +222,9 @@ defmodule TheArkWeb.FinanceLive do
               </div>
             </.form>
           </div>
-          <.finances_entries {assigns} />
+          <div class="max-h-[400px] overflow-y-scroll">
+            <.finances_entries {assigns} />
+          </div>
         </div>
       </div>
 
@@ -258,12 +261,17 @@ defmodule TheArkWeb.FinanceLive do
                   main_class="!mt-0"
                 />
               <% end %>
+              <% current_year = Date.utc_today().year %>
+              <.input
+                field={f[:year]}
+                type="select"
+                label="Choose Year"
+                options={[current_year, current_year - 1, current_year - 2]}
+                main_class="!mt-0"
+              />
             </.form>
           </div>
-          <div>
-            <div class="my-5 font-bold text-xl mx-8">
-              Non-Payee Students
-            </div>
+          <div class="max-h-[400px] overflow-y-scroll">
             <%= for class <- @detailed_indiv_finances do %>
               <div
                 :if={
@@ -271,6 +279,7 @@ defmodule TheArkWeb.FinanceLive do
                     get_non_payee_students(
                       class,
                       @month_choosen_for_non_payee_description,
+                      @year_choosen_for_non_payee_description,
                       @non_payee_type
                     )
                   ) > 0
@@ -279,9 +288,37 @@ defmodule TheArkWeb.FinanceLive do
               >
                 <div class="text-lg font-bold"><%= class.name %></div>
                 <div class="grid grid-cols-3 border mt-5">
-                  <%= for student <- get_non_payee_students(class, @month_choosen_for_non_payee_description, @non_payee_type) do %>
+                  <%= for student <- get_non_payee_students(class, @month_choosen_for_non_payee_description, @year_choosen_for_non_payee_description, @non_payee_type) do %>
                     <div class="p-2 border capitalize">
                       <%= student.name <> " " <> student.father_name %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <div class="border rounded-lg my-5">
+        <div class="rounded-t-lg bg-gray-300 p-3 font-bold flex justify-between items-center">
+          <div>Students List (having Dues)</div>
+          <div phx-click="collapse" phx-value-section_id="students_dues" class="cursor-pointer">
+            <.icon name="hero-arrows-up-down" class="w-6 h-6" />
+          </div>
+        </div>
+
+        <div :if={"students_dues" in @collapsed_sections} class="flex flex-col p-5">
+          <div class="flex flex-col gap-5 max-h-[400px] overflow-y-scroll">
+            <%= for class <- @detailed_indiv_finances do %>
+              <div :if={Enum.count(get_students_having_dues(class)) > 0} class="rounded-lg border p-5">
+                <div class="text-lg font-bold"><%= class.name %></div>
+                <div class="grid grid-cols-3 border mt-5">
+                  <%= for student <- get_students_having_dues(class) do %>
+                    <div class="p-2 border capitalize">
+                      <a href={"/groups/#{student.group_id}/finances"}>
+                        <%= student.name <> " " <> student.father_name %>
+                      </a>
                     </div>
                   <% end %>
                 </div>
@@ -347,37 +384,53 @@ defmodule TheArkWeb.FinanceLive do
     |> assign(net_due: net_due)
   end
 
-  defp assign_detailed_description(
-         %{
-           assigns: %{
-             month_choosen_for_non_payee_description: month_choosen_for_non_payee_description
-           }
-         } = socket
-       ) do
+  defp assign_detailed_description(socket) do
     detailed_indiv_finances = Finances.detailed_indiv_finances()
-
-    IO.inspect(detailed_indiv_finances)
 
     socket
     |> assign(detailed_indiv_finances: detailed_indiv_finances)
   end
 
-  defp get_non_payee_students(class, month_choosen_for_non_payee_description, "Monthly Fee") do
+  defp get_non_payee_students(
+         class,
+         month_choosen_for_non_payee_description,
+         year_choosen_for_non_payee_description,
+         "Monthly Fee"
+       ) do
     Enum.reject(class.students, fn student ->
       Enum.any?(student.finances, fn finance ->
         Enum.any?(finance.transaction_details, fn detail ->
           detail.title == "Monthly Fee" and
-            detail.month == month_choosen_for_non_payee_description and detail.due_amount == 0
+            detail.month == month_choosen_for_non_payee_description and
+            detail.inserted_at.year == year_choosen_for_non_payee_description and
+            detail.due_amount == 0
         end)
       end)
     end)
   end
 
-  defp get_non_payee_students(class, _month_choosen_for_non_payee_description, non_payee_type) do
+  defp get_non_payee_students(
+         class,
+         _month_choosen_for_non_payee_description,
+         year_choosen_for_non_payee_description,
+         non_payee_type
+       ) do
     Enum.reject(class.students, fn student ->
       Enum.any?(student.finances, fn finance ->
         Enum.any?(finance.transaction_details, fn detail ->
-          detail.title == non_payee_type and detail.due_amount == 0
+          detail.title == non_payee_type and
+            detail.inserted_at.year == year_choosen_for_non_payee_description and
+            detail.due_amount == 0
+        end)
+      end)
+    end)
+  end
+
+  defp get_students_having_dues(class) do
+    Enum.reject(class.students, fn student ->
+      Enum.all?(student.finances, fn finance ->
+        Enum.all?(finance.transaction_details, fn detail ->
+          detail.due_amount == 0
         end)
       end)
     end)

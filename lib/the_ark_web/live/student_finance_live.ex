@@ -1,6 +1,5 @@
 defmodule TheArkWeb.StudentFinanceLive do
   use TheArkWeb, :live_view
-  use Timex
 
   import Ecto.Changeset
   import Phoenix.HTML.Form
@@ -98,14 +97,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         |> assign(
           finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
         )
-        |> then(fn socket ->
-          if !Map.get(finance_params, "is_bill") do
-            socket
-            |> assign_finances()
-          else
-            socket
-          end
-        end)
+        |> assign_finances()
         |> assign(finance_params: nil)
         |> noreply()
 
@@ -204,7 +196,7 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "delete",
         %{"finance_id" => id},
-        %{assigns: %{group_id: group_id}} = socket
+        socket
       ) do
     Finances.delete_finance_by_id(id)
 
@@ -258,7 +250,7 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "add_note",
         %{"note" => params, "finance_id" => id},
-        %{assigns: %{group_id: group_id}} = socket
+        socket
       ) do
     case Notes.create_note(Map.put(params, "finance_id", id)) do
       {:ok, _} ->
@@ -315,7 +307,7 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "edit_note",
         %{"note" => params, "note_id" => id},
-        %{assigns: %{group_id: group_id}} = socket
+        socket
       ) do
     note = Notes.get_note!(id)
 
@@ -338,7 +330,7 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "delete_note",
         %{"note_id" => id},
-        %{assigns: %{group_id: group_id}} = socket
+        socket
       ) do
     Notes.delete_note_by_id(id)
 
@@ -467,9 +459,12 @@ defmodule TheArkWeb.StudentFinanceLive do
           <%= for detail <- finance.transaction_details do %>
             <div class="flex items-center">
               <div class="mr-1">
-                <b>Title:</b> <%= if detail.title != "Monthly Fee",
-                  do: detail.title,
-                  else: "#{detail.month} Fee" %>
+                <b>Title:</b>
+                <%= case detail.title do
+                  "Monthly Fee" -> "#{detail.month} #{detail.inserted_at.year} Fee"
+                  "Rent" -> "#{detail.month} #{detail.inserted_at.year} Rent"
+                  _ -> detail.title
+                end %>
               </div>
               |
               <div class="mx-1"><b>T. Amount:</b> <%= detail.total_amount %></div>
@@ -493,11 +488,13 @@ defmodule TheArkWeb.StudentFinanceLive do
               phx-value-finance_id={finance.id}
             />
             <.icon_button icon="hero-trash" phx-click="delete" phx-value-finance_id={finance.id} />
-            <.icon_button
-              icon="hero-document-text"
-              phx-click="prind_reciept"
-              phx-value-finance_id={finance.id}
-            />
+            <%= if !@is_bill do %>
+              <.icon_button
+                icon="hero-document-text"
+                phx-click="prind_reciept"
+                phx-value-finance_id={finance.id}
+              />
+            <% end %>
             <.icon_button
               icon="hero-plus"
               phx-click={JS.push("empty_note") |> show_modal("add_note_#{finance.id}")}
