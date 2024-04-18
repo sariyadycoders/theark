@@ -12,6 +12,7 @@ defmodule TheArk.Students do
   alias TheArk.Notes.Note
 
   alias TheArk.Students.Student
+  alias TheArk.Attendances
 
   @doc """
   Returns the list of students.
@@ -107,6 +108,23 @@ defmodule TheArk.Students do
     |> Repo.insert()
     |> create_subjects()
     |> create_group()
+    |> create_attendance_of_month()
+  end
+
+  def create_attendance_of_month({:ok, student}) do
+    for day_number <- 1..Timex.days_in_month(Timex.today()) do
+      beginning_of_month = Timex.beginning_of_month(Timex.today())
+      date = Date.add(beginning_of_month, day_number-1)
+      entry = "M"
+
+      Attendances.create_attendance(%{date: date, entry: entry, student_id: student.id})
+    end
+
+    {:ok, student}
+  end
+
+  def create_attendance_of_month({:error, _} = error) do
+    error
   end
 
   def create_group({:ok, student}) do

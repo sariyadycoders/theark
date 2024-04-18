@@ -38,6 +38,13 @@ defmodule TheArk.Classes do
     ])
   end
 
+  def get_class_for_attendance!(id) do
+    Repo.get!(Class, id)
+    |> Repo.preload([
+      students: [:attendances, subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
+    ])
+  end
+
   def get_class_for_teacher_collective_result(class_id, teacher_id) do
     Repo.get!(Class, class_id)
     |> Repo.preload([
