@@ -73,6 +73,15 @@ defmodule TheArk.Students do
     |> Repo.preload(subjects: [:results])
   end
 
+  def get_student_options_for_attendance(id) do
+    Repo.all(
+      from(s in Student,
+        where: s.class_id == ^id,
+        select: %{id: s.id, label: s.name, selected: false}
+      )
+    )
+  end
+
   def get_students_for_search_results(name) do
     Repo.all(from(s in Student, where: ilike(s.name, ^"%#{name}%")))
     |> Repo.preload(:class)

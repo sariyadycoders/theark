@@ -37,6 +37,10 @@ defmodule TheArk.Attendances do
   """
   def get_attendance!(id), do: Repo.get!(Attendance, id)
 
+  def get_one_attendance(student_id, date) do
+    Repo.one(from(a in Attendance, where: a.student_id == ^student_id and a.date == ^date))
+  end
+
   @doc """
   Creates a attendance.
 

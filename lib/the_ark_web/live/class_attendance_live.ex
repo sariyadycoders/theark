@@ -4,19 +4,32 @@ defmodule TheArkWeb.ClassAttendanceLive do
   alias TheArk.{
     Classes,
     Attendances,
-    Attendances.Attendance
+    Attendances.Attendance,
+    Students
   }
+
+  alias Phoenix.LiveView.Components.MultiSelect
 
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     class = Classes.get_class_for_attendance!(class_id)
+    student_options = Students.get_student_options_for_attendance(String.to_integer(class_id))
 
     socket
     |> assign(class: class)
+    |> assign(student_options: student_options)
     |> assign(attendance_changeset: Attendances.change_attendance(%Attendance{}))
     |> assign(edit_attendance_id: 0)
     |> assign(class_id: String.to_integer(class_id))
+    |> assign(add_attendance_date: nil)
     |> ok
+  end
+
+  @impl true
+  def handle_info({:updated_options, options}, socket) do
+    socket
+    |> assign(student_options: options)
+    |> noreply()
   end
 
   @impl true
@@ -47,13 +60,98 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
+  def handle_event("validate", %{"attendance" => %{"date" => date}}, socket) do
+    socket
+    |> assign(add_attendance_date: date)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "add_attendance",
+        _params,
+        %{
+          assigns: %{
+            student_options: student_options,
+            add_attendance_date: add_attendance_date,
+            class_id: class_id
+          }
+        } = socket
+      ) do
+    case add_attendance_date do
+      nil ->
+        socket
+        |> put_flash(:error, "Choose date of attendance!")
+        |> noreply()
+
+      "" ->
+        socket
+        |> put_flash(:error, "Choose date of attendance!")
+        |> noreply()
+
+      _ ->
+        {:ok, date} = Date.from_iso8601(add_attendance_date)
+
+        absent_student_ids =
+          Enum.filter(student_options, fn option ->
+            option.selected
+          end)
+          |> Enum.map(fn student ->
+            student.id
+          end)
+
+        present_student_ids =
+          Enum.filter(student_options, fn option ->
+            !option.selected
+          end)
+          |> Enum.map(fn student ->
+            student.id
+          end)
+
+        for id <- absent_student_ids do
+          attendance = Attendances.get_one_attendance(id, date)
+          Attendances.update_attendance(attendance, %{entry: "Absent"})
+        end
+
+        for id <- present_student_ids do
+          attendance = Attendances.get_one_attendance(id, date)
+          Attendances.update_attendance(attendance, %{entry: "Present"})
+        end
+
+        class = Classes.get_class_for_attendance!(class_id)
+        student_options = Students.get_student_options_for_attendance(class_id)
+
+        socket
+        |> put_flash(:info, "Attendance successfully added!")
+        |> assign(add_attendance_date: nil)
+        |> assign(class: class)
+        |> assign(student_options: student_options)
+        |> noreply()
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
-        <.button phx-click="go_to_registration">Add Attendance</.button>
+        <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
       </div>
+      <.modal id="add_attendance">
+        <.form :let={f} for={} as={:attendance} phx-submit="add_attendance" phx-change="validate">
+          <.input field={f[:date]} label="Date of attendance" type="date" />
+          <MultiSelect.multi_select
+            id={"students_#{@class.id}"}
+            on_change={fn opts -> send(self(), {:updated_options, opts}) end}
+            form={f}
+            options={@student_options}
+            placeholder="Select Absent Students..."
+            title="Select Absent Students"
+          />
+          <.button class="mt-10">Submit</.button>
+        </.form>
+      </.modal>
       <div class="font-bold flex items-center justify-between mt-5">
         <div class="border px-2 flex items-center w-40 h-16 py-1">
           <div>Student Name</div>
