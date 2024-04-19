@@ -114,8 +114,8 @@ defmodule TheArk.Students do
   def create_attendance_of_month({:ok, student}) do
     for day_number <- 1..Timex.days_in_month(Timex.today()) do
       beginning_of_month = Timex.beginning_of_month(Timex.today())
-      date = Date.add(beginning_of_month, day_number-1)
-      entry = "M"
+      date = Date.add(beginning_of_month, day_number - 1)
+      entry = "Not Marked Yet"
 
       Attendances.create_attendance(%{date: date, entry: entry, student_id: student.id})
     end

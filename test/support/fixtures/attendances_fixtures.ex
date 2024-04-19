@@ -10,9 +10,7 @@ defmodule TheArk.AttendancesFixtures do
   def attendance_fixture(attrs \\ %{}) do
     {:ok, attendance} =
       attrs
-      |> Enum.into(%{
-
-      })
+      |> Enum.into(%{})
       |> TheArk.Attendances.create_attendance()
 
     attendance

@@ -23,7 +23,19 @@ defmodule TheArk.Attendances.Attendance do
   @doc false
   def changeset(attendance, attrs) do
     attendance
-    |> cast(attrs, [:date, :entry, :is_monthly, :number_of_leaves, :leave_days, :number_of_absents, :absent_days, :number_of_half_leaves, :half_leave_days, :teacher_id, :student_id])
+    |> cast(attrs, [
+      :date,
+      :entry,
+      :is_monthly,
+      :number_of_leaves,
+      :leave_days,
+      :number_of_absents,
+      :absent_days,
+      :number_of_half_leaves,
+      :half_leave_days,
+      :teacher_id,
+      :student_id
+    ])
     |> validate_required([])
   end
 end

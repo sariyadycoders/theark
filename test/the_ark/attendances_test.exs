@@ -34,12 +34,16 @@ defmodule TheArk.AttendancesTest do
       attendance = attendance_fixture()
       update_attrs = %{}
 
-      assert {:ok, %Attendance{} = attendance} = Attendances.update_attendance(attendance, update_attrs)
+      assert {:ok, %Attendance{} = attendance} =
+               Attendances.update_attendance(attendance, update_attrs)
     end
 
     test "update_attendance/2 with invalid data returns error changeset" do
       attendance = attendance_fixture()
-      assert {:error, %Ecto.Changeset{}} = Attendances.update_attendance(attendance, @invalid_attrs)
+
+      assert {:error, %Ecto.Changeset{}} =
+               Attendances.update_attendance(attendance, @invalid_attrs)
+
       assert attendance == Attendances.get_attendance!(attendance.id)
     end
 
