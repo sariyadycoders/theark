@@ -5,6 +5,7 @@ defmodule TheArk.Repo.Migrations.CreateFinances do
     create table(:finances) do
       add :transaction_id, :string
       add :is_bill, :boolean, default: false
+      add :absent_fine_date, :date
 
       timestamps(type: :utc_datetime)
     end

@@ -26,7 +26,9 @@ defmodule TheArkWeb.StudentFinanceLive do
     "Party Fund",
     "Registration Fee",
     "Admission Fee",
-    "Remainings"
+    "Remainings",
+    "Fine",
+    "Absent Fine"
   ]
 
   @impl true
@@ -86,12 +88,7 @@ defmodule TheArkWeb.StudentFinanceLive do
       end
 
     case Finances.create_finance(finance_changeset) do
-      {:ok, finance} ->
-        serial = Serials.get_serial_by_name("finance")
-        transaction_id = TheArkWeb.Home.generate_registration_number(serial.number)
-        Serials.update_serial(serial, %{"number" => transaction_id})
-        Finances.update_finance(finance, %{"transaction_id" => transaction_id})
-
+      {:ok, _finance} ->
         socket
         |> put_flash(:info, "Transaction successfully added!")
         |> assign(
@@ -685,10 +682,10 @@ defmodule TheArkWeb.StudentFinanceLive do
         <div class="col-span-4 flex justify-end">
           <.input
             main_class="pb-3 pl-2"
-            field={n[:is_accected]}
+            field={n[:is_accepted]}
             label="Is Accepted?"
             type="checkbox"
-            value={input_value(n, :is_accected)}
+            value={input_value(n, :is_accepted)}
           />
         </div>
       </div>

@@ -4,8 +4,8 @@ defmodule TheArk.Finances do
   """
 
   import Ecto.Query, warn: false
+  alias TheArk.Serials
   alias TheArk.Repo
-
   alias TheArk.Finances.Finance
   alias TheArk.Transaction_details.Transaction_detail
   alias TheArk.Notes.Note
@@ -147,8 +147,17 @@ defmodule TheArk.Finances do
   """
   def create_finance(changeset) do
     Repo.insert_or_update(changeset)
+    |> create_serial()
   end
 
+  def create_serial({:ok, finance}) do
+    transaction_id = Serials.get_transaction_id("finance")
+    update_finance(finance, %{"transaction_id" => transaction_id})
+  end
+
+  def create_serial({:error, _changeset} = error) do
+    error
+  end
   @doc """
   Updates a finance.
 
@@ -189,6 +198,13 @@ defmodule TheArk.Finances do
 
   def delete_finance_by_id(id) do
     finance = get_finance!(id)
+    delete_finance(finance)
+  end
+
+  def delete_absent_fine(date, group_id) do
+    finance =
+      Repo.one(from(f in Finance, where: f.absent_fine_date == ^date and f.group_id == ^group_id))
+
     delete_finance(finance)
   end
 

@@ -5,7 +5,9 @@ defmodule TheArkWeb.ClassAttendanceLive do
     Classes,
     Attendances,
     Attendances.Attendance,
-    Students
+    Students,
+    Finances,
+    Finances.Finance
   }
 
   alias Phoenix.LiveView.Components.MultiSelect
@@ -49,9 +51,33 @@ defmodule TheArkWeb.ClassAttendanceLive do
         %{"attendance" => params},
         %{assigns: %{edit_attendance_id: edit_attendance_id, class_id: class_id}} = socket
       ) do
-    attendance = Attendances.get_attendance!(edit_attendance_id)
+    prev_attendance = Attendances.get_attendance!(edit_attendance_id)
 
-    {:ok, _} = Attendances.update_attendance(attendance, params)
+    {:ok, new_attendance} = Attendances.update_attendance(prev_attendance, params)
+
+    if prev_attendance.entry == "Absent" and new_attendance.entry != "Absent" do
+      group_id = Students.get_group_id_only(new_attendance.student_id)
+      Finances.delete_absent_fine(prev_attendance.date, group_id)
+    end
+
+    if prev_attendance.entry != "Absent" and new_attendance.entry == "Absent" do
+      group_id = Students.get_group_id_only(new_attendance.student_id)
+
+      Finances.change_finance(%Finance{}, %{
+        group_id: group_id,
+        absent_fine_date: new_attendance.date,
+        transaction_details: [
+          %{
+            title: "Absent Fine",
+            total_amount: 100,
+            paid_amount: 0,
+            absent_fine_date: new_attendance.date
+          }
+        ]
+      })
+      |> Finances.create_finance()
+    end
+
     class = Classes.get_class_for_attendance!(class_id)
 
     socket
@@ -109,13 +135,32 @@ defmodule TheArkWeb.ClassAttendanceLive do
           end)
 
         for id <- absent_student_ids do
-          attendance = Attendances.get_one_attendance(id, date)
-          Attendances.update_attendance(attendance, %{entry: "Absent"})
+          prev_attendance = Attendances.get_one_attendance(id, date)
+          Attendances.update_attendance(prev_attendance, %{entry: "Absent"})
+          group_id = Students.get_group_id_only(id)
+
+          if prev_attendance.entry != "Absent" do
+            Finances.change_finance(%Finance{}, %{
+              group_id: group_id,
+              absent_fine_date: date,
+              transaction_details: [
+                %{title: "Absent Fine", total_amount: 100, paid_amount: 0, absent_fine_date: date}
+              ]
+            })
+            |> Finances.create_finance()
+          end
         end
 
         for id <- present_student_ids do
-          attendance = Attendances.get_one_attendance(id, date)
-          Attendances.update_attendance(attendance, %{entry: "Present"})
+          prev_attendance = Attendances.get_one_attendance(id, date)
+
+          {:ok, new_attendance} =
+            Attendances.update_attendance(prev_attendance, %{entry: "Present"})
+
+          if prev_attendance.entry == "Absent" do
+            group_id = Students.get_group_id_only(new_attendance.student_id)
+            Finances.delete_absent_fine(prev_attendance.date, group_id)
+          end
         end
 
         class = Classes.get_class_for_attendance!(class_id)

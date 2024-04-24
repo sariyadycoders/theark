@@ -68,6 +68,10 @@ defmodule TheArk.Students do
     Repo.get!(Student, id)
   end
 
+  def get_group_id_only(student_id) do
+    Repo.one(from(s in Student, where: s.id == ^student_id, select: s.group_id))
+  end
+
   def get_students_by_class_id(id) do
     Repo.all(from(s in Student, where: s.class_id == ^id))
     |> Repo.preload(subjects: [:results])
