@@ -127,7 +127,16 @@ defmodule TheArk.Finances do
     |> Repo.preload(:transaction_details)
   end
 
-  def get_finance_for_reciept(id) do
+  # def get_finances_of_absentees_of_month(month_number, class_id) do
+  #   Repo.all(from(f in Finance,
+  #     join: g in Group, on: f.group_id == g.id,
+  #     join: s in Student, on: g.student_id == s.id,
+  #     where: s.class_id == ^class_id,
+  #     where: f.absent_fine_date.month == ^month_number,
+  #   ))
+  # end
+
+  def get_finance_for_receipt(id) do
     Repo.get!(Finance, id)
     |> Repo.preload(:transaction_details)
     |> Repo.preload(group: [students: :class])
@@ -158,6 +167,7 @@ defmodule TheArk.Finances do
   def create_serial({:error, _changeset} = error) do
     error
   end
+
   @doc """
   Updates a finance.
 

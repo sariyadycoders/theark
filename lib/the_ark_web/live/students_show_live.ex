@@ -24,12 +24,12 @@ defmodule TheArkWeb.StudentsShowLive do
     "1st Term Paper Fund",
     "2nd Term Paper Fund",
     "3rd Term Paper Fund",
-    "Anual Charges",
+    "Annual Charges",
     "Tour Fund",
     "Party Fund",
     "Registration Fee",
     "Admission Fee",
-    "Remainings"
+    "Remaining"
   ]
 
   @impl true

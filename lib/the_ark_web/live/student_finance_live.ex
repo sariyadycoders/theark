@@ -7,7 +7,6 @@ defmodule TheArkWeb.StudentFinanceLive do
   alias TheArk.{
     Finances,
     Finances.Finance,
-    Serials,
     Groups,
     Notes,
     Notes.Note
@@ -21,12 +20,12 @@ defmodule TheArkWeb.StudentFinanceLive do
     "1st Term Paper Fund",
     "2nd Term Paper Fund",
     "3rd Term Paper Fund",
-    "Anual Charges",
+    "Annual Charges",
     "Tour Fund",
     "Party Fund",
     "Registration Fee",
     "Admission Fee",
-    "Remainings",
+    "Remaining",
     "Fine",
     "Absent Fine"
   ]
@@ -54,13 +53,13 @@ defmodule TheArkWeb.StudentFinanceLive do
     |> assign(sort: "Descending")
     |> assign(t_id: "")
     |> assign_finances()
-    |> assign_total_due_amout()
+    |> assign_total_due_amount()
     |> ok
   end
 
-  def handle_event("prind_reciept", %{"finance_id" => id}, socket) do
+  def handle_event("print_receipt", %{"finance_id" => id}, socket) do
     socket
-    |> redirect(to: "/reciept/#{String.to_integer(id)}")
+    |> redirect(to: "/receipt/#{String.to_integer(id)}")
     |> noreply()
   end
 
@@ -488,7 +487,7 @@ defmodule TheArkWeb.StudentFinanceLive do
             <%= if !@is_bill do %>
               <.icon_button
                 icon="hero-document-text"
-                phx-click="prind_reciept"
+                phx-click="print_receipt"
                 phx-value-finance_id={finance.id}
               />
             <% end %>
@@ -592,7 +591,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     end
   end
 
-  defp assign_total_due_amout(%{assigns: %{finances: finances}} = socket) do
+  defp assign_total_due_amount(%{assigns: %{finances: finances}} = socket) do
     due_amount =
       Enum.map(finances, fn fin ->
         Enum.map(fin.transaction_details, fn detail ->

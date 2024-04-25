@@ -1,11 +1,11 @@
-defmodule TheArkWeb.RecieptPrint do
+defmodule TheArkWeb.ReceiptPrint do
   use TheArkWeb, :live_view
 
   alias TheArk.Finances
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    finance = Finances.get_finance_for_reciept(id)
+    finance = Finances.get_finance_for_receipt(id)
 
     socket
     |> assign(finance: finance)
@@ -29,7 +29,7 @@ defmodule TheArkWeb.RecieptPrint do
           The Ark Montessori School System
         </div>
         <div class="text-xl text-center">
-          RECIEPT
+          receipt
         </div>
         <div class="mt-2">
           <b>Transaction ID:</b> <%= @finance.transaction_id %>

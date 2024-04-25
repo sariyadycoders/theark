@@ -38,7 +38,7 @@ defmodule TheArkWeb.Router do
     live "/teachers/:id/result", TeacherResultLive
     live "/admissions", AdmissionLive
     live "/finances", FinanceLive
-    live "/reciept/:id", RecieptPrint
+    live "/receipt/:id", ReceiptPrint
     live "/results", ResultLive
     live "/time_table", TimeTableLive
     live "/papers", PaperLive

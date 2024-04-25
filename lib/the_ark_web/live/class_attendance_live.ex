@@ -14,16 +14,17 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
-    class = Classes.get_class_for_attendance!(class_id)
     student_options = Students.get_student_options_for_attendance(String.to_integer(class_id))
 
     socket
-    |> assign(class: class)
     |> assign(student_options: student_options)
     |> assign(attendance_changeset: Attendances.change_attendance(%Attendance{}))
     |> assign(edit_attendance_id: 0)
     |> assign(class_id: String.to_integer(class_id))
     |> assign(add_attendance_date: nil)
+    |> assign(selected_month: Timex.month_name(Date.utc_today().month))
+    |> assign(month_options: month_options())
+    |> assign_class_for_attendance()
     |> ok
   end
 
@@ -36,13 +37,21 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
   @impl true
   def handle_event("make_attendance_changeset", %{"attendance_id" => id}, socket) do
-    attendance = Attendances.get_attendance!(id)
-    changeset = Attendances.change_attendance(attendance, %{})
+    if String.starts_with?(id, "a") do
+      socket
+      |> assign(attendance_changeset: Attendances.change_attendance(%Attendance{}))
+      |> assign(edit_attendance_id: 0)
+      |> put_flash(:error, "Attendance not available!")
+      |> noreply()
+    else
+      attendance = Attendances.get_attendance!(id)
+      changeset = Attendances.change_attendance(attendance, %{})
 
-    socket
-    |> assign(attendance_changeset: changeset)
-    |> assign(edit_attendance_id: String.to_integer(id))
-    |> noreply()
+      socket
+      |> assign(attendance_changeset: changeset)
+      |> assign(edit_attendance_id: String.to_integer(id))
+      |> noreply()
+    end
   end
 
   @impl true
@@ -78,10 +87,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
       |> Finances.create_finance()
     end
 
-    class = Classes.get_class_for_attendance!(class_id)
-
     socket
-    |> assign(class: class)
+    |> assign_class_for_attendance()
     |> noreply()
   end
 
@@ -163,16 +170,26 @@ defmodule TheArkWeb.ClassAttendanceLive do
           end
         end
 
-        class = Classes.get_class_for_attendance!(class_id)
         student_options = Students.get_student_options_for_attendance(class_id)
 
         socket
         |> put_flash(:info, "Attendance successfully added!")
         |> assign(add_attendance_date: nil)
-        |> assign(class: class)
         |> assign(student_options: student_options)
+        |> assign_class_for_attendance()
         |> noreply()
     end
+  end
+
+  @impl true
+  def handle_event("selected_month", %{"selected_month" => %{"month" => month_number}}, socket) do
+    month_number = String.to_integer(month_number)
+    selected_month = Timex.month_name(month_number)
+
+    socket
+    |> assign(selected_month: selected_month)
+    |> assign_class_for_attendance()
+    |> noreply()
   end
 
   @impl true
@@ -181,7 +198,15 @@ defmodule TheArkWeb.ClassAttendanceLive do
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
-        <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
+        <div class="flex items-end gap-2">
+          <.button phx-click="submit_fines">Submit Fines of Month</.button>
+          <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
+          <div>
+            <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
+              <.input field={f[:month]} label="Month" type="select" options={@month_options} />
+            </.form>
+          </div>
+        </div>
       </div>
       <.modal id="add_attendance">
         <.form :let={f} for={} as={:attendance} phx-submit="add_attendance" phx-change="validate">
@@ -201,8 +226,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
         <div class="border px-2 flex items-center w-40 h-16 py-1">
           <div>Student Name</div>
         </div>
-        <%= for day_number <- 1..current_month_days() do %>
-          <% day_name = get_name_of_day(day_number) %>
+        <%= for day_number <- 1..month_days(@selected_month) do %>
+          <% day_name = get_name_of_day(day_number, @selected_month) %>
           <div class={"border px-0.5 py-1 w-9 h-16 text-center #{if day_name == "Su", do: "bg-yellow-400"}"}>
             <div><%= day_number %></div>
             <div class="mt-1"><%= day_name %></div>
@@ -214,7 +239,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
           <div class="border px-2 w-40 h-9 py-1">
             <%= student.name %>
           </div>
-          <%= for day_number <- 1..current_month_days() do %>
+          <%= for day_number <- 1..month_days(@selected_month) do %>
             <% id = get_attendance_id(student, day_number) %>
             <% entry = get_attendance_entry(student, day_number) %>
             <div
@@ -252,9 +277,9 @@ defmodule TheArkWeb.ClassAttendanceLive do
     """
   end
 
-  def get_name_of_day(day_number) do
+  def get_name_of_day(day_number, selected_month) do
     day_of_week =
-      Timex.beginning_of_month(Date.utc_today())
+      first_date_of_month(selected_month)
       |> Date.add(day_number - 1)
       |> Date.day_of_week()
 
@@ -262,8 +287,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> String.slice(0, 2)
   end
 
-  def current_month_days() do
-    Timex.days_in_month(Date.utc_today())
+  def month_days(selected_month) do
+    Timex.days_in_month(first_date_of_month(selected_month))
   end
 
   def get_attendance(student, day_number) do
@@ -273,26 +298,104 @@ defmodule TheArkWeb.ClassAttendanceLive do
       end)
       |> Enum.at(0)
 
-    case attendance.entry do
-      "Not Marked Yet" -> ""
-      "Present" -> "P"
-      "Leave" -> "L"
-      "Half Leave" -> "H"
-      "Absent" -> "A"
+    if attendance do
+      case attendance.entry do
+        "Not Marked Yet" -> ""
+        "Present" -> "P"
+        "Leave" -> "L"
+        "Half Leave" -> "H"
+        "Absent" -> "A"
+      end
+    else
+      "N"
     end
   end
 
   def get_attendance_id(student, day_number) do
-    (Enum.filter(student.attendances, fn attn ->
-       attn.date.day == day_number
-     end)
-     |> Enum.at(0)).id
+    attendance =
+      Enum.filter(student.attendances, fn attn ->
+        attn.date.day == day_number
+      end)
+      |> Enum.at(0)
+
+    if attendance do
+      attendance.id
+    else
+      "a#{student.id}#{day_number}"
+    end
   end
 
   def get_attendance_entry(student, day_number) do
-    (Enum.filter(student.attendances, fn attn ->
-       attn.date.day == day_number
-     end)
-     |> Enum.at(0)).entry
+    attendance =
+      Enum.filter(student.attendances, fn attn ->
+        attn.date.day == day_number
+      end)
+      |> Enum.at(0)
+
+    if attendance do
+      attendance.entry
+    else
+      "N"
+    end
+  end
+
+  def month_options() do
+    current_month_no = Date.utc_today().month
+
+    prev_one_month =
+      if current_month_no - 1 > 0 do
+        current_month_no - 1
+      else
+        12
+      end
+
+    prev_two_month =
+      if current_month_no - 2 > 0 do
+        current_month_no - 2
+      else
+        case current_month_no - 2 do
+          0 -> 12
+          -1 -> 11
+        end
+      end
+
+    [
+      "#{Timex.month_name(current_month_no)}": current_month_no,
+      "#{Timex.month_name(prev_one_month)}": prev_one_month,
+      "#{Timex.month_name(prev_two_month)}": prev_two_month
+    ]
+  end
+
+  def assign_class_for_attendance(
+        %{assigns: %{class_id: class_id, selected_month: selected_month}} = socket
+      ) do
+    first_date_of_month = first_date_of_month(selected_month)
+    days_in_month = Timex.days_in_month(first_date_of_month)
+
+    list_of_dates =
+      Enum.map(1..days_in_month, fn num ->
+        Date.add(first_date_of_month, num - 1)
+      end)
+
+    class = Classes.get_class_for_attendance!(class_id, list_of_dates)
+
+    socket
+    |> assign(class: class)
+  end
+
+  def first_date_of_month(selected_month) do
+    current_month_number = Date.utc_today().month
+    selected_month_number = Timex.month_to_num(selected_month)
+
+    year =
+      if current_month_number - selected_month_number < 0 do
+        Date.utc_today().year - 1
+      else
+        Date.utc_today().year
+      end
+
+    {:ok, first_date_of_month} = Date.new(year, selected_month_number, 1)
+
+    first_date_of_month
   end
 end
