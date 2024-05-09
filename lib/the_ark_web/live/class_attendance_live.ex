@@ -12,6 +12,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
   alias Phoenix.LiveView.Components.MultiSelect
 
+  @absent_fine 100
+
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     student_options = Students.get_student_options_for_attendance(String.to_integer(class_id))
@@ -20,9 +22,11 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(student_options: student_options)
     |> assign(attendance_changeset: Attendances.change_attendance(%Attendance{}))
     |> assign(edit_attendance_id: 0)
+    |> assign(absent_fine: @absent_fine)
     |> assign(class_id: String.to_integer(class_id))
     |> assign(add_attendance_date: nil)
     |> assign(selected_month: Timex.month_name(Date.utc_today().month))
+    |> assign(selected_month_number: Date.utc_today().month)
     |> assign(month_options: month_options())
     |> assign_class_for_attendance()
     |> ok
@@ -58,7 +62,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
   def handle_event(
         "update_attendance",
         %{"attendance" => params},
-        %{assigns: %{edit_attendance_id: edit_attendance_id, class_id: class_id}} = socket
+        %{assigns: %{edit_attendance_id: edit_attendance_id, class_id: _class_id, absent_fine: absent_fine}} = socket
       ) do
     prev_attendance = Attendances.get_attendance!(edit_attendance_id)
 
@@ -78,7 +82,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
         transaction_details: [
           %{
             title: "Absent Fine",
-            total_amount: 100,
+            total_amount: absent_fine,
             paid_amount: 0,
             absent_fine_date: new_attendance.date
           }
@@ -107,7 +111,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
           assigns: %{
             student_options: student_options,
             add_attendance_date: add_attendance_date,
-            class_id: class_id
+            class_id: class_id,
+            absent_fine: absent_fine
           }
         } = socket
       ) do
@@ -151,7 +156,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
               group_id: group_id,
               absent_fine_date: date,
               transaction_details: [
-                %{title: "Absent Fine", total_amount: 100, paid_amount: 0, absent_fine_date: date}
+                %{title: "Absent Fine", total_amount: absent_fine, paid_amount: 0, absent_fine_date: date}
               ]
             })
             |> Finances.create_finance()
@@ -188,6 +193,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
     socket
     |> assign(selected_month: selected_month)
+    |> assign(selected_month_number: month_number)
     |> assign_class_for_attendance()
     |> noreply()
   end
@@ -203,7 +209,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
           <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
-              <.input field={f[:month]} label="Month" type="select" options={@month_options} />
+              <.input field={f[:month]} label="Month" type="select" options={@month_options} value={@selected_month_number} />
             </.form>
           </div>
         </div>
@@ -359,10 +365,18 @@ defmodule TheArkWeb.ClassAttendanceLive do
         end
       end
 
+    next_month =
+      if current_month_no == 12 do
+        1
+      else
+        current_month_no + 1
+      end
+
     [
-      "#{Timex.month_name(current_month_no)}": current_month_no,
+      "#{Timex.month_name(prev_two_month)}": prev_two_month,
       "#{Timex.month_name(prev_one_month)}": prev_one_month,
-      "#{Timex.month_name(prev_two_month)}": prev_two_month
+      "#{Timex.month_name(current_month_no)}": current_month_no,
+      "#{Timex.month_name(next_month)}": next_month
     ]
   end
 
