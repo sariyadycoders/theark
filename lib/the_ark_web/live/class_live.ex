@@ -168,6 +168,13 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
+  def handle_event("add_attendance", %{"class_id" => id}, socket) do
+    socket
+    |> redirect(to: "/classes/#{String.to_integer(id)}/attendance")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -244,6 +251,7 @@ defmodule TheArkWeb.ClassLive do
               phx-click={JS.push("delete_class_id") |> show_modal("delete_class_modal_#{class.id}")}
               phx-value-class_id={class.id}
             />
+            <.button phx-click="add_attendance" phx-value-class_id={class.id} icon="hero-plus" />
           </div>
           <%!-- <% end %> --%>
         </div>

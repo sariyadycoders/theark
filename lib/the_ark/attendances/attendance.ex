@@ -7,6 +7,7 @@ defmodule TheArk.Attendances.Attendance do
     field :entry, :string
 
     field :is_monthly, :boolean
+    field :month_number, :integer
     field :number_of_leaves, :integer
     field :leave_days, {:array, :date}
     field :number_of_absents, :integer
@@ -16,6 +17,7 @@ defmodule TheArk.Attendances.Attendance do
 
     belongs_to :teacher, TheArk.Teachers.Teacher
     belongs_to :student, TheArk.Students.Student
+    belongs_to :class, TheArk.Classes.Class
 
     timestamps(type: :utc_datetime)
   end
@@ -34,7 +36,8 @@ defmodule TheArk.Attendances.Attendance do
       :number_of_half_leaves,
       :half_leave_days,
       :teacher_id,
-      :student_id
+      :student_id,
+      :class_id
     ])
     |> validate_required([])
   end

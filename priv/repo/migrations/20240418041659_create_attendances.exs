@@ -7,6 +7,7 @@ defmodule TheArk.Repo.Migrations.CreateAttendances do
       add :entry, :string
 
       add :is_monthly, :boolean
+      add :month_number, :integer
       add :number_of_leaves, :integer
       add :leave_days, {:array, :date}
       add :number_of_absents, :integer
@@ -16,6 +17,7 @@ defmodule TheArk.Repo.Migrations.CreateAttendances do
 
       add :teacher_id, references(:teachers, on_delete: :delete_all)
       add :student_id, references(:students, on_delete: :delete_all)
+      add :class_id, references(:classes, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)
     end

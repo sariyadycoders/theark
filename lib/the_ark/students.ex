@@ -103,6 +103,10 @@ defmodule TheArk.Students do
     Repo.one(from(s in Student, where: s.id == ^id, select: s.name))
   end
 
+  def get_all_active_students_ids() do
+    Repo.all(from(s in Student, where: s.is_leaving == false, select: s.id))
+  end
+
   @doc """
   Creates a student.
 

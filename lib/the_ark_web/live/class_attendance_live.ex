@@ -27,6 +27,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(add_attendance_date: nil)
     |> assign(selected_month: Timex.month_name(Date.utc_today().month))
     |> assign(selected_month_number: Date.utc_today().month)
+    |> assign(current_month_number: Date.utc_today().month)
     |> assign(month_options: month_options())
     |> assign_class_for_attendance()
     |> ok
@@ -62,7 +63,13 @@ defmodule TheArkWeb.ClassAttendanceLive do
   def handle_event(
         "update_attendance",
         %{"attendance" => params},
-        %{assigns: %{edit_attendance_id: edit_attendance_id, class_id: _class_id, absent_fine: absent_fine}} = socket
+        %{
+          assigns: %{
+            edit_attendance_id: edit_attendance_id,
+            class_id: _class_id,
+            absent_fine: absent_fine
+          }
+        } = socket
       ) do
     prev_attendance = Attendances.get_attendance!(edit_attendance_id)
 
@@ -156,7 +163,12 @@ defmodule TheArkWeb.ClassAttendanceLive do
               group_id: group_id,
               absent_fine_date: date,
               transaction_details: [
-                %{title: "Absent Fine", total_amount: absent_fine, paid_amount: 0, absent_fine_date: date}
+                %{
+                  title: "Absent Fine",
+                  total_amount: absent_fine,
+                  paid_amount: 0,
+                  absent_fine_date: date
+                }
               ]
             })
             |> Finances.create_finance()
@@ -199,6 +211,19 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
+  def handle_event(
+        "end_of_month",
+        _,
+        %{assigns: %{current_month_number: current_month_number}} = socket
+      ) do
+    Attendances.create_next_month_attendances(current_month_number)
+    Attendances.create_monthly_attendances(current_month_number)
+
+    socket
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -207,9 +232,16 @@ defmodule TheArkWeb.ClassAttendanceLive do
         <div class="flex items-end gap-2">
           <.button phx-click="submit_fines">Submit Fines of Month</.button>
           <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
+          <.button phx-click="end_of_month">Mark End of Month</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
-              <.input field={f[:month]} label="Month" type="select" options={@month_options} value={@selected_month_number} />
+              <.input
+                field={f[:month]}
+                label="Month"
+                type="select"
+                options={@month_options}
+                value={@selected_month_number}
+              />
             </.form>
           </div>
         </div>
@@ -402,7 +434,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
     selected_month_number = Timex.month_to_num(selected_month)
 
     year =
-      if current_month_number - selected_month_number < 0 do
+      if current_month_number in [1, 2] and selected_month_number in [11, 12] do
         Date.utc_today().year - 1
       else
         Date.utc_today().year
