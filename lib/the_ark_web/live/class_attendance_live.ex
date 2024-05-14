@@ -17,6 +17,9 @@ defmodule TheArkWeb.ClassAttendanceLive do
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     student_options = Students.get_student_options_for_attendance(String.to_integer(class_id))
+    current_month_number =
+      if !(Date.utc_today().day > 25), do: Date.utc_today().month - 1, else: Date.utc_today().month
+    # TODO: prev month calculations (if -1 denotes december).
 
     socket
     |> assign(student_options: student_options)
@@ -27,7 +30,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(add_attendance_date: nil)
     |> assign(selected_month: Timex.month_name(Date.utc_today().month))
     |> assign(selected_month_number: Date.utc_today().month)
-    |> assign(current_month_number: Date.utc_today().month)
+    |> assign(current_month_number: current_month_number)
     |> assign(month_options: month_options())
     |> assign_class_for_attendance()
     |> ok
@@ -216,7 +219,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
         _,
         %{assigns: %{current_month_number: current_month_number}} = socket
       ) do
-    Attendances.create_next_month_attendances(current_month_number)
     Attendances.create_monthly_attendances(current_month_number)
 
     socket

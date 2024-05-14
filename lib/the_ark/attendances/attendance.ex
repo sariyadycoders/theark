@@ -29,6 +29,7 @@ defmodule TheArk.Attendances.Attendance do
       :date,
       :entry,
       :is_monthly,
+      :month_number,
       :number_of_leaves,
       :leave_days,
       :number_of_absents,

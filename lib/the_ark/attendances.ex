@@ -44,7 +44,7 @@ defmodule TheArk.Attendances do
     Repo.one(from(a in Attendance, where: a.student_id == ^student_id and a.date == ^date))
   end
 
-  def get_counts_of_attendance(class_id, list_of_dates, entry) do
+  def get_counts_of_attendance_for_class(class_id, list_of_dates, entry) do
     Repo.aggregate(
       from(a in Attendance,
         join: s in Student,
@@ -57,10 +57,31 @@ defmodule TheArk.Attendances do
     )
   end
 
+  def get_counts_of_attendance_for_student(student_id, list_of_dates, entry) do
+    Repo.aggregate(
+      from(a in Attendance,
+        where: a.student_id == ^student_id,
+        where: a.date in ^list_of_dates,
+        where: a.entry == ^entry
+      ),
+      :count
+    )
+  end
+
   def get_monthly_attendance_of_class(class_id, month_number) do
     Repo.one(
       from(a in Attendance,
         where: a.class_id == ^class_id,
+        where: a.month_number == ^month_number,
+        where: a.is_monthly == true
+      )
+    )
+  end
+
+  def get_monthly_attendance_of_student(student_id, month_number) do
+    Repo.one(
+      from(a in Attendance,
+        where: a.student_id == ^student_id,
         where: a.month_number == ^month_number,
         where: a.is_monthly == true
       )
@@ -85,13 +106,13 @@ defmodule TheArk.Attendances do
     |> Repo.insert()
   end
 
-  def create_next_month_attendances(current_month_number) do
+  def create_next_month_attendances(current_month_number, class_id) do
     next_month_number = if current_month_number == 12, do: 1, else: current_month_number + 1
 
     beginning_of_next_month =
       ClassAttendanceLive.first_date_of_month(Timex.month_name(next_month_number))
 
-    for student_id <- Students.get_all_active_students_ids() do
+    for student_id <- Students.get_all_active_students_ids(class_id) do
       for day_number <- 1..Timex.days_in_month(beginning_of_next_month) do
         date = Date.add(beginning_of_next_month, day_number - 1)
         entry = "Not Marked Yet"
@@ -113,9 +134,11 @@ defmodule TheArk.Attendances do
       end)
 
     for class_id <- Classes.get_all_class_ids() do
-      number_of_absents = get_counts_of_attendance(class_id, list_of_dates, "Absent")
-      number_of_leaves = get_counts_of_attendance(class_id, list_of_dates, "Leave")
-      number_of_half_leaves = get_counts_of_attendance(class_id, list_of_dates, "Half Leave")
+      number_of_absents = get_counts_of_attendance_for_class(class_id, list_of_dates, "Absent")
+      number_of_leaves = get_counts_of_attendance_for_class(class_id, list_of_dates, "Leave")
+
+      number_of_half_leaves =
+        get_counts_of_attendance_for_class(class_id, list_of_dates, "Half Leave")
 
       monthly_attendance_of_class =
         get_monthly_attendance_of_class(class_id, current_month_number)
@@ -126,6 +149,29 @@ defmodule TheArk.Attendances do
           number_of_absents: number_of_absents,
           number_of_half_leaves: number_of_half_leaves
         })
+
+        for student_id <- Students.get_all_active_students_ids(class_id) do
+          number_of_absents =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Absent")
+
+          number_of_leaves =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Leave")
+
+          number_of_half_leaves =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Half Leave")
+
+          monthly_attendance_of_student =
+            get_monthly_attendance_of_student(student_id, current_month_number)
+
+          update_attendance(monthly_attendance_of_student, %{
+            number_of_leaves: number_of_leaves,
+            number_of_absents: number_of_absents,
+            number_of_half_leaves: number_of_half_leaves,
+            is_monthly: true,
+            month_number: current_month_number,
+            student_id: student_id
+          })
+        end
       else
         create_attendance(%{
           number_of_leaves: number_of_leaves,
@@ -135,6 +181,30 @@ defmodule TheArk.Attendances do
           month_number: current_month_number,
           class_id: class_id
         })
+
+        for student_id <- Students.get_all_active_students_ids(class_id) do
+          number_of_absents =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Absent")
+
+          number_of_leaves =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Leave")
+
+          number_of_half_leaves =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Half Leave")
+
+          create_attendance(%{
+            number_of_leaves: number_of_leaves,
+            number_of_absents: number_of_absents,
+            number_of_half_leaves: number_of_half_leaves,
+            is_monthly: true,
+            month_number: current_month_number,
+            student_id: student_id
+          })
+        end
+      end
+
+      if !monthly_attendance_of_class do
+        create_next_month_attendances(current_month_number, class_id)
       end
     end
   end
