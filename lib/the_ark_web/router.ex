@@ -31,6 +31,7 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/attendance", ClassAttendanceLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
+    live "/students/:id/attendance", StudentAttendanceLive
     live "/groups/:id/finances", StudentFinanceLive
     live "/groups", GroupsLive
     live "/teachers", TeacherLive

@@ -66,6 +66,7 @@ defmodule TheArk.Students do
 
   def get_student_only(id) do
     Repo.get!(Student, id)
+    |> Repo.preload([:class])
   end
 
   def get_group_id_only(student_id) do

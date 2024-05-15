@@ -9,7 +9,7 @@ defmodule TheArk.Attendances do
   alias TheArk.Students
   alias TheArk.Repo
   alias TheArk.Attendances.Attendance
-  alias TheArkWeb.ClassAttendanceLive
+  alias TheArk.Shared
 
   @doc """
   Returns the list of attendances.
@@ -68,6 +68,17 @@ defmodule TheArk.Attendances do
     )
   end
 
+  def get_list_of_attendance_dates(student_id, list_of_dates, entry) do
+    from(
+      a in Attendance,
+      where: a.student_id == ^student_id,
+      where: a.date in ^list_of_dates,
+      where: a.entry == ^entry,
+      select: a.date
+    )
+    |> Repo.all()
+  end
+
   def get_monthly_attendance_of_class(class_id, month_number) do
     Repo.one(
       from(a in Attendance,
@@ -84,6 +95,17 @@ defmodule TheArk.Attendances do
         where: a.student_id == ^student_id,
         where: a.month_number == ^month_number,
         where: a.is_monthly == true
+      )
+    )
+  end
+
+  def get_student_monthly_attendance_to_show(id) do
+    Repo.all(
+      from(
+        a in Attendance,
+        where: a.student_id == ^id,
+        where: a.is_monthly == true,
+        order_by: a.month_number
       )
     )
   end
@@ -109,8 +131,7 @@ defmodule TheArk.Attendances do
   def create_next_month_attendances(current_month_number, class_id) do
     next_month_number = if current_month_number == 12, do: 1, else: current_month_number + 1
 
-    beginning_of_next_month =
-      ClassAttendanceLive.first_date_of_month(Timex.month_name(next_month_number))
+    beginning_of_next_month = Shared.first_date_of_month(Timex.month_name(next_month_number))
 
     for student_id <- Students.get_all_active_students_ids(class_id) do
       for day_number <- 1..Timex.days_in_month(beginning_of_next_month) do
@@ -123,8 +144,7 @@ defmodule TheArk.Attendances do
   end
 
   def create_monthly_attendances(current_month_number) do
-    beginning_of_month =
-      ClassAttendanceLive.first_date_of_month(Timex.month_name(current_month_number))
+    beginning_of_month = Shared.first_date_of_month(Timex.month_name(current_month_number))
 
     days = Timex.days_in_month(beginning_of_month)
 
@@ -154,23 +174,46 @@ defmodule TheArk.Attendances do
           number_of_absents =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Absent")
 
+          absent_days = get_list_of_attendance_dates(student_id, list_of_dates, "Absent")
+
           number_of_leaves =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Leave")
+
+          leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Leave")
 
           number_of_half_leaves =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Half Leave")
 
+          half_leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Half Leave")
+
           monthly_attendance_of_student =
             get_monthly_attendance_of_student(student_id, current_month_number)
 
-          update_attendance(monthly_attendance_of_student, %{
-            number_of_leaves: number_of_leaves,
-            number_of_absents: number_of_absents,
-            number_of_half_leaves: number_of_half_leaves,
-            is_monthly: true,
-            month_number: current_month_number,
-            student_id: student_id
-          })
+          if monthly_attendance_of_student do
+            update_attendance(monthly_attendance_of_student, %{
+              number_of_leaves: number_of_leaves,
+              leave_days: leave_days,
+              number_of_absents: number_of_absents,
+              absent_days: absent_days,
+              number_of_half_leaves: number_of_half_leaves,
+              half_leave_days: half_leave_days,
+              is_monthly: true,
+              month_number: current_month_number,
+              student_id: student_id
+            })
+          else
+            create_attendance(%{
+              number_of_leaves: number_of_leaves,
+              leave_days: leave_days,
+              number_of_absents: number_of_absents,
+              absent_days: absent_days,
+              number_of_half_leaves: number_of_half_leaves,
+              half_leave_days: half_leave_days,
+              is_monthly: true,
+              month_number: current_month_number,
+              student_id: student_id
+            })
+          end
         end
       else
         create_attendance(%{
@@ -186,16 +229,25 @@ defmodule TheArk.Attendances do
           number_of_absents =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Absent")
 
+          absent_days = get_list_of_attendance_dates(student_id, list_of_dates, "Absent")
+
           number_of_leaves =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Leave")
+
+          leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Leave")
 
           number_of_half_leaves =
             get_counts_of_attendance_for_student(student_id, list_of_dates, "Half Leave")
 
+          half_leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Half Leave")
+
           create_attendance(%{
             number_of_leaves: number_of_leaves,
+            leave_days: leave_days,
             number_of_absents: number_of_absents,
+            absent_days: absent_days,
             number_of_half_leaves: number_of_half_leaves,
+            half_leave_days: half_leave_days,
             is_monthly: true,
             month_number: current_month_number,
             student_id: student_id

@@ -17,9 +17,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     student_options = Students.get_student_options_for_attendance(String.to_integer(class_id))
-    current_month_number =
-      if !(Date.utc_today().day > 25), do: Date.utc_today().month - 1, else: Date.utc_today().month
-    # TODO: prev month calculations (if -1 denotes december).
 
     socket
     |> assign(student_options: student_options)
@@ -30,7 +27,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(add_attendance_date: nil)
     |> assign(selected_month: Timex.month_name(Date.utc_today().month))
     |> assign(selected_month_number: Date.utc_today().month)
-    |> assign(current_month_number: current_month_number)
+    |> assign(current_month_number: Date.utc_today().month)
     |> assign(month_options: month_options())
     |> assign_class_for_attendance()
     |> ok
@@ -226,6 +223,13 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
+  def handle_event("to_student_attendance", %{"id" => id}, socket) do
+    socket
+    |> redirect(to: "/students/#{String.to_integer(id)}/attendance")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -276,7 +280,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
       </div>
       <%= for student <- @class.students do %>
         <div class="flex items-center justify-between">
-          <div class="border px-2 w-40 h-9 py-1">
+          <div phx-click="to_student_attendance" phx-value-id={student.id} class="border px-2 w-40 h-9 py-1">
             <%= student.name %>
           </div>
           <%= for day_number <- 1..month_days(@selected_month) do %>
@@ -431,19 +435,10 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(class: class)
   end
 
-  def first_date_of_month(selected_month) do
-    current_month_number = Date.utc_today().month
-    selected_month_number = Timex.month_to_num(selected_month)
-
-    year =
-      if current_month_number in [1, 2] and selected_month_number in [11, 12] do
-        Date.utc_today().year - 1
-      else
-        Date.utc_today().year
-      end
-
-    {:ok, first_date_of_month} = Date.new(year, selected_month_number, 1)
-
-    first_date_of_month
+  def prev_month_calculation() do
+    case Date.utc_today().month-1 do
+      0 -> 12
+      _ -> Date.utc_today().month - 1
+    end
   end
 end
