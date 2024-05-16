@@ -1,11 +1,12 @@
 defmodule TheArk.Classes do
   import Ecto.Query, warn: false
-  alias TheArk.Repo
 
+  alias TheArk.Repo
   alias TheArk.Classes.Class
   alias TheArk.Subjects
   alias TheArk.Subjects.Subject
   alias TheArk.Periods.Period
+  alias TheArk.Attendances.Attendance
 
   def list_classes do
     Repo.all(from(c in Class, order_by: c.id))
@@ -36,6 +37,15 @@ defmodule TheArk.Classes do
       ],
       students: [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)]
     ])
+  end
+
+  def get_class_for_attendance!(id, list_of_dates) do
+    Repo.get!(Class, id)
+    |> Repo.preload(
+      students: [
+        attendances: from(a in Attendance, where: a.date in ^list_of_dates)
+      ]
+    )
   end
 
   def get_class_for_teacher_collective_result(class_id, teacher_id) do

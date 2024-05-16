@@ -56,6 +56,8 @@ defmodule TheArkWeb do
 
       unquote(html_helpers())
 
+      import TheArk.Shared
+
       def ok(socket) do
         {:ok, socket}
       end
@@ -71,6 +73,8 @@ defmodule TheArkWeb do
       use Phoenix.LiveComponent
 
       unquote(html_helpers())
+
+      import TheArk.Shared
 
       def ok(socket) do
         {:ok, socket}

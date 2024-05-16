@@ -12,6 +12,7 @@ defmodule TheArk.Students do
   alias TheArk.Notes.Note
 
   alias TheArk.Students.Student
+  alias TheArk.Attendances
 
   @doc """
   Returns the list of students.
@@ -65,11 +66,25 @@ defmodule TheArk.Students do
 
   def get_student_only(id) do
     Repo.get!(Student, id)
+    |> Repo.preload([:class])
+  end
+
+  def get_group_id_only(student_id) do
+    Repo.one(from(s in Student, where: s.id == ^student_id, select: s.group_id))
   end
 
   def get_students_by_class_id(id) do
     Repo.all(from(s in Student, where: s.class_id == ^id))
     |> Repo.preload(subjects: [:results])
+  end
+
+  def get_student_options_for_attendance(id) do
+    Repo.all(
+      from(s in Student,
+        where: s.class_id == ^id,
+        select: %{id: s.id, label: s.name, selected: false}
+      )
+    )
   end
 
   def get_students_for_search_results(name) do
@@ -87,6 +102,16 @@ defmodule TheArk.Students do
 
   def get_student_name(id) do
     Repo.one(from(s in Student, where: s.id == ^id, select: s.name))
+  end
+
+  def get_all_active_students_ids(class_id) do
+    Repo.all(
+      from(s in Student,
+        where: s.is_leaving == false,
+        where: s.class_id == ^class_id,
+        select: s.id
+      )
+    )
   end
 
   @doc """
@@ -107,6 +132,23 @@ defmodule TheArk.Students do
     |> Repo.insert()
     |> create_subjects()
     |> create_group()
+    |> create_attendance_of_month()
+  end
+
+  def create_attendance_of_month({:ok, student}) do
+    for day_number <- 1..Timex.days_in_month(Timex.today()) do
+      beginning_of_month = Timex.beginning_of_month(Timex.today())
+      date = Date.add(beginning_of_month, day_number - 1)
+      entry = "Not Marked Yet"
+
+      Attendances.create_attendance(%{date: date, entry: entry, student_id: student.id})
+    end
+
+    {:ok, student}
+  end
+
+  def create_attendance_of_month({:error, _} = error) do
+    error
   end
 
   def create_group({:ok, student}) do

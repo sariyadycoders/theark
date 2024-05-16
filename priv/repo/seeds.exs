@@ -17,23 +17,47 @@ alias TheArk.Subjects.Subject
 alias TheArk.Serials.Serial
 alias TheArk.Organizations.Organization
 alias TheArk.Roles.Role
+alias TheArk.Students.Student
+alias TheArk.Students
+alias TheArk.Groups
 
-for name <- [
-      "Play Group",
-      "Nursery",
-      "Prep",
-      "One",
-      "Two",
-      "Three",
-      "Four",
-      "Five",
-      "Six",
-      "Seven",
-      "Eight",
-      "Nine",
-      "Ten"
+for {name, dig} <- [
+      {"Play Group", 1},
+      {"Nursery", 2},
+      {"Prep", 3},
+      {"One", 4},
+      {"Two", 5},
+      {"Three", 6},
+      {"Four", 7},
+      {"Five", 8},
+      {"Six", 9},
+      {"Seven", 10},
+      {"Eight", 11},
+      {"Nine", 12},
+      {"Ten", 13}
     ] do
-  class = %Class{name: name} |> Repo.insert!()
+  class = %Class{name: name} |> Repo.insert!() |> IO.inspect()
+
+  for num <- 1..3 do
+    {:ok, student} =
+      %Student{
+        name: "Bilal #{num} #{name}",
+        father_name: "Haq",
+        address: "random",
+        date_of_birth: Date.utc_today(),
+        cnic: "341#{dig}-9485863-#{num}",
+        guardian_cnic: "34101-9485863-7",
+        sim_number: "03000000000",
+        whatsapp_number: "03000000000",
+        enrollment_number: "1",
+        enrollment_date: Date.utc_today(),
+        class_of_enrollment: name,
+        class_id: class.id
+      }
+      |> Repo.insert()
+      |> Students.create_group()
+      |> Students.create_attendance_of_month()
+  end
 end
 
 for name <- ["Amina", "Sania", "Malaika"] do

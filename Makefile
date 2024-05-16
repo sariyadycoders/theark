@@ -23,6 +23,9 @@ distclean: clean
 run: assets/node_modules
 	iex -S mix phx.server
 
+rerun: assets/node_modules
+	mix ecto.reset && iex -S mix phx.server
+
 assets/node_modules:
 	cd assets && npm install
 

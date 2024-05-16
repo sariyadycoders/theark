@@ -8,7 +8,8 @@ defmodule TheArk.Repo.Migrations.CreateTransactionDetails do
       add :total_amount, :integer
       add :paid_amount, :integer
       add :due_amount, :integer
-      add :is_accected, :boolean
+      add :is_accepted, :boolean
+      add :absent_fine_date, :date
       add :finance_id, references(:finances, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)

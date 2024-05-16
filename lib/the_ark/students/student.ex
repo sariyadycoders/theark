@@ -24,6 +24,7 @@ defmodule TheArk.Students.Student do
     belongs_to :group, TheArk.Groups.Group
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
     has_many :notes, TheArk.Notes.Note
+    has_many :attendances, TheArk.Attendances.Attendance
 
     timestamps(type: :utc_datetime)
   end

@@ -28,8 +28,10 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/students", StudentLive
     live "/classes/:id/add_result", AddResultLive
     live "/classes/:id/slos", SloLive
+    live "/classes/:id/attendance", ClassAttendanceLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
+    live "/students/:id/attendance", StudentAttendanceLive
     live "/groups/:id/finances", StudentFinanceLive
     live "/groups", GroupsLive
     live "/teachers", TeacherLive
@@ -37,7 +39,7 @@ defmodule TheArkWeb.Router do
     live "/teachers/:id/result", TeacherResultLive
     live "/admissions", AdmissionLive
     live "/finances", FinanceLive
-    live "/reciept/:id", RecieptPrint
+    live "/receipt/:id", ReceiptPrint
     live "/results", ResultLive
     live "/time_table", TimeTableLive
     live "/papers", PaperLive

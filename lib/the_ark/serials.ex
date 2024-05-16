@@ -59,6 +59,14 @@ defmodule TheArk.Serials do
     |> Repo.insert()
   end
 
+  def get_transaction_id(type) do
+    serial = get_serial_by_name(type)
+    transaction_id = TheArkWeb.Home.generate_registration_number(serial.number)
+    update_serial(serial, %{"number" => transaction_id})
+
+    transaction_id
+  end
+
   @doc """
   Updates a serial.
 
