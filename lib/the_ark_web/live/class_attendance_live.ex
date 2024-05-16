@@ -211,18 +211,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
-  def handle_event(
-        "end_of_month",
-        _,
-        %{assigns: %{current_month_number: current_month_number}} = socket
-      ) do
-    Attendances.create_monthly_attendances(current_month_number)
-
-    socket
-    |> noreply()
-  end
-
-  @impl true
   def handle_event("to_student_attendance", %{"id" => id}, socket) do
     socket
     |> redirect(to: "/students/#{String.to_integer(id)}/attendance")
@@ -238,7 +226,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
         <div class="flex items-end gap-2">
           <.button phx-click="submit_fines">Submit Fines of Month</.button>
           <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
-          <.button phx-click="end_of_month">Mark End of Month</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
               <.input
@@ -280,7 +267,11 @@ defmodule TheArkWeb.ClassAttendanceLive do
       </div>
       <%= for student <- @class.students do %>
         <div class="flex items-center justify-between">
-          <div phx-click="to_student_attendance" phx-value-id={student.id} class="border px-2 w-40 h-9 py-1">
+          <div
+            phx-click="to_student_attendance"
+            phx-value-id={student.id}
+            class="border px-2 w-40 h-9 py-1"
+          >
             <%= student.name %>
           </div>
           <%= for day_number <- 1..month_days(@selected_month) do %>
@@ -436,7 +427,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   def prev_month_calculation() do
-    case Date.utc_today().month-1 do
+    case Date.utc_today().month - 1 do
       0 -> 12
       _ -> Date.utc_today().month - 1
     end

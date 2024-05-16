@@ -99,11 +99,11 @@ defmodule TheArk.Attendances do
     )
   end
 
-  def get_student_monthly_attendance_to_show(id) do
+  def get_student_monthly_attendances_to_show(student_id) do
     Repo.all(
       from(
         a in Attendance,
-        where: a.student_id == ^id,
+        where: a.student_id == ^student_id,
         where: a.is_monthly == true,
         order_by: a.month_number
       )
@@ -137,8 +137,10 @@ defmodule TheArk.Attendances do
       for day_number <- 1..Timex.days_in_month(beginning_of_next_month) do
         date = Date.add(beginning_of_next_month, day_number - 1)
         entry = "Not Marked Yet"
+        prev_attendance = get_one_attendance(student_id, date)
 
-        create_attendance(%{date: date, entry: entry, student_id: student_id})
+        if !prev_attendance,
+          do: create_attendance(%{date: date, entry: entry, student_id: student_id})
       end
     end
   end
@@ -255,9 +257,7 @@ defmodule TheArk.Attendances do
         end
       end
 
-      if !monthly_attendance_of_class do
-        create_next_month_attendances(current_month_number, class_id)
-      end
+      create_next_month_attendances(current_month_number, class_id)
     end
   end
 

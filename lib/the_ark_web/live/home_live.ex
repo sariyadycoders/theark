@@ -13,7 +13,8 @@ defmodule TheArkWeb.Home do
     Serials,
     Organizations,
     Roles.Role,
-    Roles
+    Roles,
+    Attendances
   }
 
   # import Ecto.Changeset
@@ -35,6 +36,7 @@ defmodule TheArkWeb.Home do
     |> assign(subject_options: Subjects.list_subject_options())
     |> assign(organization: organization)
     |> assign(students_list: nil)
+    |> assign(current_month_number: Date.utc_today().month)
     |> ok
   end
 
@@ -249,6 +251,18 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event(
+        "end_of_month",
+        _,
+        %{assigns: %{current_month_number: current_month_number}} = socket
+      ) do
+    Attendances.create_monthly_attendances(current_month_number)
+
+    socket
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -292,7 +306,9 @@ defmodule TheArkWeb.Home do
         </.form>
       </div>
 
-      <div class="grid grid-cols-6 gap-2">
+      <div class="grid grid-cols-7 gap-2">
+        <.button phx-click="end_of_month">Mark End of Month</.button>
+
         <.button
           phx-click="terms_announcement"
           class="flex justify-center"
