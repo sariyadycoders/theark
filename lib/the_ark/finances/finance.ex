@@ -6,6 +6,7 @@ defmodule TheArk.Finances.Finance do
     field :transaction_id, :string
     field :is_bill, :boolean, default: false
     field :absent_fine_date, :date
+    field :absent_student_name, :string
 
     has_many :transaction_details, TheArk.Transaction_details.Transaction_detail
     has_many :notes, TheArk.Notes.Note
@@ -17,7 +18,7 @@ defmodule TheArk.Finances.Finance do
   @doc false
   def changeset(finance, attrs) do
     finance
-    |> cast(attrs, [:transaction_id, :group_id, :is_bill, :absent_fine_date])
+    |> cast(attrs, [:transaction_id, :group_id, :is_bill, :absent_fine_date, :absent_student_name])
     |> cast_assoc(:transaction_details,
       with: &TheArk.Transaction_details.Transaction_detail.changeset/2
     )

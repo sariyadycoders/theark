@@ -6,6 +6,7 @@ defmodule TheArk.Repo.Migrations.CreateFinances do
       add :transaction_id, :string
       add :is_bill, :boolean, default: false
       add :absent_fine_date, :date
+      add :absent_student_name, :string
 
       timestamps(type: :utc_datetime)
     end

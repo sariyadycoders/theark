@@ -29,6 +29,7 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/add_result", AddResultLive
     live "/classes/:id/slos", SloLive
     live "/classes/:id/attendance", ClassAttendanceLive
+    live "/classes/:id/submit-fine", ClassSubmitFineLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
     live "/students/:id/attendance", StudentAttendanceLive
