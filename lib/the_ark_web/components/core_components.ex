@@ -338,6 +338,28 @@ defmodule TheArkWeb.CoreComponents do
     """
   end
 
+  def input(%{type: "radio"} = assigns) do
+    ~H"""
+    <div phx-feedback-for={@name} class={if @input_class, do: @input_class, else: ""}>
+      <.label :if={@label} class="" for={@id}><%= @label %></.label>
+      <input
+        type="radio"
+        name={@name}
+        id={@id}
+        value={Phoenix.HTML.Form.normalize_value(@type, @value)}
+        class={[
+          "w-full w-5 h-5 rounded-full text-zinc-900 focus:ring-0 sm:text-sm sm:leading-6",
+          "phx-no-feedback:border-zinc-300 phx-no-feedback:focus:border-zinc-400",
+          @errors == [] && "border-zinc-300 focus:border-zinc-400",
+          @errors != [] && "border-rose-400 focus:border-rose-400"
+        ]}
+        {@rest}
+      />
+      <.error :for={msg <- @errors}><%= msg %></.error>
+    </div>
+    """
+  end
+
   def input(%{type: "select"} = assigns) do
     assigns =
       assigns

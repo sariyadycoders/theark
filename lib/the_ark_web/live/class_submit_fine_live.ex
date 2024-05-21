@@ -2,8 +2,6 @@ defmodule TheArkWeb.ClassSubmitFineLive do
   alias TheArk.Transaction_details
   use TheArkWeb, :live_view
 
-  # TODO: Submission of fine
-
   @list_of_months ~w(Choose January February March April May June July August September October November December)
 
   @impl true
@@ -33,6 +31,50 @@ defmodule TheArkWeb.ClassSubmitFineLive do
   end
 
   @impl true
+  def handle_event("submit", %{"submission" => map}, socket) do
+    concession_ids = get_concession_ids(map)
+    pay_ids = get_pay_ids(map)
+
+    # TODO continue
+
+    socket
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("validate", %{"submission" => _map}, socket) do
+    # concession_ids = get_concession_ids(map)
+    # pay_ids = get_pay_ids(map)
+
+    socket
+    |> noreply()
+  end
+
+  def get_concession_ids(map) do
+    Map.values(map)
+    |> Enum.filter(fn v ->
+      String.ends_with?(v, "con")
+    end)
+    |> Enum.map(fn v ->
+      String.split(v, "_")
+      |> Enum.at(0)
+      |> String.to_integer()
+    end)
+  end
+
+  def get_pay_ids(map) do
+    Map.values(map)
+    |> Enum.filter(fn v ->
+      String.ends_with?(v, "pay")
+    end)
+    |> Enum.map(fn v ->
+      String.split(v, "_")
+      |> Enum.at(0)
+      |> String.to_integer()
+    end)
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -44,7 +86,7 @@ defmodule TheArkWeb.ClassSubmitFineLive do
       <div class="border-b-4 font-bold text-lg pb-1 my-5">
         Details of Students
       </div>
-      <.form :let={f} for={} as={:submission} phx-submit="submit">
+      <.form :let={f} for={} as={:submission} phx-submit="submit" phx-change="validate">
         <div class="grid grid-cols-2 gap-5">
           <div class="grid grid-cols-6 font-bold pb-1 border-b-2">
             <div class="col-span-2">Name</div>
@@ -62,8 +104,25 @@ defmodule TheArkWeb.ClassSubmitFineLive do
             <div class="grid grid-cols-6 my-2">
               <div class="col-span-2"><%= trans.name %></div>
               <div class="col-span-2"><%= trans.date |> Date.to_string() %></div>
-              <div>Pay</div>
-              <div>Concession</div>
+              <div class="">
+                <div class="w-5 h-5">
+                  <.input
+                    field={f[:"#{trans.name}"]}
+                    type="radio"
+                    value={"#{trans.transaction_id}_pay"}
+                    class=""
+                  />
+                </div>
+              </div>
+              <div>
+                <div class="w-5 h-5">
+                  <.input
+                    field={f[:"#{trans.name}"]}
+                    type="radio"
+                    value={"#{trans.transaction_id}_con"}
+                  />
+                </div>
+              </div>
             </div>
           <% end %>
         </div>
