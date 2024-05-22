@@ -2,6 +2,8 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
+  # TODO: finance implementation according to is_accepted attribute
+
   alias TheArk.{
     Classes,
     Classes.Class,
@@ -263,6 +265,27 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event(
+        "choose_fine_submission_class",
+        %{"choose_class" => %{"class" => "0"}},
+        socket
+      ) do
+    socket
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "choose_fine_submission_class",
+        %{"choose_class" => %{"class" => class_id}},
+        socket
+      ) do
+    socket
+    |> redirect(to: "/classes/#{String.to_integer(class_id)}/submit-fine")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -359,7 +382,7 @@ defmodule TheArkWeb.Home do
         </.button>
       </div>
 
-      <div class="grid grid-cols-3 gap-2 mt-2">
+      <div class="grid grid-cols-4 gap-2 mt-2">
         <.button phx-click={show_modal("class_registration_modal")} class="flex justify-center">
           Register New Class
         </.button>
@@ -368,6 +391,9 @@ defmodule TheArkWeb.Home do
         </.button>
         <.button class="flex justify-center" phx-click={show_modal("student_registration_modal")}>
           Register New Student
+        </.button>
+        <.button class="flex justify-center" phx-click={show_modal("choose_fine_submission_class")}>
+          Submit Absent Fines
         </.button>
       </div>
 
@@ -444,6 +470,17 @@ defmodule TheArkWeb.Home do
           </.modal>
         <% end %>
       </div>
+
+      <.modal id="choose_fine_submission_class">
+        <.form :let={f} for={} as={:choose_class} phx-change="choose_fine_submission_class">
+          <.input
+            field={f[:class]}
+            label="Choose Class"
+            type="select"
+            options={[{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
+          />
+        </.form>
+      </.modal>
 
       <.modal id="class_registration_modal">
         <div class="p-2 border rounded-lg">

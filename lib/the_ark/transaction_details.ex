@@ -4,8 +4,12 @@ defmodule TheArk.Transaction_details do
   """
 
   import Ecto.Query, warn: false
-  alias TheArk.Repo
 
+  alias TheArk.Students
+  alias TheArk.Groups.Group
+  alias TheArk.Finances.Finance
+  alias TheArk.Shared
+  alias TheArk.Repo
   alias TheArk.Transaction_details.Transaction_detail
 
   @doc """
@@ -19,6 +23,38 @@ defmodule TheArk.Transaction_details do
   """
   def list_transaction_details do
     Repo.all(Transaction_detail)
+  end
+
+  def get_absentee_due_students_for_submission(class_id, month) do
+    list_of_date = Shared.list_of_dates(month)
+    student_ids_of_class = Students.get_all_active_students_ids(class_id)
+
+    from(
+      t in Transaction_detail,
+      join: f in Finance,
+      on: t.finance_id == f.id,
+      join: g in Group,
+      on: f.group_id == g.id,
+      where: f.absent_fine_date in ^list_of_date,
+      where: t.title == "Absent Fine",
+      where: t.paid_amount == 0,
+      where: t.is_accepted != true,
+      select: %{
+        name: f.absent_student_name,
+        date: f.absent_fine_date,
+        transaction_id: t.id,
+        group_id: g.id
+      }
+    )
+    |> Repo.all()
+    |> Enum.filter(fn record ->
+      student_ids_of_group = Students.get_all_active_students_ids_of_group(record.group_id)
+
+      Enum.any?(student_ids_of_group, fn id -> id in student_ids_of_class end)
+    end)
+    |> Enum.map(fn record ->
+      Map.delete(record, :group_id)
+    end)
   end
 
   @doc """

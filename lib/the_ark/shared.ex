@@ -14,4 +14,17 @@ defmodule TheArk.Shared do
 
     first_date_of_month
   end
+
+  def list_of_dates(month) do
+    first_date_of_month = first_date_of_month(month)
+
+    days_in_month = Timex.days_in_month(first_date_of_month)
+
+    list_of_dates =
+      Enum.map(1..days_in_month, fn num ->
+        Date.add(first_date_of_month, num - 1)
+      end)
+
+    list_of_dates
+  end
 end

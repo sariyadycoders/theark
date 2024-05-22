@@ -86,6 +86,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
       Finances.change_finance(%Finance{}, %{
         group_id: group_id,
         absent_fine_date: new_attendance.date,
+        absent_student_name: Students.get_student_name(new_attendance.student_id),
         transaction_details: [
           %{
             title: "Absent Fine",
@@ -162,6 +163,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
             Finances.change_finance(%Finance{}, %{
               group_id: group_id,
               absent_fine_date: date,
+              absent_student_name: Students.get_student_name(id),
               transaction_details: [
                 %{
                   title: "Absent Fine",
@@ -224,7 +226,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
         <div class="flex items-end gap-2">
-          <.button phx-click="submit_fines">Submit Fines of Month</.button>
           <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
