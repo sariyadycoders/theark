@@ -265,6 +265,16 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event(
         "choose_fine_submission_class",
+        %{"choose_class" => %{"class" => "0"}},
+        socket
+      ) do
+    socket
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "choose_fine_submission_class",
         %{"choose_class" => %{"class" => class_id}},
         socket
       ) do
@@ -465,7 +475,7 @@ defmodule TheArkWeb.Home do
             field={f[:class]}
             label="Choose Class"
             type="select"
-            options={Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
+            options={[{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
           />
         </.form>
       </.modal>

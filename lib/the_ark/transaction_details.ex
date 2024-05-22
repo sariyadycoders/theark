@@ -38,6 +38,7 @@ defmodule TheArk.Transaction_details do
       where: f.absent_fine_date in ^list_of_date,
       where: t.title == "Absent Fine",
       where: t.paid_amount == 0,
+      where: t.is_accepted != true,
       select: %{
         name: f.absent_student_name,
         date: f.absent_fine_date,

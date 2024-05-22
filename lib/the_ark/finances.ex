@@ -69,7 +69,7 @@ defmodule TheArk.Finances do
       else
         if title == "All" and type != "All" do
           if type == "Only Due" do
-            dynamic([d], d.due_amount > 0)
+            dynamic([d], d.due_amount > 0 and d.is_accepted != true)
           else
             dynamic([d], d.paid_amount == d.total_amount)
           end
@@ -78,7 +78,7 @@ defmodule TheArk.Finances do
             dynamic([d], d.title == ^title)
           else
             if title != "All" and type == "Only Due" do
-              dynamic([d], d.title == ^title and d.due_amount > 0)
+              dynamic([d], d.title == ^title and d.due_amount > 0 and d.is_accepted != true)
             else
               dynamic([d], d.title == ^title and d.paid_amount == d.total_amount)
             end

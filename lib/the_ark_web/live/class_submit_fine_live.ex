@@ -35,9 +35,18 @@ defmodule TheArkWeb.ClassSubmitFineLive do
     concession_ids = get_concession_ids(map)
     pay_ids = get_pay_ids(map)
 
-    # TODO continue
+    for id <- concession_ids do
+      trans = Transaction_details.get_transaction_detail!(id)
+      Transaction_details.update_transaction_detail(trans, %{is_accepted: true})
+    end
+
+    for id <- pay_ids do
+      trans = Transaction_details.get_transaction_detail!(id)
+      Transaction_details.update_transaction_detail(trans, %{paid_amount: trans.total_amount})
+    end
 
     socket
+    |> put_flash(:info, "Fines successfully submitted!")
     |> noreply()
   end
 
@@ -48,30 +57,6 @@ defmodule TheArkWeb.ClassSubmitFineLive do
 
     socket
     |> noreply()
-  end
-
-  def get_concession_ids(map) do
-    Map.values(map)
-    |> Enum.filter(fn v ->
-      String.ends_with?(v, "con")
-    end)
-    |> Enum.map(fn v ->
-      String.split(v, "_")
-      |> Enum.at(0)
-      |> String.to_integer()
-    end)
-  end
-
-  def get_pay_ids(map) do
-    Map.values(map)
-    |> Enum.filter(fn v ->
-      String.ends_with?(v, "pay")
-    end)
-    |> Enum.map(fn v ->
-      String.split(v, "_")
-      |> Enum.at(0)
-      |> String.to_integer()
-    end)
   end
 
   @impl true
@@ -126,6 +111,7 @@ defmodule TheArkWeb.ClassSubmitFineLive do
             </div>
           <% end %>
         </div>
+        <.button class="mt-5 ml-auto">Submit</.button>
       </.form>
     </div>
     """
@@ -141,5 +127,29 @@ defmodule TheArkWeb.ClassSubmitFineLive do
 
     socket
     |> assign(transactions: transactions)
+  end
+
+  def get_concession_ids(map) do
+    Map.values(map)
+    |> Enum.filter(fn v ->
+      String.ends_with?(v, "con")
+    end)
+    |> Enum.map(fn v ->
+      String.split(v, "_")
+      |> Enum.at(0)
+      |> String.to_integer()
+    end)
+  end
+
+  def get_pay_ids(map) do
+    Map.values(map)
+    |> Enum.filter(fn v ->
+      String.ends_with?(v, "pay")
+    end)
+    |> Enum.map(fn v ->
+      String.split(v, "_")
+      |> Enum.at(0)
+      |> String.to_integer()
+    end)
   end
 end

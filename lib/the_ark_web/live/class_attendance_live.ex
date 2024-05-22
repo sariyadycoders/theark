@@ -226,7 +226,6 @@ defmodule TheArkWeb.ClassAttendanceLive do
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
         <div class="flex items-end gap-2">
-          <.button phx-click="submit_fines">Submit Fines of Month</.button>
           <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
