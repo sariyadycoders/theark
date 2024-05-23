@@ -14,6 +14,7 @@ defmodule TheArkWeb.FinanceLive do
   @student_finance_options [
     "All",
     "Books",
+    "Copies",
     "Monthly Fee",
     "1st Term Paper Fund",
     "2nd Term Paper Fund",
@@ -22,7 +23,10 @@ defmodule TheArkWeb.FinanceLive do
     "Tour Fund",
     "Party Fund",
     "Registration Fee",
-    "Admission Fee"
+    "Admission Fee",
+    "Remaining",
+    "Fine",
+    "Absent Fine"
   ]
 
   @options [
@@ -310,19 +314,23 @@ defmodule TheArkWeb.FinanceLive do
 
         <div :if={"students_dues" in @collapsed_sections} class="flex flex-col p-5">
           <div class="flex flex-col gap-5 max-h-[400px] overflow-y-scroll">
-            <%= for class <- @detailed_indiv_finances do %>
-              <div :if={Enum.count(get_students_having_dues(class)) > 0} class="rounded-lg border p-5">
-                <div class="text-lg font-bold"><%= class.name %></div>
-                <div class="grid grid-cols-3 border mt-5">
-                  <%= for student <- get_students_having_dues(class) do %>
-                    <div class="p-2 border capitalize">
-                      <a href={"/groups/#{student.group_id}/finances"}>
-                        <%= student.name <> " " <> student.father_name %>
-                      </a>
-                    </div>
-                  <% end %>
+            <%= if Enum.any?(@detailed_indiv_finances, fn class -> Enum.any?(get_students_having_dues(class)) end) do %>
+              <%= for class <- @detailed_indiv_finances do %>
+                <div class="rounded-lg border p-5">
+                  <div class="text-lg font-bold"><%= class.name %></div>
+                  <div class="grid grid-cols-3 border mt-5">
+                    <%= for student <- get_students_having_dues(class) do %>
+                      <div class="p-2 border capitalize">
+                        <a href={"/groups/#{student.group_id}/finances"}>
+                          <%= student.name <> " " <> student.father_name %>
+                        </a>
+                      </div>
+                    <% end %>
+                  </div>
                 </div>
-              </div>
+              <% end %>
+            <% else %>
+              <div class="text-lg text-gray-300 font-bold">No List of Students</div>
             <% end %>
           </div>
         </div>
@@ -349,12 +357,15 @@ defmodule TheArkWeb.FinanceLive do
   end
 
   defp assign_total_student_due(%{assigns: %{students_total_finances: finances}} = socket) do
-    total_paid =
+    total_due =
       Enum.filter(finances, fn finance ->
         !finance.is_bill
       end)
       |> Enum.map(fn finance ->
-        Enum.map(finance.transaction_details, fn detail ->
+        Enum.reject(finance.transaction_details, fn detail ->
+          detail.is_accepted == true
+        end)
+        |> Enum.map(fn detail ->
           detail.due_amount
         end)
         |> Enum.sum()
@@ -362,7 +373,7 @@ defmodule TheArkWeb.FinanceLive do
       |> Enum.sum()
 
     socket
-    |> assign(total_student_due: total_paid)
+    |> assign(total_student_due: total_due)
   end
 
   defp assign_due_bills(
@@ -416,11 +427,12 @@ defmodule TheArkWeb.FinanceLive do
          non_payee_type
        ) do
     Enum.reject(class.students, fn student ->
-      Enum.any?(student.finances, fn finance ->
-        Enum.any?(finance.transaction_details, fn detail ->
-          detail.title == non_payee_type and
-            detail.inserted_at.year == year_choosen_for_non_payee_description and
-            detail.due_amount == 0
+      Enum.all?(student.finances, fn finance ->
+        Enum.reject(finance.transaction_details, fn detail ->
+          (detail.title != non_payee_type) or (detail.inserted_at.year != year_choosen_for_non_payee_description)
+        end)
+        |> Enum.all?(fn detail ->
+          (detail.due_amount == 0) or (detail.is_accepted == true)
         end)
       end)
     end)
@@ -430,7 +442,7 @@ defmodule TheArkWeb.FinanceLive do
     Enum.reject(class.students, fn student ->
       Enum.all?(student.finances, fn finance ->
         Enum.all?(finance.transaction_details, fn detail ->
-          detail.due_amount == 0
+          detail.due_amount == 0 or detail.is_accepted == true
         end)
       end)
     end)

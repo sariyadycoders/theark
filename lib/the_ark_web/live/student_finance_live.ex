@@ -583,7 +583,7 @@ defmodule TheArkWeb.StudentFinanceLive do
 
   def get_status(finance) do
     if Enum.all?(finance.transaction_details, fn detail ->
-         detail.total_amount == detail.paid_amount
+         detail.total_amount == detail.paid_amount || detail.is_accepted == true
        end) do
       "paid"
     else
