@@ -122,14 +122,22 @@ defmodule TheArkWeb.FinanceLive do
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Finances</h1>
-        <.button phx-click={
-          JS.push("assign_finance_empty_changeset") |> show_modal("add_student_finance_1")
-        }>
-          Add Bills
-        </.button>
+        <div class="flex items-center gap-2">
+          <.button phx-click={
+            JS.push("assign_finance_empty_changeset") |> show_modal("add_bill_modal")
+          }>
+            Add Bills
+          </.button>
+          <.button phx-click={
+            JS.push("assign_finance_empty_changeset") |> show_modal("add_misc_finance_modal")
+          }>
+            Add Misc Finance
+          </.button>
+
+        </div>
       </div>
 
-      <.modal id="add_student_finance_1">
+      <.modal id="add_bill_modal">
         <.form
           :let={f}
           for={@finance_changeset}
@@ -137,6 +145,23 @@ defmodule TheArkWeb.FinanceLive do
           phx-submit="add_finance"
         >
           <.finance_form_fields form={f} group={@group} is_bill={@is_bill} options={@options} />
+          <div class="flex justify-end mt-5">
+            <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
+              Add one more detail
+            </.button>
+          </div>
+          <.button class="mt-5" type="submit">Submit Finance</.button>
+        </.form>
+      </.modal>
+
+      <.modal id="add_misc_finance_modal">
+        <.form
+          :let={f}
+          for={@finance_changeset}
+          phx-change="finance_validate"
+          phx-submit="add_finance"
+        >
+          <.finance_form_fields form={f} group={nil} is_bill={nil} options={@options} />
           <div class="flex justify-end mt-5">
             <.button class="text-xs h-7" type="button" phx-click="add_more_detail">
               Add one more detail

@@ -71,20 +71,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         } = _params,
         %{assigns: %{finance_changeset: finance_changeset}} = socket
       ) do
-    finance_changeset =
-      if !Map.get(finance_params, "is_bill") do
-        put_change(
-          finance_changeset,
-          :group_id,
-          Map.get(finance_params, "group_id") |> String.to_integer()
-        )
-      else
-        put_change(
-          finance_changeset,
-          :is_bill,
-          true
-        )
-      end
+    finance_changeset = Finances.change_finance(%Finance{}, finance_params)
 
     case Finances.create_finance(finance_changeset) do
       {:ok, _finance} ->
@@ -630,21 +617,30 @@ defmodule TheArkWeb.StudentFinanceLive do
       |> Enum.into(%{is_bill: false})
 
     ~H"""
-    <%= if !@is_bill do %>
+    <%= if !@is_bill && @group do %>
       <.input field={@form[:group_id]} type="hidden" value={@group.id} />
     <% end %>
-    <%= if @is_bill do %>
+    <%= if @is_bill && !@group do %>
       <.input field={@form[:is_bill]} type="hidden" value="true" />
     <% end %>
     <.inputs_for :let={n} field={@form[:transaction_details]}>
       <div class="grid grid-cols-4 gap-2 items-end">
-        <.input
-          field={n[:title]}
-          label="Title"
-          type="select"
-          options={@options -- ["All"]}
-          value={input_value(n, :title)}
-        />
+        <%= if !@is_bill && !@group do %>
+          <.input
+            field={n[:title]}
+            label="Title"
+            type="text"
+            value={input_value(n, :title)}
+          />
+        <% else %>
+          <.input
+            field={n[:title]}
+            label="Title"
+            type="select"
+            options={@options -- ["All"]}
+            value={input_value(n, :title)}
+          />
+        <% end %>
         <.input
           field={n[:month]}
           label="Month"
@@ -676,17 +672,20 @@ defmodule TheArkWeb.StudentFinanceLive do
           field={n[:paid_amount]}
           label="Paid"
           type="number"
-          value={input_value(n, :paid_amount)}
+          value={if !@is_bill && !@group, do: input_value(n, :total_amount), else: input_value(n, :paid_amount)}
+          main_class={if !@is_bill && !@group, do: "hidden"}
         />
-        <div class="col-span-4 flex justify-end">
-          <.input
-            main_class="pb-3 pl-2"
-            field={n[:is_accepted]}
-            label="Is Accepted?"
-            type="checkbox"
-            value={input_value(n, :is_accepted)}
-          />
-        </div>
+        <%= if @is_bill || @group do %>
+          <div class="col-span-4 flex justify-end">
+            <.input
+              main_class="pb-3 pl-2"
+              field={n[:is_accepted]}
+              label="Is Accepted?"
+              type="checkbox"
+              value={input_value(n, :is_accepted)}
+            />
+          </div>
+        <% end %>
       </div>
       <hr :if={true} class="mt-2" />
     </.inputs_for>
