@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: Add misc finance show
+  # TODO: Result preparation start
 
   alias TheArk.{
     Classes,
