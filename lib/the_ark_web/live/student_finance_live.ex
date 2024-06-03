@@ -1,7 +1,6 @@
 defmodule TheArkWeb.StudentFinanceLive do
   use TheArkWeb, :live_view
 
-  import Ecto.Changeset
   import Phoenix.HTML.Form
 
   alias TheArk.{
@@ -51,6 +50,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     |> assign(title: "All")
     |> assign(type: "All")
     |> assign(sort: "Descending")
+    |> assign(misc_order: "Descending")
     |> assign(t_id: "")
     |> assign_finances()
     |> assign_total_due_amount()
@@ -69,18 +69,21 @@ defmodule TheArkWeb.StudentFinanceLive do
         %{
           "finance" => finance_params
         } = _params,
-        %{assigns: %{finance_changeset: finance_changeset}} = socket
+        socket
       ) do
     finance_changeset = Finances.change_finance(%Finance{}, finance_params)
 
     case Finances.create_finance(finance_changeset) do
       {:ok, _finance} ->
+        Phoenix.PubSub.broadcast(TheArk.PubSub, "assign_stats", {:assign_stats})
+
         socket
         |> put_flash(:info, "Transaction successfully added!")
         |> assign(
           finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
         )
         |> assign_finances()
+        |> assign_misc_finances()
         |> assign(finance_params: nil)
         |> noreply()
 
@@ -96,18 +99,24 @@ defmodule TheArkWeb.StudentFinanceLive do
   def handle_event(
         "update_finance",
         %{
-          "finance" => _finance_params
+          "finance" => finance_params
         } = _params,
-        %{assigns: %{finance_changeset: finance_changeset}} = socket
+        %{assigns: %{edit_finance_id: finance_id}} = socket
       ) do
+    finance = Finances.get_finance!(finance_id)
+    finance_changeset = Finances.change_finance(finance, finance_params)
+
     case Finances.update_finance(finance_changeset) do
       {:ok, _finance} ->
+        Phoenix.PubSub.broadcast(TheArk.PubSub, "assign_stats", {:assign_stats})
+
         socket
         |> put_flash(:info, "Transaction successfully updated!")
         |> assign(
           finance_changeset: Finances.change_finance(%Finance{}, %{transaction_details: [%{}]})
         )
         |> assign_finances()
+        |> assign_misc_finances()
         |> assign(finance_params: nil)
         |> noreply()
 
@@ -182,9 +191,11 @@ defmodule TheArkWeb.StudentFinanceLive do
         socket
       ) do
     Finances.delete_finance_by_id(id)
+    Phoenix.PubSub.broadcast(TheArk.PubSub, "assign_stats", {:assign_stats})
 
     socket
     |> assign_finances()
+    |> assign_misc_finances()
     |> noreply()
   end
 
@@ -230,6 +241,14 @@ defmodule TheArkWeb.StudentFinanceLive do
   end
 
   @impl true
+  def handle_event("order_misc_finance", %{"misc_order" => %{"order" => order}}, socket) do
+    socket
+    |> assign(misc_order: order)
+    |> assign_misc_finances()
+    |> noreply()
+  end
+
+  @impl true
   def handle_event(
         "add_note",
         %{"note" => params, "finance_id" => id},
@@ -241,6 +260,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         |> put_flash(:info, "Note added successfully!")
         |> assign(note_changeset: Notes.change_note(%Note{}))
         |> assign_finances()
+        |> assign_misc_finances()
         |> noreply()
 
       {:error, changeset} ->
@@ -300,6 +320,7 @@ defmodule TheArkWeb.StudentFinanceLive do
         |> put_flash(:info, "Note updated successfully!")
         |> assign(note_changeset: Notes.change_note(%Note{}))
         |> assign_finances()
+        |> assign_misc_finances()
         |> noreply()
 
       {:error, changeset} ->
@@ -320,6 +341,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     socket
     |> put_flash(:info, "Note deleted successfully!")
     |> assign_finances()
+    |> assign_misc_finances()
     |> noreply()
   end
 
@@ -471,7 +493,7 @@ defmodule TheArkWeb.StudentFinanceLive do
               phx-value-finance_id={finance.id}
             />
             <.icon_button icon="hero-trash" phx-click="delete" phx-value-finance_id={finance.id} />
-            <%= if !@is_bill do %>
+            <%= if !@is_bill && !is_nil(finance.group_id) do %>
               <.icon_button
                 icon="hero-document-text"
                 phx-click="print_receipt"
@@ -609,6 +631,15 @@ defmodule TheArkWeb.StudentFinanceLive do
 
     socket
     |> assign(finances: finances)
+  end
+
+  def assign_misc_finances(%{assigns: %{misc_order: order}} = socket) do
+    order = if order == "Descending", do: "desc", else: "asc"
+
+    finances = Finances.get_misc_finances(order)
+
+    socket
+    |> assign(misc_finances: finances)
   end
 
   def finance_form_fields(assigns) do

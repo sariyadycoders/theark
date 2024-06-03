@@ -60,6 +60,24 @@ defmodule TheArk.Finances do
     end)
   end
 
+  def get_misc_finances(order) do
+    date_order = if order == "asc", do: [asc: :inserted_at], else: [desc: :inserted_at]
+
+    Repo.all(
+      from(f in Finance,
+        where: is_nil(f.group_id) and f.is_bill != true,
+        order_by: ^date_order
+      )
+    )
+    |> Repo.preload(
+      [:transaction_details,
+      notes: from(n in Note, order_by: [desc: n.updated_at])]
+    )
+    |> Enum.reject(fn finance ->
+      Enum.count(finance.transaction_details) == 0
+    end)
+  end
+
   def get_finances_for_group(is_bill, group_id, title, type, order, t_id) do
     date_order = if order == "asc", do: [asc: :inserted_at], else: [desc: :inserted_at]
 

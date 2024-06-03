@@ -2,7 +2,7 @@ defmodule TheArkWeb.FinanceLive do
   use TheArkWeb, :live_view
 
   import TheArkWeb.StudentFinanceLive,
-    only: [finance_form_fields: 1, assign_finances: 1, finances_entries: 1]
+    only: [finance_form_fields: 1, assign_finances: 1, assign_misc_finances: 1, finances_entries: 1]
 
   alias TheArk.{
     Finances,
@@ -30,6 +30,7 @@ defmodule TheArkWeb.FinanceLive do
   ]
 
   @options [
+    "All",
     "Books",
     "Copies",
     "Utility Bills",
@@ -37,8 +38,7 @@ defmodule TheArkWeb.FinanceLive do
     "Stationary",
     "Repairing",
     "Teacher Pay",
-    "Function Expenses",
-    "All"
+    "Function Expenses"
   ]
 
   @month_options [
@@ -59,6 +59,7 @@ defmodule TheArkWeb.FinanceLive do
 
   @impl true
   def mount(_, _, socket) do
+    if connected?(socket), do: Phoenix.PubSub.subscribe(TheArk.PubSub, "assign_stats")
     students_total_finances = Finances.list_finances_of_students()
 
     socket
@@ -78,6 +79,7 @@ defmodule TheArkWeb.FinanceLive do
     |> assign(title: "All")
     |> assign(type: "All")
     |> assign(sort: "Descending")
+    |> assign(misc_order: "Descending")
     |> assign(t_id: "")
     |> assign(collapsed_sections: [])
     |> assign(note_changeset: Notes.change_note(%Note{}))
@@ -86,11 +88,21 @@ defmodule TheArkWeb.FinanceLive do
     )
     # having only bill
     |> assign_finances()
-    |> assign_total_paid()
+    |> assign_misc_finances()
+    |> assign_total_income()
     |> assign_total_student_due()
     |> assign_due_bills()
     |> assign_detailed_description()
     |> ok
+  end
+
+  @impl true
+  def handle_info({:assign_stats}, socket) do
+    socket
+    |> assign_total_income()
+    |> assign_total_student_due()
+    |> assign_due_bills()
+    |> noreply()
   end
 
   def handle_event(
@@ -173,13 +185,13 @@ defmodule TheArkWeb.FinanceLive do
 
       <div class="rounded-lg border border-4 p-5 mt-5">
         <h1 class="font-bold text-2xl">Total Finances Calculations</h1>
-        <div class="grid grid-cols-4 gap-5 mt-5">
+        <div class="grid grid-cols-5 gap-5 mt-5">
           <div class="rounded-lg border-2 p-5">
             <div>
               Total Income
             </div>
             <div class="text-5xl font-bold text-center">
-              <%= @total_paid %>
+              <%= @total_income %>
             </div>
           </div>
           <div class="rounded-lg border-2 p-5">
@@ -200,10 +212,18 @@ defmodule TheArkWeb.FinanceLive do
           </div>
           <div class="rounded-lg border-2 p-5">
             <div>
-              Net Due
+              Current Status
             </div>
             <div class="text-5xl font-bold text-center">
-              <%= @net_due %>
+              <%= @current_status %>
+            </div>
+          </div>
+          <div class="rounded-lg border-2 p-5">
+            <div>
+              Overall Status
+            </div>
+            <div class="text-5xl font-bold text-center">
+              <%= @net_status %>
             </div>
           </div>
         </div>
@@ -253,6 +273,39 @@ defmodule TheArkWeb.FinanceLive do
           </div>
           <div class="max-h-[400px] overflow-y-scroll">
             <.finances_entries {assigns} />
+          </div>
+        </div>
+      </div>
+
+      <div class="border rounded-lg my-5">
+        <div class="rounded-t-lg bg-gray-300 p-3 font-bold flex justify-between items-center">
+          <div>Misc Finances Description</div>
+          <div phx-click="collapse" phx-value-section_id="misc_finances" class="cursor-pointer">
+            <.icon name="hero-arrows-up-down" class="w-6 h-6" />
+          </div>
+        </div>
+
+        <div :if={"misc_finances" in @collapsed_sections} class="flex flex-col p-5">
+          <div class="my-5 border rounded-lg px-3 pb-3 flex justify-end">
+            <.form
+              :let={f}
+              for={}
+              as={:misc_order}
+              class="flex items-center gap-3 justify-between"
+              phx-change="order_misc_finance"
+            >
+              <div class="flex items-center gap-3">
+                <.input
+                  field={f[:order]}
+                  type="select"
+                  label="Sort by Date"
+                  options={["Descending", "Ascending"]}
+                />
+              </div>
+            </.form>
+          </div>
+          <div class="max-h-[400px] overflow-y-scroll">
+            <.finances_entries finances={@misc_finances} options={[]} group={false} edit_note_id={@edit_note_id} is_bill={false} collapsed_sections={@collapsed_sections} note_changeset={@note_changeset} finance_changeset={@finance_changeset} edit_finance_id={@edit_finance_id}/>
           </div>
         </div>
       </div>
@@ -364,8 +417,8 @@ defmodule TheArkWeb.FinanceLive do
     """
   end
 
-  defp assign_total_paid(%{assigns: %{students_total_finances: finances}} = socket) do
-    total_paid =
+  defp assign_total_income(%{assigns: %{students_total_finances: finances, misc_finances: misc_finances}} = socket) do
+    total_paid_by_students =
       Enum.filter(finances, fn finance ->
         !finance.is_bill
       end)
@@ -377,8 +430,17 @@ defmodule TheArkWeb.FinanceLive do
       end)
       |> Enum.sum()
 
+    total_misc =
+      Enum.map(misc_finances, fn finance ->
+        Enum.map(finance.transaction_details, fn detail ->
+          detail.paid_amount
+        end)
+        |> Enum.sum()
+      end)
+      |> Enum.sum()
+
     socket
-    |> assign(total_paid: total_paid)
+    |> assign(total_income: total_paid_by_students + total_misc)
   end
 
   defp assign_total_student_due(%{assigns: %{students_total_finances: finances}} = socket) do
@@ -402,7 +464,7 @@ defmodule TheArkWeb.FinanceLive do
   end
 
   defp assign_due_bills(
-         %{assigns: %{finances: finances, total_student_due: total_student_due}} = socket
+         %{assigns: %{finances: finances, total_student_due: total_student_due, total_income: total_income}} = socket
        ) do
     due_bills =
       Enum.map(finances, fn finance ->
@@ -413,11 +475,22 @@ defmodule TheArkWeb.FinanceLive do
       end)
       |> Enum.sum()
 
-    net_due = total_student_due - due_bills
+    paid_bills =
+      Enum.map(finances, fn finance ->
+        Enum.map(finance.transaction_details, fn detail ->
+          detail.paid_amount
+        end)
+        |> Enum.sum()
+      end)
+      |> Enum.sum()
+
+    current_status = (total_income) - (due_bills + paid_bills)
+    net_status = (total_income + total_student_due) - (due_bills + paid_bills)
 
     socket
     |> assign(due_bills: due_bills)
-    |> assign(net_due: net_due)
+    |> assign(net_status: net_status)
+    |> assign(current_status: current_status)
   end
 
   defp assign_detailed_description(socket) do
