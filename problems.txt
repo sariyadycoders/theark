@@ -4,3 +4,4 @@
 4. Results of previous years (complete system of comparison)
 5. show indication for result added or not (on add result page)
 6. Printing and to pdf (non-payees etc.)
+7. Workers (1. finance yearly reset worker. 2. Attendance monthly worker)

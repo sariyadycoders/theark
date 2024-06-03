@@ -405,8 +405,12 @@ defmodule TheArkWeb.CoreComponents do
 
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
+    assigns =
+      assigns
+      |> Enum.into(%{main_class: ""})
+
     ~H"""
-    <div phx-feedback-for={@name} class={if @input_class, do: @input_class, else: "mt-2"}>
+    <div phx-feedback-for={@name} class={if @input_class, do: @input_class, else: "mt-2 #{@main_class}"}>
       <.label class={"#{(@type == "hidden") && "hidden"}"} for={@id}><%= @label %></.label>
       <input
         type={@type}

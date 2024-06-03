@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: finance implementation according to is_accepted attribute
+  # TODO: Add misc finance show
 
   alias TheArk.{
     Classes,
