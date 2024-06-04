@@ -37,10 +37,13 @@ defmodule TheArkWeb.AddResultLive do
       if subject_choosen do
         subject = Subjects.get_subject_by_subject_id(class.id, subject_id)
 
-        (Enum.filter(subject.classresults, fn result ->
+        result =
+          (Enum.filter(subject.classresults, fn result ->
            result.name == term
-         end)
-         |> Enum.at(0)).total_marks
+          end)
+          |> Enum.at(0))
+
+        if result, do: result.total_marks, else: nil
       else
         nil
       end
@@ -60,21 +63,21 @@ defmodule TheArkWeb.AddResultLive do
 
   @impl true
   def handle_event(
-        "choose_subject",
+        "choose_configurations",
         %{
           "class_id" => class_id,
-          "choose_subject" => %{"subject_id" => subject_id, "term" => term}
+          "choose_configurations" => %{"subject_id" => subject_id, "term" => term, "total_marks" => _total_marks}
         },
-        %{assigns: %{term: term}} = socket
+        socket
       ) do
     subject_choosen = Subjects.get_subject_name_by_subject_id(class_id, subject_id)
     subject = Subjects.get_subject_by_subject_id(class_id, subject_id)
 
     total_marks =
       (Enum.filter(subject.classresults, fn result ->
-         result.name == term
-       end)
-       |> Enum.at(0)).total_marks
+          result.name == term
+        end)
+        |> Enum.at(0)).total_marks
 
     socket
     |> assign(subject_choosen: subject_choosen)
@@ -90,10 +93,8 @@ defmodule TheArkWeb.AddResultLive do
         "insert_total_marks",
         %{
           "class_id" => class_id,
-          "insert_total_marks" => %{
-            "subject_id" => subject_id,
-            "term" => term,
-            "total_marks" => total_marks
+          "choose_configurations" => %{
+            "subject_id" => subject_id, "term" => term, "total_marks" => total_marks
           }
         },
         socket
@@ -207,9 +208,10 @@ defmodule TheArkWeb.AddResultLive do
         <.form
           :let={s}
           for={%{}}
-          as={:choose_subject}
+          as={:choose_configurations}
           phx-value-class_id={@class.id}
-          phx-change="choose_subject"
+          phx-change="choose_configurations"
+          phx-submit="insert_total_marks"
         >
           <.input
             field={s[:subject_id]}
@@ -220,29 +222,18 @@ defmodule TheArkWeb.AddResultLive do
                 [{:"#{subject.name}", subject.subject_id}]
               end)
             }
-            value={nil}
+            value={@subject_id}
           />
           <.input field={s[:term]} type="select" label="Choose Term" options={make_term_options()} />
-        </.form>
-
-        <.form
-          :let={m}
-          for={%{}}
-          as={:insert_total_marks}
-          phx-value-class_id={@class.id}
-          phx-submit="insert_total_marks"
-        >
           <.input
-            field={m[:total_marks]}
+            field={s[:total_marks]}
             type="number"
             label="Total Marks"
             placeholder="should be greater than zero"
             value={@total_marks}
           />
-          <.input field={m[:subject_id]} type="hidden" label="Choose Subject" value={@subject_id} />
-          <.input field={m[:term]} type="hidden" value={@term} />
 
-          <.button class="mt-2">Submit total marks</.button>
+          <.button class="mt-2">Submit Configurations</.button>
         </.form>
 
         <%= if @total_marks_submitted do %>
@@ -328,7 +319,16 @@ defmodule TheArkWeb.AddResultLive do
       class.is_first_term_announced and class.is_second_term_announced ->
         ["First Term": "first_term", "Second Term": "second_term"]
 
-      class.is_first_term_announced ->
+      class.is_second_term_announced and class.is_third_term_announced ->
+        ["Second Term": "second_term", "Third Term": "third_term"]
+
+      class.is_third_term_announced and !class.is_first_term_announced ->
+        ["Third Term": "third_term"]
+
+      class.is_second_term_announced ->
+        ["Second Term": "second_term"]
+
+      class.is_first_term_announced and !class.is_third_term_announced ->
         ["First Term": "first_term"]
 
       true ->
