@@ -50,14 +50,12 @@ defmodule TheArkWeb.AddResultLive do
 
     socket
     |> assign(class: class)
-    |> assign(is_first_term_announced: class.is_first_term_announced)
     |> assign(subject_choosen: subject_choosen)
     |> assign(total_marks: total_marks)
     |> assign(term: term)
     |> assign(subject_id: subject_id)
-    |> assign(allowed_result_student_id: 0)
-    |> assign(result_changeset: Results.change_result(%Result{}))
     |> assign(total_marks_submitted: false)
+    |> assign(result_changesets: [])
     |> ok()
   end
 
@@ -97,7 +95,7 @@ defmodule TheArkWeb.AddResultLive do
             "subject_id" => subject_id, "term" => term, "total_marks" => total_marks
           }
         },
-        socket
+        %{assigns: %{class: class, subject_choosen: subject_choosen}} = socket
       ) do
     subject = Subjects.get_subject_by_subject_id(class_id, subject_id)
 
@@ -117,9 +115,14 @@ defmodule TheArkWeb.AddResultLive do
     if total_marks do
       Classresults.update_classresult(result, %{"total_marks" => total_marks})
 
+      result_changesets = Enum.map(class.students, fn student ->
+          %{name: student.name, changeset: result_changeset(student, term, subject_choosen), result_id: get_result_id(student, term, subject_choosen), is_submitted: false}
+        end)
+
       socket
       |> assign(total_marks: total_marks)
       |> assign(total_marks_submitted: true)
+      |> assign(result_changesets: result_changesets)
       |> put_flash(:info, "Total marks added")
       |> noreply()
     else
@@ -131,44 +134,26 @@ defmodule TheArkWeb.AddResultLive do
 
   @impl true
   def handle_event(
-        "allowed_result_student_id",
-        %{"student_id" => "0"},
-        socket
-      ) do
-    socket
-    |> assign(allowed_result_student_id: 0)
-    |> noreply()
-  end
-
-  @impl true
-  def handle_event(
-        "allowed_result_student_id",
-        %{"student_id" => id},
-        %{assigns: %{term: term, subject_choosen: subject_choosen}} = socket
-      ) do
-    student = Students.get_student!(id)
-    result_changeset = result_changeset(student, term, subject_choosen)
-
-    socket
-    |> assign(result_changeset: result_changeset)
-    |> assign(allowed_result_student_id: String.to_integer(id))
-    |> noreply()
-  end
-
-  @impl true
-  def handle_event(
         "validate_result",
         %{
           "result_id" => result_id,
           "result" => result_params
         },
-        socket
+        %{assigns: %{result_changesets: result_changesets}} = socket
       ) do
     result = Results.get_result!(result_id)
     result_changeset = Results.change_result(result, result_params) |> Map.put(:action, :insert)
+    result_changesets =
+      Enum.map(result_changesets, fn change ->
+        if change.result_id == String.to_integer(result_id) do
+          Map.put(change, :changeset, result_changeset)
+        else
+          change
+        end
+      end)
 
     socket
-    |> assign(result_changeset: result_changeset)
+    |> assign(result_changesets: result_changesets)
     |> noreply()
   end
 
@@ -179,15 +164,24 @@ defmodule TheArkWeb.AddResultLive do
           "result_id" => result_id,
           "result" => result_params
         },
-        socket
+        %{assigns: %{result_changesets: result_changesets}} = socket
       ) do
     result = Results.get_result!(result_id)
 
     case Results.update_result(result, result_params) do
       {:ok, _result} ->
+        result_changesets =
+          Enum.map(result_changesets, fn change ->
+            if change.result_id == String.to_integer(result_id) do
+              Map.put(change, :is_submitted, true)
+            else
+              change
+            end
+          end)
+
         socket
         |> put_flash(:info, "result added")
-        |> assign(allowed_result_student_id: 0)
+        |> assign(result_changesets: result_changesets)
         |> noreply()
 
       {:error, changeset} ->
@@ -237,54 +231,31 @@ defmodule TheArkWeb.AddResultLive do
         </.form>
 
         <%= if @total_marks_submitted do %>
-          <%= for student <- @class.students do %>
+          <%= for %{name: name, changeset: changeset, result_id: result_id, is_submitted: is_submitted} <- @result_changesets, !is_submitted do %>
             <div class="relative p-5 border rounded-lg my-3">
-              <%= if !(@allowed_result_student_id == student.id) do %>
-                <div class="flex items-center justify-between">
-                  <div>
-                    Are your adding <b><%= @subject_choosen %></b>
-                    result for <b><%= student.name %></b>?
-                  </div>
-                  <.button
-                    phx-click="allowed_result_student_id"
-                    phx-value-student_id={student.id}
-                    class="mt-2"
-                  >
-                    Yes
-                  </.button>
-                </div>
-              <% else %>
-                <div
-                  phx-click="allowed_result_student_id"
-                  phx-value-student_id="0"
-                  class="absolute top-2 right-2 cursor-pointer"
-                >
-                  &#9746;
-                </div>
-                <.form
-                  :let={f}
-                  for={@result_changeset}
-                  phx-value-result_id={get_result(student, @term, @subject_choosen)}
-                  phx-change="validate_result"
-                  phx-submit="add_result"
-                >
-                  <.input
-                    field={f[:obtained_marks]}
-                    type="number"
-                    label={"Obtained Marks of #{student.name} (out of #{@total_marks})"}
-                    placeholder="0 marks means student is absent"
-                  />
-                  <.input
-                    field={f[:total_marks]}
-                    type="hidden"
-                    label="Total Marks"
-                    value={@total_marks}
-                  />
-                  <.input field={f[:name]} type="hidden" label="Name" value={@term} />
+              <.form
+                :let={f}
+                for={changeset}
+                phx-value-result_id={result_id}
+                phx-change="validate_result"
+                phx-submit="add_result"
+              >
+                <.input
+                  field={f[:obtained_marks]}
+                  type="number"
+                  label={"Obtained Marks of #{name} (out of #{@total_marks})"}
+                  placeholder="0 marks means student is absent"
+                />
+                <.input
+                  field={f[:total_marks]}
+                  type="hidden"
+                  label="Total Marks"
+                  value={@total_marks}
+                />
+                <.input field={f[:name]} type="hidden" label="Name" value={@term} />
 
-                  <.button class="mt-2">Submit</.button>
-                </.form>
-              <% end %>
+                <.button class="mt-2">Submit</.button>
+              </.form>
             </div>
           <% end %>
         <% end %>
@@ -304,7 +275,7 @@ defmodule TheArkWeb.AddResultLive do
     Results.result_changeset_for_result_edition(student, term, subject)
   end
 
-  def get_result(student, term, subject) do
+  def get_result_id(student, term, subject) do
     Results.get_result_of_student(student, term, subject).id
   end
 
