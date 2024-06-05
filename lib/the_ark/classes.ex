@@ -219,7 +219,16 @@ defmodule TheArk.Classes do
       class.is_first_term_announced and class.is_second_term_announced ->
         ["first_term", "second_term"]
 
-      class.is_first_term_announced ->
+      class.is_second_term_announced and class.is_third_term_announced ->
+        ["second_term", "third_term"]
+
+      class.is_third_term_announced and !class.is_first_term_announced ->
+        ["third_term"]
+
+      class.is_second_term_announced ->
+        ["second_term"]
+
+      class.is_first_term_announced and !class.is_third_term_announced ->
         ["first_term"]
 
       true ->

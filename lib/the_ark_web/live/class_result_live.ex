@@ -16,9 +16,10 @@ defmodule TheArkWeb.ClassResultLive do
   end
 
   @impl true
-  def handle_event("choose_term", %{"term_name" => term_name}, socket) do
+  def handle_event("go_to_result_sheet", %{"term_name" => term_name}, %{assigns: %{class: class}} = socket) do
     socket
     |> assign(term_name: term_name)
+    |> redirect(to: "/classes/#{class.id}/result-sheet/#{term_name}")
     |> noreply()
   end
 
@@ -30,38 +31,9 @@ defmodule TheArkWeb.ClassResultLive do
 
       <div class="flex items-center gap-2 my-5">
         <%= for term_name <- Classes.make_list_of_terms() do %>
-          <.button phx-click="choose_term" phx-value-term_name={term_name}>
+          <.button phx-click="go_to_result_sheet" phx-value-term_name={term_name}>
             See <%= term_name |> String.replace("_", " ") %> Result Sheet
           </.button>
-        <% end %>
-      </div>
-
-      <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
-        <div class="grid grid-cols-8 items-center font-bold">
-          <div class="border flex flex-col py-2">
-            <div class="col-span-2 text-center">S. Name</div>
-            <div class="col-span-2 text-sm font-normal text-center text-white">random</div>
-          </div>
-          <%= for subject <- @class.subjects do %>
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center"><%= subject.name %></div>
-              <div class="col-span-2 text-sm font-normal text-center">
-                <%= get_total_marks_of_term_from_results(subject.classresults, @term_name) %>
-              </div>
-            </div>
-          <% end %>
-        </div>
-        <%= for student <- @class.students do %>
-          <div class="grid grid-cols-8 items-center">
-            <div class="border pl-2 py-1">
-              <%= student.name %>
-            </div>
-            <%= for subject <- student.subjects do %>
-              <div class="flex border justify-center py-1">
-                <%= get_obtained_marks_of_term_from_results(subject.results, @term_name) %>
-              </div>
-            <% end %>
-          </div>
         <% end %>
       </div>
 
