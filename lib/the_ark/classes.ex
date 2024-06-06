@@ -8,6 +8,18 @@ defmodule TheArk.Classes do
   alias TheArk.Periods.Period
   alias TheArk.Attendances.Attendance
 
+  @traits [
+    %{id: 5001, label: "Punctuality_t", selected: true},
+    %{id: 5002, label: "Cleanliness_t", selected: true},
+    %{id: 5003, label: "Obedience_t", selected: true},
+    %{id: 5004, label: "Conduct_t", selected: true},
+    %{id: 5005, label: "Honesty_t", selected: true},
+    %{id: 5006, label: "Responsibility_t", selected: true},
+    %{id: 5007, label: "Self-Discipline_t", selected: true},
+    %{id: 5008, label: "Cooperation_t", selected: true},
+    %{id: 5009, label: "Confidence_t", selected: true},
+  ]
+
   def list_classes do
     Repo.all(from(c in Class, order_by: c.id))
     |> Repo.preload([
@@ -100,7 +112,7 @@ defmodule TheArk.Classes do
   end
 
   def create_class_subjects({:ok, class} = success, subject_options) do
-    selected_subjects = Enum.filter(subject_options, fn subject -> subject.selected end)
+    selected_subjects = Enum.filter(subject_options, fn subject -> subject.selected end) ++ @traits
 
     for subject <- selected_subjects do
       Subjects.create_class_subject(%{
@@ -132,6 +144,7 @@ defmodule TheArk.Classes do
   end
 
   def update_class_subjects({:ok, _class}, class, subject_options) do
+    subject_options = subject_options ++ @traits
     new_class_subject_ids =
       Enum.map(subject_options, fn subject_option ->
         if subject_option.selected, do: subject_option.id, else: 0
