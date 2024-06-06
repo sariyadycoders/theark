@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: Styling of separate class result sheet | and creation of student's separate result sheet.
+  # TODO: Styling of student's separate result sheet.
 
   alias TheArk.{
     Classes,
