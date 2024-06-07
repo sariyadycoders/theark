@@ -38,10 +38,10 @@ defmodule TheArkWeb.AddResultLive do
         subject = Subjects.get_subject_by_subject_id(class.id, subject_id)
 
         result =
-          (Enum.filter(subject.classresults, fn result ->
-           result.name == term
+          Enum.filter(subject.classresults, fn result ->
+            result.name == term
           end)
-          |> Enum.at(0))
+          |> Enum.at(0)
 
         if result, do: result.total_marks, else: nil
       else
@@ -64,7 +64,11 @@ defmodule TheArkWeb.AddResultLive do
         "choose_configurations",
         %{
           "class_id" => class_id,
-          "choose_configurations" => %{"subject_id" => subject_id, "term" => term, "total_marks" => _total_marks}
+          "choose_configurations" => %{
+            "subject_id" => subject_id,
+            "term" => term,
+            "total_marks" => _total_marks
+          }
         },
         socket
       ) do
@@ -73,9 +77,9 @@ defmodule TheArkWeb.AddResultLive do
 
     total_marks =
       (Enum.filter(subject.classresults, fn result ->
-          result.name == term
-        end)
-        |> Enum.at(0)).total_marks
+         result.name == term
+       end)
+       |> Enum.at(0)).total_marks
 
     socket
     |> assign(subject_choosen: subject_choosen)
@@ -92,7 +96,9 @@ defmodule TheArkWeb.AddResultLive do
         %{
           "class_id" => class_id,
           "choose_configurations" => %{
-            "subject_id" => subject_id, "term" => term, "total_marks" => total_marks
+            "subject_id" => subject_id,
+            "term" => term,
+            "total_marks" => total_marks
           }
         },
         %{assigns: %{class: class, subject_choosen: subject_choosen}} = socket
@@ -115,8 +121,14 @@ defmodule TheArkWeb.AddResultLive do
     if total_marks do
       Classresults.update_classresult(result, %{"total_marks" => total_marks})
 
-      result_changesets = Enum.map(class.students, fn student ->
-          %{name: student.name, changeset: result_changeset(student, term, subject_choosen), result_id: get_result_id(student, term, subject_choosen), is_submitted: false}
+      result_changesets =
+        Enum.map(class.students, fn student ->
+          %{
+            name: student.name,
+            changeset: result_changeset(student, term, subject_choosen),
+            result_id: get_result_id(student, term, subject_choosen),
+            is_submitted: false
+          }
         end)
 
       socket
@@ -143,6 +155,7 @@ defmodule TheArkWeb.AddResultLive do
       ) do
     result = Results.get_result!(result_id)
     result_changeset = Results.change_result(result, result_params) |> Map.put(:action, :insert)
+
     result_changesets =
       Enum.map(result_changesets, fn change ->
         if change.result_id == String.to_integer(result_id) do

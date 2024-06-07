@@ -477,7 +477,9 @@ defmodule TheArkWeb.Home do
             field={f[:class]}
             label="Choose Class"
             type="select"
-            options={[{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)}
+            options={
+              [{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)
+            }
           />
         </.form>
       </.modal>

@@ -657,12 +657,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     <.inputs_for :let={n} field={@form[:transaction_details]}>
       <div class="grid grid-cols-4 gap-2 items-end">
         <%= if !@is_bill && !@group do %>
-          <.input
-            field={n[:title]}
-            label="Title"
-            type="text"
-            value={input_value(n, :title)}
-          />
+          <.input field={n[:title]} label="Title" type="text" value={input_value(n, :title)} />
         <% else %>
           <.input
             field={n[:title]}
@@ -703,7 +698,11 @@ defmodule TheArkWeb.StudentFinanceLive do
           field={n[:paid_amount]}
           label="Paid"
           type="number"
-          value={if !@is_bill && !@group, do: input_value(n, :total_amount), else: input_value(n, :paid_amount)}
+          value={
+            if !@is_bill && !@group,
+              do: input_value(n, :total_amount),
+              else: input_value(n, :paid_amount)
+          }
           main_class={if !@is_bill && !@group, do: "hidden"}
         />
         <%= if @is_bill || @group do %>

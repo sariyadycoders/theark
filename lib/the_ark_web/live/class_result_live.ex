@@ -16,7 +16,11 @@ defmodule TheArkWeb.ClassResultLive do
   end
 
   @impl true
-  def handle_event("go_to_result_sheet", %{"term_name" => term_name}, %{assigns: %{class: class}} = socket) do
+  def handle_event(
+        "go_to_result_sheet",
+        %{"term_name" => term_name},
+        %{assigns: %{class: class}} = socket
+      ) do
     socket
     |> assign(term_name: term_name)
     |> redirect(to: "/classes/#{class.id}/result-sheet/#{term_name}")

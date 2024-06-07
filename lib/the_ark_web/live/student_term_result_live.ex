@@ -22,48 +22,46 @@ defmodule TheArkWeb.StudentTermResultLive do
   @impl true
   def render(assigns) do
     ~H"""
-      <div>
-        <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
-          <div class="grid grid-cols-5 items-center font-bold">
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center">Subject Name</div>
-            </div>
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center">Total Marks</div>
-            </div>
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center">Obtained Marks</div>
-            </div>
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center">Percentage</div>
-            </div>
-            <div class="border flex flex-col py-2">
-              <div class="col-span-2 text-center">Status</div>
-            </div>
-          </div>
-          <%= for subject <- @student.subjects do %>
-            <div class="grid grid-cols-5 items-center">
-              <div class="border pl-2 py-1">
-                <%= subject.name %>
-              </div>
-              <div class="border pl-2 py-1 text-center">
-                <%= get_total_marks_of_term_from_results(subject.results, @term_name) %>
-              </div>
-              <div class="border pl-2 py-1 text-center">
-                <%= get_obtained_marks_of_term_from_results(subject.results, @term_name) %>
-              </div>
-              <div class="border pl-2 py-1 text-center">
-                <%= get_percentage_of_marks(subject.results, @term_name) %>
-              </div>
-              <div class="border pl-2 py-1 text-center">
-                <%= if get_percentage_of_marks(subject.results, @term_name) > 32,
-                  do: "Pass",
-                  else: "Fail" %>
-              </div>
-            </div>
-          <% end %>
+    <div :if={@term_name} class="w-full p-5 border rounded-lg my-5">
+      <div class="grid grid-cols-5 items-center font-bold">
+        <div class="border flex flex-col py-2">
+          <div class="col-span-2 text-center">Subject Name</div>
+        </div>
+        <div class="border flex flex-col py-2">
+          <div class="col-span-2 text-center">Total Marks</div>
+        </div>
+        <div class="border flex flex-col py-2">
+          <div class="col-span-2 text-center">Obtained Marks</div>
+        </div>
+        <div class="border flex flex-col py-2">
+          <div class="col-span-2 text-center">Percentage</div>
+        </div>
+        <div class="border flex flex-col py-2">
+          <div class="col-span-2 text-center">Status</div>
         </div>
       </div>
+      <%= for subject <- @student.subjects do %>
+        <div class="grid grid-cols-5 items-center">
+          <div class="border pl-2 py-1">
+            <%= subject.name %>
+          </div>
+          <div class="border pl-2 py-1 text-center">
+            <%= get_total_marks_of_term_from_results(subject.results, @term_name) %>
+          </div>
+          <div class="border pl-2 py-1 text-center">
+            <%= get_obtained_marks_of_term_from_results(subject.results, @term_name) %>
+          </div>
+          <div class="border pl-2 py-1 text-center">
+            <%= get_percentage_of_marks(subject.results, @term_name) %>
+          </div>
+          <div class="border pl-2 py-1 text-center">
+            <%= if get_percentage_of_marks(subject.results, @term_name) > 32,
+              do: "Pass",
+              else: "Fail" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
     """
   end
 end

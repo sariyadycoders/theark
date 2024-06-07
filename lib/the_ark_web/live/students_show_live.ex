@@ -123,7 +123,11 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
-  def handle_event("go_to_term_result", %{"term_name" => term_name}, %{assigns: %{student_id: student_id}} = socket) do
+  def handle_event(
+        "go_to_term_result",
+        %{"term_name" => term_name},
+        %{assigns: %{student_id: student_id}} = socket
+      ) do
     socket
     |> redirect(to: "/students/#{student_id}/result-sheet/#{term_name}")
     |> noreply()

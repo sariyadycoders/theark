@@ -17,7 +17,7 @@ defmodule TheArk.Classes do
     %{id: 5006, label: "Responsibility_t", selected: true},
     %{id: 5007, label: "Self-Discipline_t", selected: true},
     %{id: 5008, label: "Cooperation_t", selected: true},
-    %{id: 5009, label: "Confidence_t", selected: true},
+    %{id: 5009, label: "Confidence_t", selected: true}
   ]
 
   def list_classes do
@@ -112,7 +112,8 @@ defmodule TheArk.Classes do
   end
 
   def create_class_subjects({:ok, class} = success, subject_options) do
-    selected_subjects = Enum.filter(subject_options, fn subject -> subject.selected end) ++ @traits
+    selected_subjects =
+      Enum.filter(subject_options, fn subject -> subject.selected end) ++ @traits
 
     for subject <- selected_subjects do
       Subjects.create_class_subject(%{
@@ -145,6 +146,7 @@ defmodule TheArk.Classes do
 
   def update_class_subjects({:ok, _class}, class, subject_options) do
     subject_options = subject_options ++ @traits
+
     new_class_subject_ids =
       Enum.map(subject_options, fn subject_option ->
         if subject_option.selected, do: subject_option.id, else: 0
