@@ -26,7 +26,7 @@ defmodule TheArkWeb.StudentTermResultLive do
     <div class="p-5 border-4 rounded-lg my-5 border-black">
       <div class="flex justify-between my-5">
         <div class="border w-28 h-28">
-          Logo
+          <image src="/images/ark_logo.jpeg" />
         </div>
         <div class="flex flex-col">
           <div class="font-bold">
@@ -149,34 +149,83 @@ defmodule TheArkWeb.StudentTermResultLive do
           <div class="border pl-2 py-1">
             <%= subject.name |> String.slice(0..-3) %>
           </div>
-          <div class="border pl-2 py-1 text-center">
-            <.icon
-              name="hero-check-solid"
-              class={"h-5 w-5 #{(percentage not in 0..50) && "text-white"}"}
-            />
+          <div class="border pl-2 py-2 text-center flex items-center justify-center">
+            <div class={"h-5 w-5 #{(percentage not in 0..50) && "invisible"}"}>
+              <.tick_icon />
+            </div>
           </div>
-          <div class="border pl-2 py-1 text-center">
-            <.icon
-              name="hero-check-solid"
-              class={"h-5 w-5 #{(percentage not in 51..70) && "text-white"}"}
-            />
+          <div class="border pl-2 py-2 text-center flex items-center justify-center">
+            <div class={"h-5 w-5 #{(percentage not in 51..70) && "invisible"}"}>
+              <.tick_icon />
+            </div>
           </div>
-          <div class="border pl-2 py-1 text-center">
-            <.icon
-              name="hero-check-solid"
-              class={"h-5 w-5 #{(percentage not in 71..90) && "text-white"}"}
-            />
+          <div class="border pl-2 py-2 text-center flex items-center justify-center">
+            <div class={"h-5 w-5 #{(percentage not in 71..90) && "invisible"}"}>
+              <.tick_icon />
+            </div>
           </div>
-          <div class="border pl-2 py-1 text-center">
-            <.icon
-              name="hero-check-solid"
-              class={"h-5 w-5 #{(percentage not in 91..100) && "text-white"}"}
-            />
+          <div class="border pl-2 py-2 text-center flex items-center justify-center">
+            <div class={"h-5 w-5 #{(percentage not in 91..100) && "invisible"}"}>
+              <.tick_icon />
+            </div>
           </div>
         </div>
       <% end %>
+      <div class="mt-5 border-2 border-black flex">
+        <div class="font-bold text-lg p-2 grow border-r border-black">
+          Remarks
+        </div>
+        <div class="flex flex-col font-bold grow">
+          <div class="border border-black px-2 py-1 font-bold">
+            Overall Status:
+            <span class="ml-1 font-normal">
+              <%= if get_average_percentage(@student.subjects, @term_name) > 32,
+                do: "Pass",
+                else: "Fail" %>
+            </span>
+          </div>
+          <div class="border border-black px-2 py-1">
+            Promoted to next Class?:
+            <span class="ml-1 font-normal"><%= promoted?(@student.subjects, @term_name) %></span>
+          </div>
+          <div class="border border-black px-2 py-1">
+            Class In-charge Sign:
+          </div>
+          <div class="border border-black px-2 py-1 h-20">
+            Principal's Sign and Stamp:
+          </div>
+        </div>
+      </div>
     </div>
     """
+  end
+
+  def tick_icon(assigns) do
+    ~H"""
+    <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 457.57">
+      <defs>
+        <style>
+          .cls-1{fill-rule:evenodd; width: 20px; height: 20px;}
+        </style>
+      </defs>
+      <path
+        class="cls-1 h-5 w-5"
+        d="M0,220.57c100.43-1.33,121-5.2,191.79,81.5,54.29-90,114.62-167.9,179.92-235.86C436-.72,436.5-.89,512,.24,383.54,143,278.71,295.74,194.87,457.57,150,361.45,87.33,280.53,0,220.57Z"
+      />
+    </svg>
+    """
+  end
+
+  def promoted?(subjects, "third_term" = term_name) do
+    if get_average_percentage(subjects, term_name) > 32 do
+      "Yes"
+    else
+      "No"
+    end
+  end
+
+  def promoted?(_subjects, _) do
+    "No"
   end
 
   def get_net_total_marks(subjects, term_name) do
