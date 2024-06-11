@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: School logo on result card. AND test initialization and submission system.
+  # TODO: School logo on result card. AND test result system
 
   alias TheArk.{
     Classes,
@@ -16,7 +16,10 @@ defmodule TheArkWeb.Home do
     Organizations,
     Roles.Role,
     Roles,
-    Attendances
+    Attendances,
+    Subjects,
+    Tests,
+    Tests.Test
   }
 
   # import Ecto.Changeset
@@ -33,6 +36,8 @@ defmodule TheArkWeb.Home do
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
     |> assign(role_changeset: Roles.change_role(%Role{}))
+    |> assign(test_changeset: Tests.change_test(%Test{}))
+    |> assign(test_subject_options: [])
     |> assign(role_editing_id: 0)
     |> assign(organization_changeset: Organizations.change_organization(organization))
     |> assign(subject_options: Subjects.list_subject_options())
@@ -286,6 +291,111 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event(
+        "validate_test_init",
+        %{
+          "test" =>
+            %{
+              "class_id" => class_id,
+              "total_marks" => _total_marks,
+              "subject" => _subject,
+              "date_of_test" => _date
+            } = params
+        },
+        %{assigns: %{test_subject_options: test_subject_options}} = socket
+      ) do
+    class_id = String.to_integer(class_id)
+    class_id = if class_id > 0, do: class_id, else: nil
+
+    test_subject_options =
+      if class_id do
+        Subjects.get_subject_options_for_select(class_id)
+        |> Enum.reject(fn {_key, value} ->
+          String.ends_with?(value, "_t")
+        end)
+      else
+        test_subject_options
+      end
+
+    params = Map.put(params, "class_id", class_id)
+
+    test_changeset =
+      Tests.change_test(%Test{}, params)
+      |> Map.put(:action, :insert)
+
+    socket
+    |> assign(test_subject_options: test_subject_options)
+    |> assign(test_changeset: test_changeset)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "validate_test_init",
+        %{
+          "test" =>
+            %{
+              "class_id" => class_id
+            } = params
+        },
+        %{assigns: %{test_subject_options: test_subject_options}} = socket
+      ) do
+    class_id = String.to_integer(class_id)
+    class_id = if class_id > 0, do: class_id, else: nil
+
+    test_subject_options =
+      if class_id do
+        Subjects.get_subject_options_for_select(class_id)
+        |> Enum.reject(fn {_key, value} ->
+          String.ends_with?(value, "_t")
+        end)
+      else
+        test_subject_options
+      end
+
+    socket
+    |> assign(test_subject_options: test_subject_options)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "submit_test_init",
+        %{
+          "test" =>
+            %{
+              "class_id" => class_id,
+              "total_marks" => _total_marks,
+              "subject" => _subject,
+              "date_of_test" => _date
+            } = params
+        },
+        %{assigns: %{test_subject_options: test_subject_options}} = socket
+      ) do
+    class_id = String.to_integer(class_id)
+    class_id = if class_id > 0, do: class_id, else: nil
+
+    params =
+      Map.put(params, "class_id", class_id)
+      |> Map.put("is_class_test", true)
+
+    case Tests.create_class_test(params) do
+      {:ok, test} ->
+
+        socket
+        |> put_flash(:info, "Test initiated successfully!")
+        |> assign(test_changeset: Tests.change_test(%Test{}))
+        |> assign(test_subject_options: [])
+        |> noreply()
+
+      {:error, changeset} ->
+        socket
+        |> assign(test_changeset: changeset)
+        |> noreply()
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -395,6 +505,9 @@ defmodule TheArkWeb.Home do
         <.button class="flex justify-center" phx-click={show_modal("choose_fine_submission_class")}>
           Submit Absent Fines
         </.button>
+        <.button class="flex justify-center" phx-click={show_modal("choose_test_configs")}>
+          Initialize a Test
+        </.button>
       </div>
 
       <div class="border rounded-lg grid grid-cols-3 gap-2 p-4 my-5">
@@ -481,6 +594,34 @@ defmodule TheArkWeb.Home do
               [{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)
             }
           />
+        </.form>
+      </.modal>
+
+      <.modal id="choose_test_configs">
+        <.form
+          :let={f}
+          for={@test_changeset}
+          phx-submit="submit_test_init"
+          phx-change="validate_test_init"
+        >
+          <.input
+            field={f[:class_id]}
+            label="Choose Class"
+            type="select"
+            options={
+              [{:none, 0}] ++ Enum.flat_map(@classes, fn class -> [{:"#{class.name}", class.id}] end)
+            }
+          />
+          <.input
+            field={f[:subject]}
+            label="Choose Subject"
+            type="select"
+            options={@test_subject_options}
+          />
+          <.input field={f[:total_marks]} label="Total Marks" type="number" />
+          <.input field={f[:date_of_test]} label="Date of Test" type="date" />
+
+          <.button class="mt-5">Initialize Test</.button>
         </.form>
       </.modal>
 
