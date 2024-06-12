@@ -8,10 +8,13 @@ defmodule TheArk.Repo.Migrations.CreateTests do
       add :obtained_marks, :integer
       add :date_of_test, :date
       add :is_class_test, :boolean
+      add :is_closed, :boolean
       add :student_id, references(:students, on_delete: :delete_all)
       add :class_id, references(:classes, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)
     end
+
+    create unique_index(:tests, [:subject, :date_of_test, :class_id], name: "unique_subject_date_class_id")
   end
 end

@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: School logo on result card. AND test result system
+  # TODO: School logo on result card. AND page of class tests
 
   alias TheArk.{
     Classes,
@@ -36,7 +36,7 @@ defmodule TheArkWeb.Home do
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
     |> assign(role_changeset: Roles.change_role(%Role{}))
-    |> assign(test_changeset: Tests.change_test(%Test{}))
+    |> assign(test_changeset: Tests.change_class_test(%Test{}))
     |> assign(test_subject_options: [])
     |> assign(role_editing_id: 0)
     |> assign(organization_changeset: Organizations.change_organization(organization))
@@ -320,7 +320,7 @@ defmodule TheArkWeb.Home do
     params = Map.put(params, "class_id", class_id)
 
     test_changeset =
-      Tests.change_test(%Test{}, params)
+      Tests.change_class_test(%Test{}, params)
       |> Map.put(:action, :insert)
 
     socket
@@ -336,7 +336,7 @@ defmodule TheArkWeb.Home do
           "test" =>
             %{
               "class_id" => class_id
-            } = params
+            } = _params
         },
         %{assigns: %{test_subject_options: test_subject_options}} = socket
       ) do
@@ -370,7 +370,7 @@ defmodule TheArkWeb.Home do
               "date_of_test" => _date
             } = params
         },
-        %{assigns: %{test_subject_options: test_subject_options}} = socket
+        socket
       ) do
     class_id = String.to_integer(class_id)
     class_id = if class_id > 0, do: class_id, else: nil
@@ -380,11 +380,10 @@ defmodule TheArkWeb.Home do
       |> Map.put("is_class_test", true)
 
     case Tests.create_class_test(params) do
-      {:ok, test} ->
-
+      {:ok, _test} ->
         socket
         |> put_flash(:info, "Test initiated successfully!")
-        |> assign(test_changeset: Tests.change_test(%Test{}))
+        |> assign(test_changeset: Tests.change_class_test(%Test{}))
         |> assign(test_subject_options: [])
         |> noreply()
 

@@ -8,7 +8,8 @@ defmodule TheArk.Tests do
 
   alias TheArk.{
     Tests.Test,
-    Students
+    Students,
+    Results
   }
 
   @doc """
@@ -60,22 +61,25 @@ defmodule TheArk.Tests do
 
   def create_class_test(attrs \\ %{}) do
     %Test{}
-    |> Test.changeset(attrs)
+    |> Test.class_changeset(attrs)
     |> Repo.insert()
-    |> create_test_students()
+    |> create_test_for_students()
   end
 
-  def create_test_students({:ok, test} = success) do
+  def create_test_for_students({:ok, test} = success) do
+    Results.create_test_result(%{total_marks: test.total_marks, test_id: test.id})
     student_ids = Students.get_all_active_students_ids(test.class_id)
 
     for id <- student_ids do
-      create_test(%{
-        subject: test.subject,
-        total_marks: test.total_marks,
-        date_of_test: test.date_of_test,
-        class_id: test.class_id,
-        student_id: id
-      })
+      {:ok, test} =
+        create_test(%{
+          subject: test.subject,
+          total_marks: test.total_marks,
+          date_of_test: test.date_of_test,
+          student_id: id
+        })
+
+      Results.create_test_result(%{total_marks: test.total_marks, test_id: test.id})
     end
 
     success
@@ -130,5 +134,9 @@ defmodule TheArk.Tests do
   """
   def change_test(%Test{} = test, attrs \\ %{}) do
     Test.changeset(test, attrs)
+  end
+
+  def change_class_test(%Test{} = test, attrs \\ %{}) do
+    Test.class_changeset(test, attrs)
   end
 end
