@@ -2,7 +2,7 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: School logo on result card. AND page of class tests
+  # TODO: School logo on result card. AND submission of test results
 
   alias TheArk.{
     Classes,

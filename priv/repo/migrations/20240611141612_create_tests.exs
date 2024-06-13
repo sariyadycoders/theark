@@ -15,6 +15,8 @@ defmodule TheArk.Repo.Migrations.CreateTests do
       timestamps(type: :utc_datetime)
     end
 
-    create unique_index(:tests, [:subject, :date_of_test, :class_id], name: "unique_subject_date_class_id")
+    create unique_index(:tests, [:subject, :date_of_test, :class_id],
+             name: "unique_subject_date_class_id"
+           )
   end
 end

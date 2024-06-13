@@ -41,6 +41,17 @@ defmodule TheArk.Tests do
   """
   def get_test!(id), do: Repo.get!(Test, id)
 
+  def get_single_test(subject, student_id, date) do
+    Repo.one(
+      from(
+        t in Test,
+        where: t.subject == ^subject,
+        where: t.student_id == ^student_id,
+        where: t.date_of_test == ^date
+      )
+    )
+  end
+
   @doc """
   Creates a test.
 
@@ -134,6 +145,10 @@ defmodule TheArk.Tests do
   """
   def change_test(%Test{} = test, attrs \\ %{}) do
     Test.changeset(test, attrs)
+  end
+
+  def student_submit_test_change(%Test{} = test, attrs \\ %{}) do
+    Test.student_submit_changeset(test, attrs)
   end
 
   def change_class_test(%Test{} = test, attrs \\ %{}) do

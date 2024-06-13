@@ -175,6 +175,13 @@ defmodule TheArkWeb.ClassLive do
   end
 
   @impl true
+  def handle_event("go_to_tests", %{"class_id" => id}, socket) do
+    socket
+    |> redirect(to: "/classes/#{String.to_integer(id)}/tests")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -182,7 +189,7 @@ defmodule TheArkWeb.ClassLive do
         <h1 class="font-bold text-3xl mb-5">Classes</h1>
         <.button phx-click="go_to_registration">Add a new Class</.button>
       </div>
-      <div class="grid grid-cols-7 items-center border-b-4 pb-2 font-bold text-md">
+      <div class="grid grid-cols-9 items-center border-b-4 pb-2 font-bold text-md">
         <div>
           Name
         </div>
@@ -195,17 +202,16 @@ defmodule TheArkWeb.ClassLive do
         <div>
           SLO's
         </div>
-        <div class="">
+        <div class="col-span-2">
           Results
         </div>
-        <div class=""></div>
-        <div>
+        <div class="col-span-3">
           Actions
         </div>
       </div>
 
       <%= for class <- @classes do %>
-        <div class="grid grid-cols-7 items-center py-3 text-sm">
+        <div class="grid grid-cols-9 items-center py-3 text-sm">
           <div class="cursor-pointer" phx-click="open_class" phx-value-class_id={class.id}>
             <%= class.name %>
           </div>
@@ -218,29 +224,31 @@ defmodule TheArkWeb.ClassLive do
           <div>
             <.button phx-click="go_to_slos" phx-value-class_id={class.id} icon="hero-eye" />
           </div>
-          <div class="flex items-center gap-1">
-            <.button phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
-            <.button phx-click="open_class_result" phx-value-class_id={class.id} icon="hero-eye" />
-          </div>
-          <div class="flex items-center gap-1">
-            <%= for term_name <- @list_of_terms do %>
-              <%= if Map.get(class, String.to_atom("is_#{term_name}_announced")) do %>
-                <div class={"w-5 rounded-full text-center #{!Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-red-500 text-white"} #{Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-green-500 text-white"}"}>
-                  <%= if term_name == "first_term" do %>
-                    1
-                  <% else %>
-                    <%= if term_name == "second_term" do %>
-                      2
+          <div class="col-span-2 flex items-center gap-2">
+            <div class="flex items-center gap-1">
+              <.button phx-click="add_result" phx-value-class_id={class.id} icon="hero-plus" />
+              <.button phx-click="open_class_result" phx-value-class_id={class.id} icon="hero-eye" />
+            </div>
+            <div class="flex items-center gap-1">
+              <%= for term_name <- @list_of_terms do %>
+                <%= if Map.get(class, String.to_atom("is_#{term_name}_announced")) do %>
+                  <div class={"w-5 rounded-full text-center #{!Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-red-500 text-white"} #{Map.get(class, String.to_atom("is_#{term_name}_result_completed")) && "bg-green-500 text-white"}"}>
+                    <%= if term_name == "first_term" do %>
+                      1
                     <% else %>
-                      3
+                      <%= if term_name == "second_term" do %>
+                        2
+                      <% else %>
+                        3
+                      <% end %>
                     <% end %>
-                  <% end %>
-                </div>
+                  </div>
+                <% end %>
               <% end %>
-            <% end %>
+            </div>
           </div>
           <%!-- <%= if @current_user.email == "management@ark.com" do %> --%>
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 col-span-3">
             <.button
               icon="hero-pencil"
               phx-click={JS.push("edit_class_id") |> show_modal("edit_class_modal_#{class.id}")}
@@ -251,7 +259,12 @@ defmodule TheArkWeb.ClassLive do
               phx-click={JS.push("delete_class_id") |> show_modal("delete_class_modal_#{class.id}")}
               phx-value-class_id={class.id}
             />
-            <.button phx-click="add_attendance" phx-value-class_id={class.id} icon="hero-plus" />
+            <.button
+              phx-click="add_attendance"
+              phx-value-class_id={class.id}
+              icon="hero-arrow-left-on-rectangle"
+            />
+            <.button phx-click="go_to_tests" phx-value-class_id={class.id} icon="hero-scale" />
           </div>
           <%!-- <% end %> --%>
         </div>
