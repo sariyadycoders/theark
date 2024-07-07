@@ -66,7 +66,7 @@ defmodule TheArkWeb.ClassResultLive do
           <%= for subject <- @class.subjects do %>
             <div>
               <a href={"/classes/#{@class.id}/results/#{subject.name}/?term=#{result_name}"}>
-                <%= subject.name %>
+                <%= subject.name |> String.replace("_t", "") %>
               </a>
             </div>
             <div class="col-span-2">

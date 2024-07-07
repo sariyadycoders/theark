@@ -118,6 +118,12 @@ defmodule TheArk.Tests do
     |> Repo.update()
   end
 
+  def update_student_test(%Test{} = test, attrs) do
+    test
+    |> Test.student_submit_changeset(attrs)
+    |> Repo.update()
+  end
+
   @doc """
   Deletes a test.
 
