@@ -10,6 +10,7 @@ defmodule TheArkWeb.ClassTestsLive do
 
     socket
     |> assign(class: class)
+    |> assign(class_id: class.id)
     |> assign(changesets: [])
     |> assign(total_marks: "")
     |> assign(edit_test_id: 0)
@@ -83,20 +84,11 @@ defmodule TheArkWeb.ClassTestsLive do
     end
   end
 
-  def assign_changesets(%{assigns: %{class: class}} = socket, test) do
-    changesets =
-      Enum.map(class.students, fn student ->
-        test = Tests.get_single_test(test.subject, student.id, test.date_of_test)
-
-        %{test_id: test.id, name: student.name, changeset: Tests.student_submit_test_change(test), is_submitted: false}
-      end)
-
+  @impl true
+  def handle_event("go_to_test_result", %{"test_id" => test_id}, %{assigns: %{class_id: class_id}} = socket) do
     socket
-    |> assign(changesets: changesets)
-    |> assign(total_marks: test.total_marks)
-    |> assign(selected_test_subject: test.subject)
-    |> assign(selected_test_date: test.date_of_test)
-    |> assign(edit_test_id: test.id)
+    |> push_navigate(to: "/classes/#{class_id}/tests/#{String.to_integer(test_id)}/result")
+    |> noreply()
   end
 
   @impl true
@@ -117,10 +109,10 @@ defmodule TheArkWeb.ClassTestsLive do
           Total Marks
         </div>
         <div class="col-span-2">
-          Failed Students
+          Absent Students
         </div>
         <div class="">
-          Average Result
+          Avg Result (%)
         </div>
         <div>
           Actions
@@ -137,11 +129,22 @@ defmodule TheArkWeb.ClassTestsLive do
           <div>
             <%= test.total_marks %>
           </div>
-          <div class="col-span-2">
-            Failed Students
+          <div class="col-span-2 flex items-center">
+            <%
+              students = get_absent_student_names(@class, test)
+            %>
+            <%= if students do %>
+              <% count = Enum.count(students) %>
+              <%= for {student, index} <- Enum.with_index(students) do %>
+              <span><%= student %><%= if index < count - 1, do: ", "%></span>
+              <% end %>
+            <% else %>
+              <b>Result Status: </b> <div class="w-4 h-4 bg-red-600 ml-2 rounded-full"></div>
+            <% end %>
           </div>
           <div class="">
-            Average Result
+            <% result = get_average_result(@class, test) %>
+            <%= if result, do: result |> round %>
           </div>
           <div class="flex gap-1">
             <.button
@@ -149,7 +152,7 @@ defmodule TheArkWeb.ClassTestsLive do
               phx-value-id={test.id}
               icon="hero-plus"
             />
-            <.button phx-click="go_to_tests" icon="hero-eye" />
+            <.button phx-click="go_to_test_result" phx-value-test_id={test.id} icon="hero-eye" />
           </div>
         </div>
         <.modal id={"test_result_add_#{test.id}"}>
@@ -177,5 +180,64 @@ defmodule TheArkWeb.ClassTestsLive do
       <% end %>
     </div>
     """
+  end
+
+  defp assign_changesets(%{assigns: %{class: class}} = socket, test) do
+    changesets =
+      Enum.map(class.students, fn student ->
+        test = Tests.get_single_test(test.subject, student.id, test.date_of_test)
+
+        %{test_id: test.id, name: student.name, changeset: Tests.student_submit_test_change(test), is_submitted: false}
+      end)
+
+    socket
+    |> assign(changesets: changesets)
+    |> assign(total_marks: test.total_marks)
+    |> assign(selected_test_subject: test.subject)
+    |> assign(selected_test_date: test.date_of_test)
+    |> assign(edit_test_id: test.id)
+  end
+
+  defp get_absent_student_names(class, test) do
+    students =
+      Enum.map(class.students, fn student ->
+        test = Tests.get_single_test(test.subject, student.id, test.date_of_test)
+
+        if is_nil(test.obtained_marks) do
+          "result not logged yet"
+        else
+          if test.obtained_marks == 0 do
+            student.name
+          else
+            nil
+          end
+        end
+      end)
+      |> Enum.reject(& is_nil(&1))
+
+    if Enum.any?(students, & &1 == "result not logged yet") do
+      nil
+    else
+      students
+    end
+  end
+
+  defp get_average_result(class, test) do
+    marks =
+      Enum.map(class.students, fn student ->
+        test = Tests.get_single_test(test.subject, student.id, test.date_of_test)
+
+        if is_nil(test.obtained_marks) do
+          nil
+        else
+          test.obtained_marks
+        end
+      end)
+
+    if Enum.any?(marks, & is_nil(&1)) do
+      nil
+    else
+      ((Enum.sum(marks) / Enum.count(marks)) / test.total_marks) * 100
+    end
   end
 end

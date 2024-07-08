@@ -50,6 +50,7 @@ defmodule TheArk.Tests do
         where: t.date_of_test == ^date
       )
     )
+    |> Repo.preload(:result)
   end
 
   @doc """
