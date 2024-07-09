@@ -25,8 +25,8 @@ defmodule TheArkWeb.StudentTermResultLive do
     ~H"""
     <div class="p-5 border-4 rounded-lg my-5 border-black">
       <div class="flex justify-between my-5">
-        <div class="border w-28 h-28">
-          <image src="/images/ark_logo.jpeg" />
+        <div class="ml-5 w-28 h-28">
+          <image src="/images/ark_logo.png" />
         </div>
         <div class="flex flex-col">
           <div class="font-bold">
@@ -251,6 +251,13 @@ defmodule TheArkWeb.StudentTermResultLive do
   end
 
   def get_average_percentage(subjects, term_name) do
+    subjects_count =
+      Enum.reject(subjects, fn subject ->
+        subject.name
+        |> String.ends_with?("_t")
+      end)
+      |> Enum.count()
+
     (Enum.reject(subjects, fn subject ->
        subject.name
        |> String.ends_with?("_t")
@@ -258,7 +265,7 @@ defmodule TheArkWeb.StudentTermResultLive do
      |> Enum.map(fn subject ->
        get_percentage_of_marks(subject.results, term_name)
      end)
-     |> Enum.sum()) / Enum.count(subjects)
+     |> Enum.sum()) / subjects_count
   end
 
   def get_grade(subjects, term_name) do
