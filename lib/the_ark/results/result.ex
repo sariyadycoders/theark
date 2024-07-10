@@ -8,6 +8,7 @@ defmodule TheArk.Results.Result do
     field :total_marks, :integer
 
     belongs_to :subject, TheArk.Subjects.Subject
+    belongs_to :test, TheArk.Tests.Test
 
     timestamps(type: :utc_datetime)
   end
@@ -18,6 +19,13 @@ defmodule TheArk.Results.Result do
     |> cast(attrs, [:name, :total_marks, :obtained_marks, :subject_id])
     |> validate_required([:name, :subject_id])
     |> unique_constraint(:name_subject_id, name: :name, subject_id: :subject_id)
+    |> validate_obtained_marks_less_than_total_marks()
+  end
+
+  def test_changeset(result, attrs) do
+    result
+    |> cast(attrs, [:total_marks, :obtained_marks, :test_id])
+    |> validate_required([:total_marks, :test_id])
     |> validate_obtained_marks_less_than_total_marks()
   end
 

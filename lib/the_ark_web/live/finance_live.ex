@@ -2,7 +2,12 @@ defmodule TheArkWeb.FinanceLive do
   use TheArkWeb, :live_view
 
   import TheArkWeb.StudentFinanceLive,
-    only: [finance_form_fields: 1, assign_finances: 1, assign_misc_finances: 1, finances_entries: 1]
+    only: [
+      finance_form_fields: 1,
+      assign_finances: 1,
+      assign_misc_finances: 1,
+      finances_entries: 1
+    ]
 
   alias TheArk.{
     Finances,
@@ -145,7 +150,6 @@ defmodule TheArkWeb.FinanceLive do
           }>
             Add Misc Finance
           </.button>
-
         </div>
       </div>
 
@@ -305,7 +309,17 @@ defmodule TheArkWeb.FinanceLive do
             </.form>
           </div>
           <div class="max-h-[400px] overflow-y-scroll">
-            <.finances_entries finances={@misc_finances} options={[]} group={false} edit_note_id={@edit_note_id} is_bill={false} collapsed_sections={@collapsed_sections} note_changeset={@note_changeset} finance_changeset={@finance_changeset} edit_finance_id={@edit_finance_id}/>
+            <.finances_entries
+              finances={@misc_finances}
+              options={[]}
+              group={false}
+              edit_note_id={@edit_note_id}
+              is_bill={false}
+              collapsed_sections={@collapsed_sections}
+              note_changeset={@note_changeset}
+              finance_changeset={@finance_changeset}
+              edit_finance_id={@edit_finance_id}
+            />
           </div>
         </div>
       </div>
@@ -417,7 +431,9 @@ defmodule TheArkWeb.FinanceLive do
     """
   end
 
-  defp assign_total_income(%{assigns: %{students_total_finances: finances, misc_finances: misc_finances}} = socket) do
+  defp assign_total_income(
+         %{assigns: %{students_total_finances: finances, misc_finances: misc_finances}} = socket
+       ) do
     total_paid_by_students =
       Enum.filter(finances, fn finance ->
         !finance.is_bill
@@ -464,7 +480,13 @@ defmodule TheArkWeb.FinanceLive do
   end
 
   defp assign_due_bills(
-         %{assigns: %{finances: finances, total_student_due: total_student_due, total_income: total_income}} = socket
+         %{
+           assigns: %{
+             finances: finances,
+             total_student_due: total_student_due,
+             total_income: total_income
+           }
+         } = socket
        ) do
     due_bills =
       Enum.map(finances, fn finance ->
@@ -484,8 +506,8 @@ defmodule TheArkWeb.FinanceLive do
       end)
       |> Enum.sum()
 
-    current_status = (total_income) - (due_bills + paid_bills)
-    net_status = (total_income + total_student_due) - (due_bills + paid_bills)
+    current_status = total_income - (due_bills + paid_bills)
+    net_status = total_income + total_student_due - (due_bills + paid_bills)
 
     socket
     |> assign(due_bills: due_bills)
@@ -527,10 +549,11 @@ defmodule TheArkWeb.FinanceLive do
     Enum.reject(class.students, fn student ->
       Enum.all?(student.finances, fn finance ->
         Enum.reject(finance.transaction_details, fn detail ->
-          (detail.title != non_payee_type) or (detail.inserted_at.year != year_choosen_for_non_payee_description)
+          detail.title != non_payee_type or
+            detail.inserted_at.year != year_choosen_for_non_payee_description
         end)
         |> Enum.all?(fn detail ->
-          (detail.due_amount == 0) or (detail.is_accepted == true)
+          detail.due_amount == 0 or detail.is_accepted == true
         end)
       end)
     end)

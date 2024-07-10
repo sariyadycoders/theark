@@ -69,10 +69,7 @@ defmodule TheArk.Finances do
         order_by: ^date_order
       )
     )
-    |> Repo.preload(
-      [:transaction_details,
-      notes: from(n in Note, order_by: [desc: n.updated_at])]
-    )
+    |> Repo.preload([:transaction_details, notes: from(n in Note, order_by: [desc: n.updated_at])])
     |> Enum.reject(fn finance ->
       Enum.count(finance.transaction_details) == 0
     end)

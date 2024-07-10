@@ -16,6 +16,7 @@ defmodule TheArk.Classes.Class do
     has_many :students, TheArk.Students.Student, on_delete: :delete_all
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
     has_many :slos, TheArk.Slos.Slo, on_delete: :delete_all
+    has_many :tests, TheArk.Tests.Test, on_delete: :delete_all
 
     timestamps(type: :utc_datetime)
   end
