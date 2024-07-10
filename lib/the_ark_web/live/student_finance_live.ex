@@ -1,7 +1,7 @@
 defmodule TheArkWeb.StudentFinanceLive do
   use TheArkWeb, :live_view
 
-  import Phoenix.HTML.Form
+  import Phoenix.HTML.Form, only: [input_value: 2]
 
   alias TheArk.{
     Finances,
@@ -57,6 +57,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     |> ok
   end
 
+  @impl true
   def handle_event("print_receipt", %{"finance_id" => id}, socket) do
     socket
     |> redirect(to: "/receipt/#{String.to_integer(id)}")
@@ -296,6 +297,7 @@ defmodule TheArkWeb.StudentFinanceLive do
     |> noreply()
   end
 
+  @impl true
   def handle_event("edit_note_id", %{"note_id" => id}, socket) do
     note = Notes.get_note!(id)
     changeset = Notes.change_note(note)

@@ -97,7 +97,7 @@ defmodule TheArk.Tests do
     success
   end
 
-  def create_test_students({:error, _} = error) do
+  def create_test_for_students({:error, _} = error) do
     error
   end
 
