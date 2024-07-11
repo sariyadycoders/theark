@@ -18,7 +18,7 @@ defmodule TheArk.Application do
       # {TheArk.Worker, arg},
       # Start to serve requests, typically the last entry
       TheArkWeb.Endpoint,
-      TheArk.MonthlyAttendance
+      TheArk.MonthlyAttendanceJob
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

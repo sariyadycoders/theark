@@ -29,6 +29,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(selected_month_number: Date.utc_today().month)
     |> assign(current_month_number: Date.utc_today().month)
     |> assign(month_options: month_options())
+    |> assign(open_add_modal?: false)
     |> assign_class_for_attendance()
     |> ok
   end
@@ -180,12 +181,14 @@ defmodule TheArkWeb.ClassAttendanceLive do
         for id <- present_student_ids do
           prev_attendance = Attendances.get_one_attendance(id, date)
 
-          {:ok, new_attendance} =
-            Attendances.update_attendance(prev_attendance, %{entry: "Present"})
+          if prev_attendance.entry != "Leave" do
+            {:ok, new_attendance} =
+              Attendances.update_attendance(prev_attendance, %{entry: "Present"})
 
-          if prev_attendance.entry == "Absent" do
-            group_id = Students.get_group_id_only(new_attendance.student_id)
-            Finances.delete_absent_fine(prev_attendance.date, group_id)
+            if prev_attendance.entry == "Absent" do
+              group_id = Students.get_group_id_only(new_attendance.student_id)
+              Finances.delete_absent_fine(prev_attendance.date, group_id)
+            end
           end
         end
 
@@ -194,6 +197,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
         socket
         |> put_flash(:info, "Attendance successfully added!")
         |> assign(add_attendance_date: nil)
+        |> assign(open_add_modal?: false)
         |> assign(student_options: student_options)
         |> assign_class_for_attendance()
         |> noreply()
@@ -220,13 +224,20 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
+  def handle_event("open_add_modal", _payload, socket) do
+    socket
+    |> assign(open_add_modal?: true)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
         <div class="flex items-end gap-2">
-          <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
+          <.button phx-click={"open_add_modal"}>Add Attendance</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
               <.input
@@ -240,8 +251,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
           </div>
         </div>
       </div>
-      <.modal id="add_attendance">
-        <.form :let={f} for={} as={:attendance} phx-submit="add_attendance" phx-change="validate">
+      <.modal :if={@open_add_modal?} show id="add_attendance">
+        <.form :let={f} for={} as={:attendance} phx-submit={"add_attendance"} phx-change="validate">
           <.input field={f[:date]} label="Date of attendance" type="date" />
           <MultiSelect.multi_select
             id={"students_#{@class.id}"}
@@ -271,7 +282,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
           <div
             phx-click="to_student_attendance"
             phx-value-id={student.id}
-            class="border px-2 w-40 h-9 py-1"
+            class="border px-2 w-40 h-9 py-1 cursor-pointer"
           >
             <%= student.name %>
           </div>
@@ -295,7 +306,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
             <.modal id={"edit_attendance_#{id}"}>
               <%= if @edit_attendance_id == id do %>
-                <.form :let={f} for={@attendance_changeset} phx-submit="update_attendance">
+                <.form :let={f} for={@attendance_changeset} phx-submit={JS.push("update_attendance") |> hide_modal("edit_attendance_#{id}")}>
                   <.input
                     field={f[:entry]}
                     label="Type"

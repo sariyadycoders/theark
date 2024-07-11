@@ -8,6 +8,7 @@ defmodule TheArk.Repo.Migrations.CreateAttendances do
 
       add :is_monthly, :boolean
       add :month_number, :integer
+      add :year, :integer
       add :number_of_leaves, :integer
       add :leave_days, {:array, :date}
       add :number_of_absents, :integer

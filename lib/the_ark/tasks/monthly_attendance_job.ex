@@ -1,5 +1,5 @@
 # lib/my_app/monthly_insertion.ex
-defmodule TheArk.MonthlyAttendance do
+defmodule TheArk.MonthlyAttendanceJob do
   use GenServer
 
   alias TheArk.Attendances
@@ -16,8 +16,6 @@ defmodule TheArk.MonthlyAttendance do
   end
 
   def handle_info({:insert_records, current_month_number}, state) do
-
-    # Insert your records here
     Attendances.create_monthly_attendances(current_month_number)
 
     # Optionally, you can log the insertion or handle errors

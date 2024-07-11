@@ -2,7 +2,8 @@ defmodule TheArkWeb.Home do
   alias TheArk.Organizations
   use TheArkWeb, :live_view
 
-  # TODO: School logo on result card. AND workers for attendance etc. AND attendance system
+  # TODO: offdays addition modal and implimetation
+  # workers for attendance etc. AND attendance system
   # teachers attendance and salary system
   # progress graphs system
   # resetting results after year
@@ -443,7 +444,7 @@ defmodule TheArkWeb.Home do
 
       <div class="grid grid-cols-7 gap-2">
         <.button phx-click="end_of_month">Mark End of Month</.button>
-
+        <.button phx-click="end_of_month">Choose Off Days</.button>
         <.button
           phx-click="terms_announcement"
           class="flex justify-center"
@@ -533,6 +534,21 @@ defmodule TheArkWeb.Home do
           Add Role <.button icon="hero-plus" phx-click={show_modal("role_adding")} />
         </div>
       </div>
+
+      <%!-- <.modal id="off_days">
+        <.form
+          :let={f}
+          for={@role_changeset}
+          phx-submit="off_days"
+          phx-value-org_id={@organization.id}
+        >
+          <.input field={f[:month_number]} type="select" label="Choose Month" options={@month_options} />
+          <.input field={f[:year]} type="text" label="Designation" />
+          <.input field={f[:contact_number]} type="text" label="Contact Number" />
+
+          <.button class="mt-5">Submit</.button>
+        </.form>
+      </.modal> --%>
 
       <.modal id="role_adding">
         <.form

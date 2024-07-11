@@ -8,6 +8,7 @@ defmodule TheArk.Attendances.Attendance do
 
     field :is_monthly, :boolean
     field :month_number, :integer
+    field :year, :integer
     field :number_of_leaves, :integer
     field :leave_days, {:array, :date}
     field :number_of_absents, :integer
@@ -30,6 +31,7 @@ defmodule TheArk.Attendances.Attendance do
       :entry,
       :is_monthly,
       :month_number,
+      :year,
       :number_of_leaves,
       :leave_days,
       :number_of_absents,
