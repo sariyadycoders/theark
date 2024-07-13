@@ -433,6 +433,73 @@ defmodule TheArkWeb.CoreComponents do
     """
   end
 
+  def field_type_option(%{type: "custom_checkbox"} = assigns) do
+    assigns =
+      Enum.into(assigns, %{
+        disabled: false,
+        class: "",
+        mini_class: "",
+        color: "blue",
+        override_global: nil,
+        icon: nil,
+        click_event: nil
+      })
+
+    ~H"""
+    <label class={[
+        "border rounded-lg text-lg flex items-center justify-center gap-2 px-2 py-3 box_shadow_out h-14 #{@class}",
+        "#{@checked && "box_shadow_in bg-primaryBlue font-bold"}",
+        "#{!@disabled && "hover:cursor-pointer"}"
+      ]
+    }>
+      <input type="hidden" name={@name} value="false" />
+      <input
+        class="hidden"
+        type="checkbox"
+        name={@name}
+        value="true"
+        checked={@checked}
+        phx-click={@click_event}
+        disabled={@disabled}
+      />
+
+      <div class={"flex gap-3 w-full relative #{@mini_class}"}>
+        <div class={[
+            "flex items-center justify-center w-7 h-7 ml-1 mr-3 rounded-full flex-shrink-0 absolute top-0 left-2",
+            "#{@checked && "text-white"}",
+            "#{!@checked && "bg-base-200"}"
+          ]
+        }>
+          <%!-- <.icon name={@icon} class="text-black w-6 h-6" /> --%>
+        </div>
+
+        <div class="ml-10 text-center grow">
+          <%= @label |> to_string() |> String.replace("_", " ") %>
+        </div>
+      </div>
+    </label>
+    """
+  end
+
+  def classes(nil), do: ""
+  def classes(%{} = optionals), do: classes([], optionals)
+  def classes([{_k, _v} | _] = optionals), do: classes([], Map.new(optionals))
+  def classes(["" <> _constant | _] = constants), do: classes(constants, %{})
+
+  def classes(nil, optionals), do: classes([], optionals)
+  def classes("" <> constant, optionals), do: classes([constant], optionals)
+
+  def classes(constants, optionals) do
+    [
+      constants,
+      optionals
+      |> Enum.filter(&elem(&1, 1))
+      |> Enum.map(&elem(&1, 0))
+    ]
+    |> Enum.concat()
+    |> Enum.join(" ")
+  end
+
   @doc """
   Renders a label.
   """

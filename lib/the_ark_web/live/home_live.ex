@@ -1,5 +1,4 @@
 defmodule TheArkWeb.Home do
-  alias TheArk.Organizations
   use TheArkWeb, :live_view
 
   # TODO: offdays addition modal and implimetation
@@ -7,6 +6,8 @@ defmodule TheArkWeb.Home do
   # teachers attendance and salary system
   # progress graphs system
   # resetting results after year
+
+  import Phoenix.HTML.Form
 
   alias TheArk.{
     Classes,
@@ -23,11 +24,19 @@ defmodule TheArkWeb.Home do
     Attendances,
     Subjects,
     Tests,
-    Tests.Test
+    Tests.Test,
+    Offdays,
+    Offdays.Offday
   }
 
   # import Ecto.Changeset
   alias Phoenix.LiveView.Components.MultiSelect
+
+  @month_options [
+    {"Jan", 1}, {"Feb", 2}, {"Mar", 3}, {"April", 4}
+  ]
+
+  @days_of_week ~w(Mon Tue Wed Thu Fri Sat Sun)
 
   @impl true
   def mount(_, _, socket) do
@@ -39,6 +48,7 @@ defmodule TheArkWeb.Home do
     |> assign(class_changeset: Classes.change_class(%Class{}))
     |> assign(student_changeset: Students.change_student(%Student{}))
     |> assign(teacher_changeset: Teachers.change_teacher(%Teacher{}))
+    |> assign(off_days_changeset: Offdays.change_offday(%Offday{}))
     |> assign(role_changeset: Roles.change_role(%Role{}))
     |> assign(test_changeset: Tests.change_class_test(%Test{}))
     |> assign(test_subject_options: [])
@@ -48,7 +58,11 @@ defmodule TheArkWeb.Home do
     |> assign(organization: organization)
     |> assign(students_list: nil)
     |> assign(current_month_number: Date.utc_today().month)
-    |> ok
+    |> assign(month_options: @month_options)
+    |> assign(chosen_month_for_offdays_modal: 1)
+    |> assign(days_of_week: @days_of_week)
+    |> month_dates()
+    |> ok()
   end
 
   @impl true
@@ -399,6 +413,29 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event("click_ch", _payload, socket) do
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_event("validate_off_days",
+    %{
+      "_target" => ["offday", "month_number"],
+      "offday" => %{
+        "month_number" => month_number,
+      }
+    }, socket) do
+
+    month_number = String.to_integer(month_number) |> IO.inspect
+
+
+    socket
+    |> assign(chosen_month_for_offdays_modal: month_number)
+    |> month_dates()
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -443,6 +480,7 @@ defmodule TheArkWeb.Home do
       </div>
 
       <div class="grid grid-cols-7 gap-2">
+        <.button phx-click={show_modal("off_days")}>Off days</.button>
         <.button phx-click="end_of_month">Mark End of Month</.button>
         <.button phx-click="end_of_month">Choose Off Days</.button>
         <.button
@@ -535,20 +573,58 @@ defmodule TheArkWeb.Home do
         </div>
       </div>
 
-      <%!-- <.modal id="off_days">
+      <.modal id="off_days">
         <.form
           :let={f}
-          for={@role_changeset}
-          phx-submit="off_days"
-          phx-value-org_id={@organization.id}
+          for={@off_days_changeset}
+          phx-submit="submit_off_days"
+          phx-change="validate_off_days"
         >
           <.input field={f[:month_number]} type="select" label="Choose Month" options={@month_options} />
-          <.input field={f[:year]} type="text" label="Designation" />
-          <.input field={f[:contact_number]} type="text" label="Contact Number" />
+          <.input field={f[:year]} type="hidden" value={Date.utc_today().year} />
+
+            <div class="grid grid-cols-7 gap-2 mt-5">
+              <%= for day <- ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] do %>
+                <div class={"bg-sky-700 rounded-lg py-1 text-center text-white"}>
+                  <%= day %>
+                </div>
+              <% end %>
+            </div>
+            <div class="grid grid-cols-7 gap-2 mt-5">
+              <%= for {{day, date}, index} <- Enum.with_index(@month_dates) do %>
+                <div class={classes(
+                "border border-sky-700 rounded-lg py-1 text-center",
+                %{
+                  "col-start-1 col-end-2" => Enum.find_index(@days_of_week, & &1 == day) == 0 and index == 0,
+                  "col-start-2 col-end-3" => Enum.find_index(@days_of_week, & &1 == day) == 1 and index == 0,
+                  "col-start-3 col-end-4" => Enum.find_index(@days_of_week, & &1 == day) == 2 and index == 0,
+                  "col-start-4 col-end-5" => Enum.find_index(@days_of_week, & &1 == day) == 3 and index == 0,
+                  "col-start-5 col-end-6" => Enum.find_index(@days_of_week, & &1 == day) == 4 and index == 0,
+                  "col-start-6 col-end-7" => Enum.find_index(@days_of_week, & &1 == day) == 5 and index == 0,
+                  "col-start-7 col-end-8" => Enum.find_index(@days_of_week, & &1 == day) == 6 and index == 0,
+                }
+              )}>
+                  <%= date %>
+                </div>
+              <% end %>
+            </div>
+
+
+
+          <%= for item <- 1..3 do %>
+            <.field_type_option
+              type="custom_checkbox"
+              class="col-span-4"
+              mini_class="px-5"
+              name={input_name(f, "is_active_#{item}" |> String.to_atom())}
+              label={item}
+              checked={input_value(f, "is_active_#{item}" |> String.to_atom()) == "true"}
+            />
+          <% end %>
 
           <.button class="mt-5">Submit</.button>
         </.form>
-      </.modal> --%>
+      </.modal>
 
       <.modal id="role_adding">
         <.form
@@ -743,5 +819,22 @@ defmodule TheArkWeb.Home do
       end)
     end)
     |> Enum.join("-")
+  end
+
+  def month_dates(%{assigns: %{chosen_month_for_offdays_modal: month_number}} = socket) do
+    {:ok, first_date} = Date.new(Date.utc_today().year, month_number, 1)
+    total_days = Timex.days_in_month(first_date)
+
+    dates =
+      Enum.map(1..total_days, fn day_num ->
+        date = Date.add(first_date, day_num - 1)
+        day_of_week = Date.day_of_week(date)
+        day_name = Enum.at(@days_of_week, day_of_week - 1)
+
+        {day_name, date.day}
+      end)
+
+    socket
+    |> assign(month_dates: dates)
   end
 end
