@@ -29,13 +29,21 @@ defmodule TheArkWeb.ClassTestsLive do
   end
 
   @impl true
-  def handle_event("validate", %{"test" => params, "test_id" => test_id}, %{assigns: %{changesets: changesets}} =  socket) do
+  def handle_event(
+        "validate",
+        %{"test" => params, "test_id" => test_id},
+        %{assigns: %{changesets: changesets}} = socket
+      ) do
     test = Tests.get_test!(test_id)
 
     changesets =
       Enum.map(changesets, fn map ->
         if map.test_id == test.id do
-          Map.put(map, :changeset, Tests.student_submit_test_change(test, params) |> Map.put(:action, :insert))
+          Map.put(
+            map,
+            :changeset,
+            Tests.student_submit_test_change(test, params) |> Map.put(:action, :insert)
+          )
         else
           map
         end
@@ -47,7 +55,11 @@ defmodule TheArkWeb.ClassTestsLive do
   end
 
   @impl true
-  def handle_event("submit", %{"test" => params, "test_id" => test_id}, %{assigns: %{changesets: changesets}} =  socket) do
+  def handle_event(
+        "submit",
+        %{"test" => params, "test_id" => test_id},
+        %{assigns: %{changesets: changesets}} = socket
+      ) do
     test = Tests.get_test!(test_id)
 
     case Tests.update_student_test(test, params) do
@@ -67,7 +79,6 @@ defmodule TheArkWeb.ClassTestsLive do
         |> noreply()
 
       {:error, changeset} ->
-
         changesets =
           Enum.map(changesets, fn map ->
             if map.test_id == String.to_integer(test_id) do
@@ -85,7 +96,11 @@ defmodule TheArkWeb.ClassTestsLive do
   end
 
   @impl true
-  def handle_event("go_to_test_result", %{"test_id" => test_id}, %{assigns: %{class_id: class_id}} = socket) do
+  def handle_event(
+        "go_to_test_result",
+        %{"test_id" => test_id},
+        %{assigns: %{class_id: class_id}} = socket
+      ) do
     socket
     |> push_navigate(to: "/classes/#{class_id}/tests/#{String.to_integer(test_id)}/result")
     |> noreply()
@@ -130,16 +145,15 @@ defmodule TheArkWeb.ClassTestsLive do
             <%= test.total_marks %>
           </div>
           <div class="col-span-2 flex items-center">
-            <%
-              students = get_absent_student_names(@class, test)
-            %>
+            <% students = get_absent_student_names(@class, test) %>
             <%= if students do %>
               <% count = Enum.count(students) %>
               <%= for {student, index} <- Enum.with_index(students) do %>
-              <span><%= student %><%= if index < count - 1, do: ", "%></span>
+                <span><%= student %><%= if index < count - 1, do: ", " %></span>
               <% end %>
             <% else %>
-              <b>Result Status: </b> <div class="w-4 h-4 bg-red-600 ml-2 rounded-full"></div>
+              <b>Result Status: </b>
+              <div class="w-4 h-4 bg-red-600 ml-2 rounded-full"></div>
             <% end %>
           </div>
           <div class="">
@@ -163,7 +177,13 @@ defmodule TheArkWeb.ClassTestsLive do
             </div>
             <hr class="my-5" />
             <%= for %{test_id: id, name: name, changeset: changeset, is_submitted: is_submitted} <- @changesets, !is_submitted do %>
-              <.form :let={f} for={changeset} phx-submit="submit" phx-change="validate" phx-value-test_id={id}>
+              <.form
+                :let={f}
+                for={changeset}
+                phx-submit="submit"
+                phx-change="validate"
+                phx-value-test_id={id}
+              >
                 <.input
                   field={f[:obtained_marks]}
                   label={"Obtained Marks of --- #{name} --- (out of #{@total_marks})"}
@@ -187,7 +207,12 @@ defmodule TheArkWeb.ClassTestsLive do
       Enum.map(class.students, fn student ->
         test = Tests.get_single_test(test.subject, student.id, test.date_of_test)
 
-        %{test_id: test.id, name: student.name, changeset: Tests.student_submit_test_change(test), is_submitted: false}
+        %{
+          test_id: test.id,
+          name: student.name,
+          changeset: Tests.student_submit_test_change(test),
+          is_submitted: false
+        }
       end)
 
     socket
@@ -213,9 +238,9 @@ defmodule TheArkWeb.ClassTestsLive do
           end
         end
       end)
-      |> Enum.reject(& is_nil(&1))
+      |> Enum.reject(&is_nil(&1))
 
-    if Enum.any?(students, & &1 == "result not logged yet") do
+    if Enum.any?(students, &(&1 == "result not logged yet")) do
       nil
     else
       students
@@ -234,10 +259,10 @@ defmodule TheArkWeb.ClassTestsLive do
         end
       end)
 
-    if Enum.any?(marks, & is_nil(&1)) do
+    if Enum.any?(marks, &is_nil(&1)) do
       nil
     else
-      ((Enum.sum(marks) / Enum.count(marks)) / test.total_marks) * 100
+      Enum.sum(marks) / Enum.count(marks) / test.total_marks * 100
     end
   end
 end

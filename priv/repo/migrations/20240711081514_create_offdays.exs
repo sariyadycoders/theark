@@ -5,8 +5,7 @@ defmodule TheArk.Repo.Migrations.CreateOffdays do
     create table(:offdays) do
       add :month_number, :integer
       add :year, :integer
-      add :days, {:array, :date}
-
+      add :days, {:array, :integer}
 
       timestamps(type: :utc_datetime)
     end

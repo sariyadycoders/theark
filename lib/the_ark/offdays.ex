@@ -37,6 +37,16 @@ defmodule TheArk.Offdays do
   """
   def get_offday!(id), do: Repo.get!(Offday, id)
 
+  def get_offday_by_month_number(month_number, year) do
+    Repo.one(
+      from(
+        od in Offday,
+        where: od.month_number == ^month_number,
+        where: od.year == ^year
+      )
+    )
+  end
+
   @doc """
   Creates a offday.
 

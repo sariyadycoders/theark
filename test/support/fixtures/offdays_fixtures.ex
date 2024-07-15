@@ -10,9 +10,7 @@ defmodule TheArk.OffdaysFixtures do
   def offday_fixture(attrs \\ %{}) do
     {:ok, offday} =
       attrs
-      |> Enum.into(%{
-
-      })
+      |> Enum.into(%{})
       |> TheArk.Offdays.create_offday()
 
     offday

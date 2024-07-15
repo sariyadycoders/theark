@@ -227,14 +227,14 @@ defmodule TheArkWeb.CoreComponents do
   slot :inner_block
 
   def button(assigns) do
-    assigns = assigns |> Enum.into(%{icon: nil})
+    assigns = assigns |> Enum.into(%{icon: nil, disabled: nil})
 
     ~H"""
     <button
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center gap-1",
-        "text-sm font-semibold leading-6 text-white active:text-white/80"
+        "text-sm font-semibold leading-6 text-white active:text-white/80 disabled:bg-white disabled:text-black disabled:border-2"
       ]}
       {@rest}
     >
@@ -447,11 +447,10 @@ defmodule TheArkWeb.CoreComponents do
 
     ~H"""
     <label class={[
-        "border rounded-lg text-lg flex items-center justify-center gap-2 px-2 py-3 box_shadow_out h-14 #{@class}",
-        "#{@checked && "box_shadow_in bg-primaryBlue font-bold"}",
-        "#{!@disabled && "hover:cursor-pointer"}"
-      ]
-    }>
+      "border rounded-lg text-lg flex items-center justify-center h-8 #{@class}",
+      "#{@checked && "bg-sky-700 text-white font-bold"}",
+      "#{!@disabled && "hover:cursor-pointer"}"
+    ]}>
       <input type="hidden" name={@name} value="false" />
       <input
         class="hidden"
@@ -463,17 +462,8 @@ defmodule TheArkWeb.CoreComponents do
         disabled={@disabled}
       />
 
-      <div class={"flex gap-3 w-full relative #{@mini_class}"}>
-        <div class={[
-            "flex items-center justify-center w-7 h-7 ml-1 mr-3 rounded-full flex-shrink-0 absolute top-0 left-2",
-            "#{@checked && "text-white"}",
-            "#{!@checked && "bg-base-200"}"
-          ]
-        }>
-          <%!-- <.icon name={@icon} class="text-black w-6 h-6" /> --%>
-        </div>
-
-        <div class="ml-10 text-center grow">
+      <div class="flex w-full">
+        <div class="text-center grow">
           <%= @label |> to_string() |> String.replace("_", " ") %>
         </div>
       </div>
