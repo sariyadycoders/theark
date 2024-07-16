@@ -37,12 +37,24 @@ defmodule TheArk.Offdays do
   """
   def get_offday!(id), do: Repo.get!(Offday, id)
 
-  def get_offday_by_month_number(month_number, year) do
+  def get_offday_by_month_number(month_number, year, "students") do
     Repo.one(
       from(
         od in Offday,
         where: od.month_number == ^month_number,
-        where: od.year == ^year
+        where: od.year == ^year,
+        where: od.for_students == true
+      )
+    )
+  end
+
+  def get_offday_by_month_number(month_number, year, "staff") do
+    Repo.one(
+      from(
+        od in Offday,
+        where: od.month_number == ^month_number,
+        where: od.year == ^year,
+        where: od.for_staff == true
       )
     )
   end

@@ -283,7 +283,8 @@ defmodule TheArkWeb.CoreComponents do
 
   attr :type, :string,
     default: "text",
-    values: ~w(checkbox color date datetime-local email file hidden month number password
+    values:
+      ~w(checkbox checkbox-custom color date datetime-local email file hidden month number password
                range radio search select tel text textarea time url week)
 
   attr :field, Phoenix.HTML.FormField,
@@ -329,6 +330,36 @@ defmodule TheArkWeb.CoreComponents do
           value="true"
           checked={@checked}
           class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+          {@rest}
+        />
+        <%= @label %>
+      </label>
+      <.error :for={msg <- @errors}><%= msg %></.error>
+    </div>
+    """
+  end
+
+  def input(%{type: "checkbox-custom"} = assigns) do
+    assigns =
+      assign_new(assigns, :checked, fn ->
+        Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
+      end)
+      |> Enum.into(%{main_class: "", class: ""})
+
+    ~H"""
+    <div phx-feedback-for={@name} class={"mt-2 #{@main_class}"}>
+      <label class={[
+        "border rounded-lg text-lg flex items-center justify-center h-10 cursor-pointer #{@class}",
+        "#{@checked && "bg-sky-700 text-white font-bold"}"
+      ]}>
+        <input type="hidden" name={@name} value="false" />
+        <input
+          type="checkbox"
+          id={@id}
+          name={@name}
+          value="true"
+          checked={@checked}
+          class="hidden"
           {@rest}
         />
         <%= @label %>

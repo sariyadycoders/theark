@@ -67,6 +67,9 @@ defmodule TheArkWeb.Home do
     |> assign(month_options: @month_options)
     |> assign(chosen_month_for_offdays_modal: nil)
     |> assign(days_of_week: @days_of_week)
+    |> assign(open_modal_id: nil)
+    |> assign(for_staff: false)
+    |> assign(for_students: false)
     |> ok()
   end
 
@@ -426,20 +429,35 @@ defmodule TheArkWeb.Home do
             "month_number" => month_number
           }
         },
-        %{assigns: %{off_days_changeset: off_days_changeset}} = socket
+        %{assigns: %{off_days_changeset: off_days_changeset, for_staff: for_staff}} = socket
       ) do
     month_number = String.to_integer(month_number)
+    binding = if for_staff, do: "staff", else: "students"
 
     if month_number > 0 do
-      off_day = Offdays.get_offday_by_month_number(month_number, Date.utc_today().year)
+      off_day = Offdays.get_offday_by_month_number(month_number, Date.utc_today().year, binding)
 
       changeset =
         if off_day do
           Offdays.change_offday(off_day, %{})
+          |> then(fn changeset ->
+            if binding == "staff" do
+              Ecto.Changeset.put_change(changeset, :for_staff, true)
+            else
+              Ecto.Changeset.put_change(changeset, :for_students, true)
+            end
+          end)
         else
           change = Ecto.Changeset.put_change(off_days_changeset, :month_number, month_number)
 
           Offdays.change_offday(%Offday{}, Map.put(change.changes, :year, Date.utc_today().year))
+          |> then(fn changeset ->
+            if binding == "staff" do
+              Ecto.Changeset.put_change(changeset, :for_staff, true)
+            else
+              Ecto.Changeset.put_change(changeset, :for_students, true)
+            end
+          end)
           |> Ecto.Changeset.delete_change(:days)
         end
 
@@ -467,11 +485,13 @@ defmodule TheArkWeb.Home do
         %{
           assigns: %{
             off_days_changeset: off_days_changeset,
-            chosen_month_for_offdays_modal: month_number
+            chosen_month_for_offdays_modal: month_number,
+            for_staff: for_staff
           }
         } = socket
       ) do
-    off_day = Offdays.get_offday_by_month_number(month_number, Date.utc_today().year)
+    binding = if for_staff, do: "staff", else: "students"
+    off_day = Offdays.get_offday_by_month_number(month_number, Date.utc_today().year, binding)
     coming_list = Enum.map(coming_list, &String.to_integer(&1))
     coming_value = hd(coming_list)
     already_list = Ecto.Changeset.get_field(off_days_changeset, :days)
@@ -486,8 +506,22 @@ defmodule TheArkWeb.Home do
         final_list = if Enum.empty?(final_list), do: nil, else: final_list
 
         Ecto.Changeset.put_change(off_days_changeset, :days, final_list)
+        |> then(fn changeset ->
+          if binding == "staff" do
+            Ecto.Changeset.put_change(changeset, :for_staff, true)
+          else
+            Ecto.Changeset.put_change(changeset, :for_students, true)
+          end
+        end)
       else
         Ecto.Changeset.put_change(off_days_changeset, :days, coming_list)
+        |> then(fn changeset ->
+          if binding == "staff" do
+            Ecto.Changeset.put_change(changeset, :for_staff, true)
+          else
+            Ecto.Changeset.put_change(changeset, :for_students, true)
+          end
+        end)
       end
 
     changeset =
@@ -508,14 +542,92 @@ defmodule TheArkWeb.Home do
         %{assigns: %{off_days_changeset: off_days_changeset}} = socket
       ) do
     case TheArk.Repo.insert_or_update(off_days_changeset) do
-      {:ok, offday} ->
-        IO.inspect(offday)
+      {:ok, _offday} ->
+        socket
+        |> put_flash(:info, "Off-days updated successfully!")
+        |> assign(
+          off_days_changeset: Offdays.change_offday(%Offday{}, %{year: Date.utc_today().year})
+        )
+        |> assign(chosen_month_for_offdays_modal: nil)
+        |> assign(open_modal_id: nil)
+        |> noreply()
 
       {:error, changeset} ->
-        IO.inspect(changeset)
+        socket
+        |> assign(off_days_changeset: changeset)
+        |> noreply()
     end
+  end
 
+  @impl true
+  def handle_event("reset_offdays_modal", _payload, socket) do
     socket
+    |> assign(
+      off_days_changeset: Offdays.change_offday(%Offday{}, %{year: Date.utc_today().year})
+    )
+    |> assign(chosen_month_for_offdays_modal: nil)
+    |> assign(open_modal_id: nil)
+    |> assign(for_staff: false)
+    |> assign(for_students: false)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("open_offdays_modal", _payload, socket) do
+    socket
+    |> assign(
+      off_days_changeset: Offdays.change_offday(%Offday{}, %{year: Date.utc_today().year})
+    )
+    |> assign(chosen_month_for_offdays_modal: nil)
+    |> assign(open_modal_id: "off_days")
+    |> assign(for_staff: false)
+    |> assign(for_students: false)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "offday_category",
+        %{
+          "_target" => ["offday_category", "for_staff"]
+        },
+        socket
+      ) do
+    socket
+    |> assign(:for_staff, true)
+    |> assign(for_students: false)
+    |> assign(
+      off_days_changeset:
+        Offdays.change_offday(%Offday{}, %{
+          year: Date.utc_today().year,
+          for_students: false,
+          for_staff: true
+        })
+    )
+    |> assign(chosen_month_for_offdays_modal: nil)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "offday_category",
+        %{
+          "_target" => ["offday_category", "for_students"]
+        },
+        socket
+      ) do
+    socket
+    |> assign(:for_students, true)
+    |> assign(for_staff: false)
+    |> assign(
+      off_days_changeset:
+        Offdays.change_offday(%Offday{}, %{
+          year: Date.utc_today().year,
+          for_students: true,
+          for_staff: false
+        })
+    )
+    |> assign(chosen_month_for_offdays_modal: nil)
     |> noreply()
   end
 
@@ -564,7 +676,9 @@ defmodule TheArkWeb.Home do
       </div>
 
       <div class="grid grid-cols-7 gap-2">
-        <.button phx-click={show_modal("off_days")}>Off days</.button>
+        <.button phx-click={JS.push("open_offdays_modal") |> show_modal("off_days")}>
+          Off days
+        </.button>
         <.button phx-click="end_of_month">Mark End of Month</.button>
         <.button phx-click="end_of_month">Choose Off Days</.button>
         <.button
@@ -657,9 +771,29 @@ defmodule TheArkWeb.Home do
         </div>
       </div>
 
-      <.modal id="off_days">
+      <%!-- :if={@open_modal_id == "off_days"} --%>
+      <.modal
+        :if={@open_modal_id == "off_days"}
+        id="off_days"
+        show
+        on_cancel={JS.push("reset_offdays_modal") |> hide_modal("off_days")}
+      >
+        <.form :let={f} for={} as={:offday_category} phx-change="offday_category">
+          <div class="font-bold text-sm">Updating the off-days for:</div>
+          <div class="grid grid-cols-2 gap-2 mb-5">
+            <.input field={f[:for_staff]} type="checkbox-custom" label="Staff" checked={@for_staff} />
+            <.input
+              field={f[:for_students]}
+              type="checkbox-custom"
+              label="Students"
+              checked={@for_students}
+            />
+          </div>
+        </.form>
+
         <.form
           :let={f}
+          :if={@for_staff || @for_students}
           for={@off_days_changeset}
           phx-submit="submit_off_days"
           phx-change="validate_off_days"
@@ -670,7 +804,6 @@ defmodule TheArkWeb.Home do
             label="Choose Month"
             options={@month_options}
           />
-          <.input field={f[:year]} type="hidden" value={Date.utc_today().year} />
 
           <div class="grid grid-cols-7 gap-2 mt-5">
             <%= for day <- ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] do %>
