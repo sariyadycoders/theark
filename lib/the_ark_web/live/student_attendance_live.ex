@@ -37,27 +37,42 @@ defmodule TheArkWeb.StudentAttendanceLive do
         <%= for attendance <- @attendances do %>
           <div class="grid grid-cols-10 items-center py-3 text-sm">
             <div class=""><%= attendance.month_number |> Timex.month_name() %></div>
-            <div class=""><%= attendance.number_of_absents %></div>
+            <div class="ml-5"><%= attendance.number_of_absents %></div>
             <div class="col-span-2">
-              <%= for day <- attendance.absent_days, do: day |> Date.to_string() %>
+              <% count = Enum.count(attendance.absent_days) %>
+              <%= for {day, index} <- Enum.with_index(attendance.absent_days) do %>
+                <span class={"px-2 #{if index < count - 1, do: "border-r-2"}"}>
+                  <%= day.day |> to_string() %>
+                </span>
+              <% end %>
             </div>
-            <div class=""><%= attendance.number_of_leaves %></div>
+            <div class="ml-4"><%= attendance.number_of_leaves %></div>
             <div class="col-span-2">
-              <%= for day <- attendance.leave_days, do: day |> Date.to_string() %>
+              <% count = Enum.count(attendance.leave_days) %>
+              <%= for {day, index} <- Enum.with_index(attendance.leave_days) do %>
+                <span class={"px-2 #{if index < count - 1, do: "border-r-2"}"}>
+                  <%= day.day |> to_string() %>
+                </span>
+              <% end %>
             </div>
-            <div class=""><%= attendance.number_of_half_leaves %></div>
+            <div class="ml-8"><%= attendance.number_of_half_leaves %></div>
             <div class="col-span-2">
-              <%= for day <- attendance.half_leave_days, do: day |> Date.to_string() %>
+              <% count = Enum.count(attendance.half_leave_days) %>
+              <%= for {day, index} <- Enum.with_index(attendance.half_leave_days) do %>
+                <span class={"px-2 #{if index < count - 1, do: "border-r-2"}"}>
+                  <%= day.day |> to_string() %>
+                </span>
+              <% end %>
             </div>
           </div>
           <hr />
         <% end %>
       </div>
-      <div class="grid grid-cols-10 items-center py-3 mt-10 text-lg font-bold border-b border-t fixed bottom-5 left-24 right-24 bg-white">
+      <div class="grid grid-cols-11 items-center py-3 mt-10 text-lg font-bold border-b border-t fixed bottom-5 left-0 right-24 bg-sky-200 w-full pl-24">
         <div class="">Total</div>
         <div class="col-span-3"><%= calculate_total(@attendances, "Absent") %></div>
-        <div class="col-span-3"><%= calculate_total(@attendances, "Leave") %></div>
-        <div class="col-span-3"><%= calculate_total(@attendances, "Half Leave") %></div>
+        <div class="col-span-3 pl-3"><%= calculate_total(@attendances, "Leave") %></div>
+        <div class="col-span-3 pl-5"><%= calculate_total(@attendances, "Half Leave") %></div>
       </div>
     </div>
     """
