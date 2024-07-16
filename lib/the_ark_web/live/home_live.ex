@@ -1,8 +1,7 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
-  # TODO: offdays modal finalization (on_cancel) and for teacher and students
-  # workers for attendance etc. AND attendance system
+  # TODO: workers for attendance etc. AND attendance system
   # teachers attendance and salary system
   # progress graphs system
   # resetting results after year
