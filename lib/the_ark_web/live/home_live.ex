@@ -1,7 +1,7 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
-  # TODO: year implimetation on student attendance page
+  # TODO: year implementation on student attendance page, and working days implementation
   # teachers attendance and salary system
   # progress graphs system
   # resetting results after year
