@@ -1,8 +1,7 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
-  # TODO: year implementation on student attendance page, and working days implementation
-  # teachers attendance and salary system
+  # TODO: teachers attendance and salary system
   # progress graphs system
   # resetting results after year
 
@@ -293,13 +292,23 @@ defmodule TheArkWeb.Home do
   @impl true
   def handle_event(
         "end_of_month",
-        _,
-        %{assigns: %{current_month_number: current_month_number}} = socket
+        %{"end_of_month" => %{"month_number" => month_number}},
+        socket
       ) do
-    Attendances.create_monthly_attendances(current_month_number)
+    month_number = String.to_integer(month_number)
 
-    socket
-    |> noreply()
+    if month_number > 0 do
+      Attendances.create_monthly_attendances(month_number)
+
+      socket
+      |> assign(open_modal_id: nil)
+      |> put_flash(:info, "Month ended successfully!")
+      |> noreply()
+    else
+      socket
+      |> put_flash(:error, "Choose month please!")
+      |> noreply()
+    end
   end
 
   @impl true
@@ -593,6 +602,13 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event("open_end_month_modal", _payload, socket) do
+    socket
+    |> assign(open_modal_id: "end_of_month")
+    |> noreply()
+  end
+
+  @impl true
   def handle_event(
         "offday_category",
         %{
@@ -686,8 +702,9 @@ defmodule TheArkWeb.Home do
         <.button phx-click={JS.push("open_offdays_modal") |> show_modal("off_days")}>
           Off days
         </.button>
-        <.button phx-click="end_of_month">Mark End of Month</.button>
-        <.button phx-click="end_of_month">Choose Off Days</.button>
+        <.button phx-click={JS.push("open_end_month_modal") |> show_modal("end_of_month")}>
+          Mark End of Month
+        </.button>
         <.button
           phx-click="terms_announcement"
           class="flex justify-center"
@@ -777,6 +794,26 @@ defmodule TheArkWeb.Home do
           Add Role <.button icon="hero-plus" phx-click={show_modal("role_adding")} />
         </div>
       </div>
+
+      <.modal :if={@open_modal_id == "end_of_month"} show id="end_of_month">
+        <% max_number = Date.utc_today().month + 1
+        min_number = Date.utc_today().month - 3
+
+        month_options =
+          Enum.filter(@month_options, fn {_month, number} ->
+            number > min_number and number < max_number
+          end) %>
+        <.form :let={f} for={} as={:end_of_month} phx-submit="end_of_month">
+          <.input
+            field={f[:month_number]}
+            type="select"
+            options={[{"none", 0}] ++ month_options}
+            label="Choose Month for End"
+          />
+
+          <.button disabled={} class="mt-5">Submit</.button>
+        </.form>
+      </.modal>
 
       <%!-- :if={@open_modal_id == "off_days"} --%>
       <.modal

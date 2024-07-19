@@ -191,6 +191,11 @@ defmodule TheArk.Attendances do
 
           half_leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Half Leave")
 
+          number_of_presents =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Present")
+
+          present_days = get_list_of_attendance_dates(student_id, list_of_dates, "Present")
+
           monthly_attendance_of_student =
             get_monthly_attendance_of_student(
               student_id,
@@ -206,6 +211,8 @@ defmodule TheArk.Attendances do
               absent_days: absent_days,
               number_of_half_leaves: number_of_half_leaves,
               half_leave_days: half_leave_days,
+              number_of_presents: number_of_presents,
+              present_days: present_days,
               is_monthly: true,
               year: beginning_of_month.year,
               month_number: current_month_number,
@@ -219,6 +226,8 @@ defmodule TheArk.Attendances do
               absent_days: absent_days,
               number_of_half_leaves: number_of_half_leaves,
               half_leave_days: half_leave_days,
+              number_of_presents: number_of_presents,
+              present_days: present_days,
               is_monthly: true,
               month_number: current_month_number,
               year: beginning_of_month.year,
@@ -253,6 +262,11 @@ defmodule TheArk.Attendances do
 
           half_leave_days = get_list_of_attendance_dates(student_id, list_of_dates, "Half Leave")
 
+          number_of_presents =
+            get_counts_of_attendance_for_student(student_id, list_of_dates, "Present")
+
+          present_days = get_list_of_attendance_dates(student_id, list_of_dates, "Present")
+
           create_attendance(%{
             number_of_leaves: number_of_leaves,
             leave_days: leave_days,
@@ -260,6 +274,8 @@ defmodule TheArk.Attendances do
             absent_days: absent_days,
             number_of_half_leaves: number_of_half_leaves,
             half_leave_days: half_leave_days,
+            number_of_presents: number_of_presents,
+            present_days: present_days,
             is_monthly: true,
             month_number: current_month_number,
             year: beginning_of_month.year,

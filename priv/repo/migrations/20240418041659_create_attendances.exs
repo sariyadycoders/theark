@@ -15,6 +15,8 @@ defmodule TheArk.Repo.Migrations.CreateAttendances do
       add :absent_days, {:array, :date}
       add :number_of_half_leaves, :integer
       add :half_leave_days, {:array, :date}
+      add :number_of_presents, :integer
+      add :present_days, {:array, :date}
 
       add :teacher_id, references(:teachers, on_delete: :delete_all)
       add :student_id, references(:students, on_delete: :delete_all)
