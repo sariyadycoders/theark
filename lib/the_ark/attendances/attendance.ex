@@ -8,12 +8,15 @@ defmodule TheArk.Attendances.Attendance do
 
     field :is_monthly, :boolean
     field :month_number, :integer
+    field :year, :integer
     field :number_of_leaves, :integer
     field :leave_days, {:array, :date}
     field :number_of_absents, :integer
     field :absent_days, {:array, :date}
     field :number_of_half_leaves, :integer
     field :half_leave_days, {:array, :date}
+    field :number_of_presents, :integer
+    field :present_days, {:array, :date}
 
     belongs_to :teacher, TheArk.Teachers.Teacher
     belongs_to :student, TheArk.Students.Student
@@ -30,6 +33,7 @@ defmodule TheArk.Attendances.Attendance do
       :entry,
       :is_monthly,
       :month_number,
+      :year,
       :number_of_leaves,
       :leave_days,
       :number_of_absents,
@@ -38,7 +42,9 @@ defmodule TheArk.Attendances.Attendance do
       :half_leave_days,
       :teacher_id,
       :student_id,
-      :class_id
+      :class_id,
+      :number_of_presents,
+      :present_days
     ])
     |> validate_required([])
   end

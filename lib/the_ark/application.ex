@@ -17,7 +17,8 @@ defmodule TheArk.Application do
       # Start a worker by calling: TheArk.Worker.start_link(arg)
       # {TheArk.Worker, arg},
       # Start to serve requests, typically the last entry
-      TheArkWeb.Endpoint
+      TheArkWeb.Endpoint,
+      TheArk.MonthlyAttendanceJob
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

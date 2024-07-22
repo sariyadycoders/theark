@@ -7,7 +7,8 @@ defmodule TheArkWeb.ClassAttendanceLive do
     Attendances.Attendance,
     Students,
     Finances,
-    Finances.Finance
+    Finances.Finance,
+    Offdays
   }
 
   alias Phoenix.LiveView.Components.MultiSelect
@@ -25,11 +26,15 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(absent_fine: @absent_fine)
     |> assign(class_id: String.to_integer(class_id))
     |> assign(add_attendance_date: nil)
+    |> assign(add_attendance_date_error: nil)
     |> assign(selected_month: Timex.month_name(Date.utc_today().month))
     |> assign(selected_month_number: Date.utc_today().month)
     |> assign(current_month_number: Date.utc_today().month)
+    |> assign(current_year: Date.utc_today().year)
     |> assign(month_options: month_options())
+    |> assign(open_add_modal?: false)
     |> assign_class_for_attendance()
+    |> assign_off_days()
     |> ok
   end
 
@@ -105,10 +110,24 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
-  def handle_event("validate", %{"attendance" => %{"date" => date}}, socket) do
-    socket
-    |> assign(add_attendance_date: date)
-    |> noreply()
+  def handle_event(
+        "validate",
+        %{"attendance" => %{"date" => date}},
+        %{assigns: %{off_days: off_days}} = socket
+      ) do
+    {:ok, coming_date} = Date.from_iso8601(date)
+
+    if coming_date.day in off_days do
+      socket
+      |> assign(add_attendance_date: nil)
+      |> assign(add_attendance_date_error: "This day is off!")
+      |> noreply()
+    else
+      socket
+      |> assign(add_attendance_date: date)
+      |> assign(add_attendance_date_error: nil)
+      |> noreply()
+    end
   end
 
   @impl true
@@ -180,12 +199,14 @@ defmodule TheArkWeb.ClassAttendanceLive do
         for id <- present_student_ids do
           prev_attendance = Attendances.get_one_attendance(id, date)
 
-          {:ok, new_attendance} =
-            Attendances.update_attendance(prev_attendance, %{entry: "Present"})
+          if prev_attendance.entry != "Leave" do
+            {:ok, new_attendance} =
+              Attendances.update_attendance(prev_attendance, %{entry: "Present"})
 
-          if prev_attendance.entry == "Absent" do
-            group_id = Students.get_group_id_only(new_attendance.student_id)
-            Finances.delete_absent_fine(prev_attendance.date, group_id)
+            if prev_attendance.entry == "Absent" do
+              group_id = Students.get_group_id_only(new_attendance.student_id)
+              Finances.delete_absent_fine(prev_attendance.date, group_id)
+            end
           end
         end
 
@@ -194,6 +215,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
         socket
         |> put_flash(:info, "Attendance successfully added!")
         |> assign(add_attendance_date: nil)
+        |> assign(open_add_modal?: false)
         |> assign(student_options: student_options)
         |> assign_class_for_attendance()
         |> noreply()
@@ -220,13 +242,26 @@ defmodule TheArkWeb.ClassAttendanceLive do
   end
 
   @impl true
+  def handle_event("open_add_modal", _payload, socket) do
+    socket
+    |> assign(open_add_modal?: true)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Attendance for Class <%= @class.name %></h1>
         <div class="flex items-end gap-2">
-          <.button phx-click={show_modal("add_attendance")}>Add Attendance</.button>
+          <div class="mb-2 mr-10">
+            <span class="font-bold mr-2">Off Days: </span>
+            <%= for day <- @off_days do %>
+              <%= day %> |
+            <% end %>
+          </div>
+          <.button phx-click="open_add_modal">Add Attendance</.button>
           <div>
             <.form :let={f} for={} as={:selected_month} phx-change="selected_month">
               <.input
@@ -240,9 +275,12 @@ defmodule TheArkWeb.ClassAttendanceLive do
           </div>
         </div>
       </div>
-      <.modal id="add_attendance">
+      <.modal :if={@open_add_modal?} show id="add_attendance">
         <.form :let={f} for={} as={:attendance} phx-submit="add_attendance" phx-change="validate">
           <.input field={f[:date]} label="Date of attendance" type="date" />
+          <div :if={@add_attendance_date_error} class="text-red-600 mb-3 text-sm">
+            <%= @add_attendance_date_error %>
+          </div>
           <MultiSelect.multi_select
             id={"students_#{@class.id}"}
             on_change={fn opts -> send(self(), {:updated_options, opts}) end}
@@ -271,7 +309,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
           <div
             phx-click="to_student_attendance"
             phx-value-id={student.id}
-            class="border px-2 w-40 h-9 py-1"
+            class="border px-2 w-40 h-9 py-1 cursor-pointer"
           >
             <%= student.name %>
           </div>
@@ -279,7 +317,10 @@ defmodule TheArkWeb.ClassAttendanceLive do
             <% id = get_attendance_id(student, day_number) %>
             <% entry = get_attendance_entry(student, day_number) %>
             <div
-              phx-click={JS.push("make_attendance_changeset") |> show_modal("edit_attendance_#{id}")}
+              phx-click={
+                if day_number not in @off_days,
+                  do: JS.push("make_attendance_changeset") |> show_modal("edit_attendance_#{id}")
+              }
               phx-value-attendance_id={id}
               class={[
                 "border px-0.5 py-1 w-9 h-9 text-center font-bold",
@@ -295,7 +336,11 @@ defmodule TheArkWeb.ClassAttendanceLive do
 
             <.modal id={"edit_attendance_#{id}"}>
               <%= if @edit_attendance_id == id do %>
-                <.form :let={f} for={@attendance_changeset} phx-submit="update_attendance">
+                <.form
+                  :let={f}
+                  for={@attendance_changeset}
+                  phx-submit={JS.push("update_attendance") |> hide_modal("edit_attendance_#{id}")}
+                >
                   <.input
                     field={f[:entry]}
                     label="Type"
@@ -427,10 +472,13 @@ defmodule TheArkWeb.ClassAttendanceLive do
     |> assign(class: class)
   end
 
-  def prev_month_calculation() do
-    case Date.utc_today().month - 1 do
-      0 -> 12
-      _ -> Date.utc_today().month - 1
-    end
+  defp assign_off_days(
+         %{assigns: %{current_month_number: month_number, current_year: year}} = socket
+       ) do
+    days = Offdays.get_offday_by_month_number(month_number, year, "students")
+    days = if days, do: days.days, else: []
+
+    socket
+    |> assign(off_days: days)
   end
 end

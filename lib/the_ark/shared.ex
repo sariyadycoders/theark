@@ -27,4 +27,10 @@ defmodule TheArk.Shared do
 
     list_of_dates
   end
+
+  def total_days_in_month(month_number) do
+    Timex.month_name(month_number)
+    |> first_date_of_month()
+    |> Timex.days_in_month()
+  end
 end

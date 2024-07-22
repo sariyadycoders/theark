@@ -227,14 +227,14 @@ defmodule TheArkWeb.CoreComponents do
   slot :inner_block
 
   def button(assigns) do
-    assigns = assigns |> Enum.into(%{icon: nil})
+    assigns = assigns |> Enum.into(%{icon: nil, disabled: nil})
 
     ~H"""
     <button
       type={@type}
       class={[
         "phx-submit-loading:opacity-75 #{@class} rounded-lg bg-zinc-900 hover:bg-zinc-700 py-2 px-3 flex items-center gap-1",
-        "text-sm font-semibold leading-6 text-white active:text-white/80"
+        "text-sm font-semibold leading-6 text-white active:text-white/80 disabled:bg-white disabled:text-black disabled:border-2"
       ]}
       {@rest}
     >
@@ -283,7 +283,8 @@ defmodule TheArkWeb.CoreComponents do
 
   attr :type, :string,
     default: "text",
-    values: ~w(checkbox color date datetime-local email file hidden month number password
+    values:
+      ~w(checkbox checkbox-custom color date datetime-local email file hidden month number password
                range radio search select tel text textarea time url week)
 
   attr :field, Phoenix.HTML.FormField,
@@ -329,6 +330,36 @@ defmodule TheArkWeb.CoreComponents do
           value="true"
           checked={@checked}
           class="rounded border-zinc-300 text-zinc-900 focus:ring-0"
+          {@rest}
+        />
+        <%= @label %>
+      </label>
+      <.error :for={msg <- @errors}><%= msg %></.error>
+    </div>
+    """
+  end
+
+  def input(%{type: "checkbox-custom"} = assigns) do
+    assigns =
+      assign_new(assigns, :checked, fn ->
+        Phoenix.HTML.Form.normalize_value("checkbox", assigns[:value])
+      end)
+      |> Enum.into(%{main_class: "", class: ""})
+
+    ~H"""
+    <div phx-feedback-for={@name} class={"mt-2 #{@main_class}"}>
+      <label class={[
+        "border rounded-lg text-lg flex items-center justify-center h-10 cursor-pointer #{@class}",
+        "#{@checked && "bg-sky-700 text-white font-bold"}"
+      ]}>
+        <input type="hidden" name={@name} value="false" />
+        <input
+          type="checkbox"
+          id={@id}
+          name={@name}
+          value="true"
+          checked={@checked}
+          class="hidden"
           {@rest}
         />
         <%= @label %>
@@ -431,6 +462,63 @@ defmodule TheArkWeb.CoreComponents do
       <.error :for={msg <- @errors}><%= msg %></.error>
     </div>
     """
+  end
+
+  def field_type_option(%{type: "custom_checkbox"} = assigns) do
+    assigns =
+      Enum.into(assigns, %{
+        disabled: false,
+        class: "",
+        mini_class: "",
+        color: "blue",
+        override_global: nil,
+        icon: nil,
+        click_event: nil
+      })
+
+    ~H"""
+    <label class={[
+      "border rounded-lg text-lg flex items-center justify-center h-8 #{@class}",
+      "#{@checked && "bg-sky-700 text-white font-bold"}",
+      "#{!@disabled && "hover:cursor-pointer"}"
+    ]}>
+      <input type="hidden" name={@name} value="false" />
+      <input
+        class="hidden"
+        type="checkbox"
+        name={@name}
+        value="true"
+        checked={@checked}
+        phx-click={@click_event}
+        disabled={@disabled}
+      />
+
+      <div class="flex w-full">
+        <div class="text-center grow">
+          <%= @label |> to_string() |> String.replace("_", " ") %>
+        </div>
+      </div>
+    </label>
+    """
+  end
+
+  def classes(nil), do: ""
+  def classes(%{} = optionals), do: classes([], optionals)
+  def classes([{_k, _v} | _] = optionals), do: classes([], Map.new(optionals))
+  def classes(["" <> _constant | _] = constants), do: classes(constants, %{})
+
+  def classes(nil, optionals), do: classes([], optionals)
+  def classes("" <> constant, optionals), do: classes([constant], optionals)
+
+  def classes(constants, optionals) do
+    [
+      constants,
+      optionals
+      |> Enum.filter(&elem(&1, 1))
+      |> Enum.map(&elem(&1, 0))
+    ]
+    |> Enum.concat()
+    |> Enum.join(" ")
   end
 
   @doc """

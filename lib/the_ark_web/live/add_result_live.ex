@@ -5,8 +5,6 @@ defmodule TheArkWeb.AddResultLive do
     Classes,
     Subjects,
     Results,
-    Results.Result,
-    Students,
     Classresults
   }
 
