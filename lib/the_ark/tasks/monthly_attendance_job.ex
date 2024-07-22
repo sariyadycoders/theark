@@ -9,22 +9,16 @@ defmodule TheArk.MonthlyAttendanceJob do
   end
 
   def init(state) do
-    state = Map.put(state, :month_number, 1)
-
     next_month_job()
     {:ok, state}
   end
 
   def handle_info({:insert_records, current_month_number}, state) do
     Attendances.create_monthly_attendances(current_month_number)
-
-    # Optionally, you can log the insertion or handle errors
-    IO.puts("Inserted #{8} records at the end of the month.")
+    Attendances.delete_old_attendances(current_month_number)
 
     # Reschedule for the next month
     next_month_job()
-
-    state = Map.put(state, :month_number, state.month_number + 1)
 
     {:noreply, state}
   end

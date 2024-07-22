@@ -33,4 +33,12 @@ defmodule TheArk.Shared do
     |> first_date_of_month()
     |> Timex.days_in_month()
   end
+
+  def next_month_number(current_number) do
+    if current_number == 12, do: 1, else: current_number + 1
+  end
+
+  def prev_month_number(current_number) do
+    if current_number == 1, do: 12, else: current_number - 1
+  end
 end
