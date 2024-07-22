@@ -288,6 +288,28 @@ defmodule TheArk.Attendances do
     end
   end
 
+  def delete_old_attendances(current_month_number) do
+    month_numbers = [
+      Shared.next_month_number(current_month_number),
+      current_month_number,
+      Shared.prev_month_number(current_month_number),
+      Shared.prev_month_number(current_month_number - 1)
+    ]
+
+    list_of_dates =
+      Enum.flat_map(month_numbers, fn number ->
+        Shared.list_of_dates(Timex.month_name(number))
+      end)
+
+    Repo.delete_all(
+      from(
+        a in Attendance,
+        where: a.date not in ^list_of_dates,
+        where: a.is_monthly != true
+      )
+    )
+  end
+
   @doc """
   Updates a attendance.
 

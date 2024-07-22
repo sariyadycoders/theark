@@ -1,9 +1,9 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
-  # TODO: teachers attendance and salary system
+  # TODO: resetting results after year
   # progress graphs system
-  # resetting results after year
+  # teachers attendance and salary system
 
   import Phoenix.HTML.Form
 
