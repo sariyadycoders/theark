@@ -10,7 +10,6 @@ defmodule TheArk.Tests.Test do
     field :is_class_test, :boolean, default: false
     field :is_closed, :boolean
 
-    has_one :result, TheArk.Results.Result
     belongs_to :student, TheArk.Students.Student
     belongs_to :class, TheArk.Classes.Class
 

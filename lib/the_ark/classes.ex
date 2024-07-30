@@ -53,7 +53,7 @@ defmodule TheArk.Classes do
 
   def get_class_for_tests_page(id) do
     Repo.get!(Class, id)
-    |> Repo.preload([:students, tests: [:result]])
+    |> Repo.preload([:students, :tests])
   end
 
   def get_class_for_attendance!(id, list_of_dates) do
