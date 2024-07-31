@@ -10,7 +10,6 @@ defmodule TheArk.Results.Result do
     field :subject_of_result, :string
 
     belongs_to :subject, TheArk.Subjects.Subject
-    belongs_to :test, TheArk.Tests.Test
     belongs_to :student, TheArk.Students.Student
 
     timestamps(type: :utc_datetime)

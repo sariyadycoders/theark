@@ -27,7 +27,10 @@ defmodule TheArkWeb.StudentLive do
   def render(assigns) do
     ~H"""
     <div>
-      <h1 class="font-bold text-3xl mb-5">Students of Class <%= @class.name %></h1>
+      <div class="flex items-center justify-between">
+        <h1 class="font-bold text-3xl mb-5">Students of Class <%= @class.name %></h1>
+        <.button>Transfer Students</.button>
+      </div>
       <div class="grid grid-cols-6 items-center border-b-4 pb-2 font-bold text-lg mb-2">
         <div>
           Name
@@ -77,10 +80,13 @@ defmodule TheArkWeb.StudentLive do
       results =
         Enum.map(student.subjects, fn subject ->
           result =
-            (Enum.filter(subject.results, fn result ->
-               result.name == term
-             end)
-             |> Enum.at(0)).obtained_marks
+            Enum.filter(subject.results, fn result ->
+              result.name == term
+            end)
+            |> Enum.at(0)
+
+          result =
+            if result, do: result.obtained_marks, else: nil
 
           %{subject_name: subject.name, id: subject.subject_id, result: result}
         end)

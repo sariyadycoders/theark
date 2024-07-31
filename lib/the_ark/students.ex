@@ -6,6 +6,7 @@ defmodule TheArk.Students do
   import Ecto.Query, warn: false
 
   alias TheArk.Repo
+  alias TheArk.Classes
   alias TheArk.Subjects
   alias TheArk.Subjects.Subject
   alias TheArk.Groups
@@ -203,10 +204,48 @@ defmodule TheArk.Students do
       {:error, %Ecto.Changeset{}}
 
   """
+
+  def update_student(%Student{} = student, %{"class_id" => class_id} = attrs) do
+    student
+    |> Student.changeset(attrs)
+    |> Repo.update()
+    |> delete_prev_subjects()
+    |> create_new_subjects(class_id)
+  end
+
   def update_student(%Student{} = student, attrs) do
     student
     |> Student.changeset(attrs)
     |> Repo.update()
+  end
+
+  defp create_new_subjects({:ok, student} = success, class_id) do
+    class = Classes.get_class!(class_id)
+
+    for subject <- class.subjects do
+      Subjects.create_subject(%{
+        "name" => subject.name,
+        "subject_id" => subject.subject_id,
+        "class_id" => class.id,
+        "student_id" => student.id
+      })
+    end
+
+    success
+  end
+
+  defp create_new_subjects({:error, _} = error, _class_id) do
+    error
+  end
+
+  defp delete_prev_subjects({:ok, student} = success) do
+    Subjects.delete_all_by_attributes(student_id: student.id)
+
+    success
+  end
+
+  defp delete_prev_subjects({:error, _} = error) do
+    error
   end
 
   def update_student_leaving(%Student{} = student, attrs) do
