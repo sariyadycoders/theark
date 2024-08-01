@@ -1,7 +1,7 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
-  # TODO: resetting results after year [See transfer of students funtionality first! (DONE) -> then in class, create transfer students button which opens modal and selected students are tranferred properly with their previous results summerization]
+  # TODO: resetting results after year [See transfer of students funtionality first! (DONE) -> then in class, create transfer students button which opens modal and selected students are tranferred properly (DONE) with their previous results summerization (NOOOT) ]
   # progress graphs system
   # teachers attendance and salary system
 

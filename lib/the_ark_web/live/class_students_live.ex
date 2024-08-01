@@ -8,11 +8,14 @@ defmodule TheArkWeb.StudentLive do
   @impl true
   def mount(%{"id" => class_id}, _, socket) do
     class = Classes.get_class!(String.to_integer(class_id))
+    class_options = Classes.get_class_options()
     students = get_students_and_calculate_results(class_id)
 
     socket
     |> assign(class: class)
+    |> assign(class_options: class_options)
     |> assign(students: students)
+    |> assign(open_modal_id: nil)
     |> ok
   end
 
@@ -24,13 +27,88 @@ defmodule TheArkWeb.StudentLive do
   end
 
   @impl true
+  def handle_event("open_students_modal", _payload, socket) do
+    socket
+    |> assign(open_modal_id: "students_transfer")
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event("close_students_modal", _payload, socket) do
+    socket
+    |> assign(open_modal_id: nil)
+    |> noreply()
+  end
+
+  @impl true
+  def handle_event(
+        "submit",
+        %{
+          "students_transfer" => %{"class" => class_id} = params
+        },
+        %{assigns: %{class: class}} = socket
+      ) do
+    selected_student_ids =
+      Enum.map(params, fn {key, value} ->
+        if value == "true", do: key |> String.to_integer(), else: false
+      end)
+      |> Enum.filter(&(&1 != false))
+
+    class_id = String.to_integer(class_id)
+
+    for student_id <- selected_student_ids do
+      student = Students.get_student!(student_id)
+
+      if student.class_id != class_id do
+        Students.update_student(student, %{"class_id" => class_id})
+      end
+    end
+
+    class = Classes.get_class!(class.id)
+    students = get_students_and_calculate_results(class.id)
+
+    socket
+    |> assign(class: class)
+    |> assign(students: students)
+    |> assign(open_modal_id: nil)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
       <div class="flex items-center justify-between">
         <h1 class="font-bold text-3xl mb-5">Students of Class <%= @class.name %></h1>
-        <.button>Transfer Students</.button>
+        <.button phx-click={JS.push("open_students_modal") |> show_modal("students_transfer")}>
+          Transfer Students
+        </.button>
       </div>
+      <.modal
+        :if={@open_modal_id == "students_transfer"}
+        show
+        id="students_transfer"
+        on_cancel={JS.navigate("/classes/#{@class.id}/students")}
+      >
+        <.form :let={f} for={} as={:students_transfer} phx-submit="submit">
+          <.input field={f[:class]} type="select" label="Choose Next Class" options={@class_options} />
+          <div class="my-3">
+            Choose students to be transferred:
+          </div>
+          <%= for student <- @students do %>
+            <.input
+              field={f["#{student.id}" |> String.to_atom()]}
+              type="checkbox"
+              label={student.name}
+              checked={true}
+            />
+          <% end %>
+
+          <div class="mt-10">
+            <.button type="submit">Submit</.button>
+          </div>
+        </.form>
+      </.modal>
       <div class="grid grid-cols-6 items-center border-b-4 pb-2 font-bold text-lg mb-2">
         <div>
           Name
