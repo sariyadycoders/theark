@@ -6,11 +6,9 @@ defmodule TheArk.Classes.Class do
     field :name, :string
     field :incharge, :string
     field :is_first_term_announced, :boolean, default: false
-    field :is_first_term_result_completed, :boolean, default: false
     field :is_second_term_announced, :boolean, default: false
-    field :is_second_term_result_completed, :boolean, default: false
     field :is_third_term_announced, :boolean, default: false
-    field :is_third_term_result_completed, :boolean, default: false
+    field :year, :integer
 
     has_many :periods, TheArk.Periods.Period, on_delete: :delete_all
     has_many :students, TheArk.Students.Student, on_delete: :delete_all
@@ -28,11 +26,9 @@ defmodule TheArk.Classes.Class do
       :name,
       :incharge,
       :is_first_term_announced,
-      :is_first_term_result_completed,
       :is_second_term_announced,
-      :is_second_term_result_completed,
       :is_third_term_announced,
-      :is_third_term_result_completed
+      :year
     ])
     |> validate_required([:name])
     |> validate_length(:name, min: 5)

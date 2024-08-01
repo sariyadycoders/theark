@@ -8,6 +8,7 @@ defmodule TheArk.Students do
   alias TheArk.Repo
   alias TheArk.Classes
   alias TheArk.Subjects
+  alias TheArk.Results
   alias TheArk.Subjects.Subject
   alias TheArk.Groups
   alias TheArk.Notes.Note
@@ -209,6 +210,7 @@ defmodule TheArk.Students do
     student
     |> Student.changeset(attrs)
     |> Repo.update()
+    |> summerize_the_results()
     |> delete_prev_subjects()
     |> create_new_subjects(class_id)
   end
@@ -217,6 +219,35 @@ defmodule TheArk.Students do
     student
     |> Student.changeset(attrs)
     |> Repo.update()
+  end
+
+  defp summerize_the_results({:ok, student} = success) do
+    student = get_student!(student.id)
+
+    for term_name <- Classes.make_list_of_terms() do
+      for subject <- student.subjects do
+        result =
+          Enum.filter(subject.results, fn result ->
+            result.name == term_name
+          end)
+          |> Enum.at(0)
+
+        Results.create_yearly_result(%{
+          name: term_name,
+          total_marks: result.total_marks,
+          obtained_marks: result.obtained_marks,
+          student_id: student.id,
+          subject_of_result: subject.name,
+          year: student.class.year
+        })
+      end
+    end
+
+    success
+  end
+
+  defp summerize_the_results({:error, _} = error) do
+    error
   end
 
   defp create_new_subjects({:ok, student} = success, class_id) do

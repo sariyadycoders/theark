@@ -98,6 +98,7 @@ defmodule TheArkWeb.ClassLive do
         |> assign(edit_class_id: 0)
         |> put_flash(:info, "Class successfully updated!")
         |> assign(classes: Classes.list_classes())
+        |> check_result_completion()
         |> noreply()
 
       {:error, changeset} ->

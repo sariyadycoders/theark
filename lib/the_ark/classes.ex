@@ -222,9 +222,14 @@ defmodule TheArk.Classes do
 
   def term_announcement(name, type) do
     case name do
-      "first_term" -> Repo.update_all(Class, set: [is_first_term_announced: type])
-      "second_term" -> Repo.update_all(Class, set: [is_second_term_announced: type])
-      "third_term" -> Repo.update_all(Class, set: [is_third_term_announced: type])
+      "first_term" ->
+        Repo.update_all(Class, set: [is_first_term_announced: type, year: Date.utc_today().year])
+
+      "second_term" ->
+        Repo.update_all(Class, set: [is_second_term_announced: type])
+
+      "third_term" ->
+        Repo.update_all(Class, set: [is_third_term_announced: type])
     end
   end
 

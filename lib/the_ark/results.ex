@@ -62,6 +62,12 @@ defmodule TheArk.Results do
     |> Repo.insert()
   end
 
+  def create_yearly_result(attrs \\ %{}) do
+    %Result{}
+    |> Result.yearly_changeset(attrs)
+    |> Repo.insert()
+  end
+
   @doc """
   Updates a result.
 

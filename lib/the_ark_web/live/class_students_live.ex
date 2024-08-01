@@ -16,6 +16,7 @@ defmodule TheArkWeb.StudentLive do
     |> assign(class_options: class_options)
     |> assign(students: students)
     |> assign(open_modal_id: nil)
+    |> check_result_completion()
     |> ok
   end
 
@@ -90,24 +91,35 @@ defmodule TheArkWeb.StudentLive do
         id="students_transfer"
         on_cancel={JS.navigate("/classes/#{@class.id}/students")}
       >
-        <.form :let={f} for={} as={:students_transfer} phx-submit="submit">
-          <.input field={f[:class]} type="select" label="Choose Next Class" options={@class_options} />
-          <div class="my-3">
-            Choose students to be transferred:
-          </div>
-          <%= for student <- @students do %>
+        <%= if @is_result_completed do %>
+          <.form :let={f} for={} as={:students_transfer} phx-submit="submit">
             <.input
-              field={f["#{student.id}" |> String.to_atom()]}
-              type="checkbox"
-              label={student.name}
-              checked={true}
+              field={f[:class]}
+              type="select"
+              label="Choose Next Class"
+              options={@class_options}
             />
-          <% end %>
+            <div class="my-3">
+              Choose students to be transferred:
+            </div>
+            <%= for student <- @students do %>
+              <.input
+                field={f["#{student.id}" |> String.to_atom()]}
+                type="checkbox"
+                label={student.name}
+                checked={true}
+              />
+            <% end %>
 
-          <div class="mt-10">
-            <.button type="submit">Submit</.button>
+            <div class="mt-10">
+              <.button type="submit">Submit</.button>
+            </div>
+          </.form>
+        <% else %>
+          <div class="font-bold text-lg text">
+            Plz submit the results completly, first !
           </div>
-        </.form>
+        <% end %>
       </.modal>
       <div class="grid grid-cols-6 items-center border-b-4 pb-2 font-bold text-lg mb-2">
         <div>
@@ -119,8 +131,9 @@ defmodule TheArkWeb.StudentLive do
         <div>
           Age
         </div>
-        <div class="col-span-3">
+        <div class="col-span-3 flex items-center gap-5">
           Recent Term Result
+          <div :if={!@is_result_completed} class="h-5 w-5 bg-red-600 rounded-full"></div>
         </div>
       </div>
       <%= for student <- @students do %>
@@ -172,5 +185,28 @@ defmodule TheArkWeb.StudentLive do
 
       Map.put(student, :results, results)
     end)
+  end
+
+  defp check_result_completion(%{assigns: %{class: class}} = socket) do
+    list_of_terms = Classes.make_list_of_terms()
+
+    is_result_completed =
+      Enum.all?(list_of_terms, fn term_name ->
+        Enum.all?(class.students, fn student ->
+          Enum.all?(student.subjects, fn subject ->
+            results =
+              Enum.filter(subject.results, fn result ->
+                result.name == term_name
+              end)
+
+            Enum.all?(results, fn result ->
+              result.obtained_marks
+            end)
+          end)
+        end)
+      end)
+
+    socket
+    |> assign(is_result_completed: is_result_completed)
   end
 end
