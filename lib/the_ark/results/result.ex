@@ -6,9 +6,12 @@ defmodule TheArk.Results.Result do
     field :name, :string
     field :obtained_marks, :integer
     field :total_marks, :integer
+    field :year, :integer
+    field :subject_of_result, :string
+    field :class_of_result, :string
 
     belongs_to :subject, TheArk.Subjects.Subject
-    belongs_to :test, TheArk.Tests.Test
+    belongs_to :student, TheArk.Students.Student
 
     timestamps(type: :utc_datetime)
   end
@@ -18,14 +21,32 @@ defmodule TheArk.Results.Result do
     result
     |> cast(attrs, [:name, :total_marks, :obtained_marks, :subject_id])
     |> validate_required([:name, :subject_id])
-    |> unique_constraint(:name_subject_id, name: :name, subject_id: :subject_id)
+    |> unique_constraint(:name_subject_id_year, name: :unique_name_subject_id_year)
     |> validate_obtained_marks_less_than_total_marks()
   end
 
-  def test_changeset(result, attrs) do
+  @doc false
+  def yearly_changeset(result, attrs) do
     result
-    |> cast(attrs, [:total_marks, :obtained_marks, :test_id])
-    |> validate_required([:total_marks, :test_id])
+    |> cast(attrs, [
+      :name,
+      :total_marks,
+      :obtained_marks,
+      :student_id,
+      :year,
+      :subject_of_result,
+      :class_of_result
+    ])
+    |> validate_required([
+      :name,
+      :total_marks,
+      :obtained_marks,
+      :student_id,
+      :year,
+      :subject_of_result,
+      :class_of_result
+    ])
+    |> unique_constraint(:name_subject_id_year, name: :unique_name_subject_id_year)
     |> validate_obtained_marks_less_than_total_marks()
   end
 

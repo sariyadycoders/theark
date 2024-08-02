@@ -62,9 +62,9 @@ defmodule TheArk.Results do
     |> Repo.insert()
   end
 
-  def create_test_result(attrs \\ %{}) do
+  def create_yearly_result(attrs \\ %{}) do
     %Result{}
-    |> Result.test_changeset(attrs)
+    |> Result.yearly_changeset(attrs)
     |> Repo.insert()
   end
 

@@ -8,8 +8,7 @@ defmodule TheArk.Tests do
 
   alias TheArk.{
     Tests.Test,
-    Students,
-    Results
+    Students
   }
 
   @doc """
@@ -50,7 +49,6 @@ defmodule TheArk.Tests do
         where: t.date_of_test == ^date
       )
     )
-    |> Repo.preload(:result)
   end
 
   @doc """
@@ -79,19 +77,16 @@ defmodule TheArk.Tests do
   end
 
   def create_test_for_students({:ok, test} = success) do
-    Results.create_test_result(%{total_marks: test.total_marks, test_id: test.id})
     student_ids = Students.get_all_active_students_ids(test.class_id)
 
     for id <- student_ids do
-      {:ok, test} =
+      {:ok, _test} =
         create_test(%{
           subject: test.subject,
           total_marks: test.total_marks,
           date_of_test: test.date_of_test,
           student_id: id
         })
-
-      Results.create_test_result(%{total_marks: test.total_marks, test_id: test.id})
     end
 
     success

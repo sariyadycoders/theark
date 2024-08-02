@@ -434,6 +434,34 @@ defmodule TheArkWeb.CoreComponents do
     """
   end
 
+  def input(%{type: "binary"} = assigns) do
+    assigns =
+      Enum.into(assigns, %{main_class: ""})
+
+    ~H"""
+    <div phx-feedback-for={@name} class={"mt-2 #{@main_class}"}>
+      <label class="inline-flex items-center cursor-pointer">
+        <input type="hidden" name={@name} value="false" />
+        <input
+          type="checkbox"
+          id={@id}
+          name={@name}
+          value="true"
+          checked={@checked}
+          {@rest}
+          class="sr-only peer"
+        />
+        <div class="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600">
+        </div>
+        <span class="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+          <%= @label %>
+        </span>
+      </label>
+      <.error :for={msg <- @errors}><%= msg %></.error>
+    </div>
+    """
+  end
+
   # All other inputs text, datetime-local, url, password, etc. are handled here...
   def input(assigns) do
     assigns =
@@ -499,6 +527,96 @@ defmodule TheArkWeb.CoreComponents do
         </div>
       </div>
     </label>
+    """
+  end
+
+  # Required: 1) options 2) chosen_option 3) id 4) event 5) label
+  def drop_down(assigns) do
+    assigns =
+      assigns
+      |> Enum.into(%{main_class: "", chosen_option: nil, target: nil})
+
+    ~H"""
+    <div class={"flex #{@main_class}"}>
+      <div
+        class="items-center w-full xl:w-auto grow sm:grow-0 relative"
+        phx-click-away={
+          JS.set_attribute({"style", "display: none"}, to: "#content_#{@id}")
+          |> JS.set_attribute({"style", "display: none"}, to: "#down_#{@id}")
+          |> JS.set_attribute({"style", "display: block"}, to: "#up_#{@id}")
+        }
+        phx-click={
+          JS.toggle(to: "#content_#{@id}")
+          |> JS.toggle(to: "#down_#{@id}")
+          |> JS.toggle(to: "#up_#{@id}")
+        }
+      >
+        <button
+          title="Manage"
+          class="flex items-center justify-between w-48 text-sky-700 ring ring-sky-600 hover:ring-offset-2 rounded-lg px-4 py-1.5 flex gap-3 "
+        >
+          <%= @chosen_option || @label %>
+          <span id={"up_#{@id}"} class="text-black">
+            <.icon name="hero-chevron-down" class="w-5 h-5" />
+          </span>
+          <span id={"down_#{@id}"} class="hidden text-black">
+            <.icon name="hero-chevron-up" class="w-5 h-5" />
+          </span>
+        </button>
+        <div
+          id={"content_#{@id}"}
+          class="z-10 flex hidden absolute top-12 right-0 flex-col w-48 bg-white border rounded-lg shadow-lg ring ring-sky-700 ring-offset-2"
+        >
+          <%= if !is_tuple(List.first(@options)) do %>
+            <%= for option <- @options do %>
+              <button
+                phx-target={@target}
+                phx-click={
+                  JS.push(@event)
+                  |> JS.toggle(to: "#content_#{@id}")
+                  |> JS.toggle(to: "#down_#{@id}")
+                  |> JS.toggle(to: "#up_#{@id}")
+                }
+                phx-value-option={option}
+                id={option}
+                class={[
+                  "hover:bg-gradient-to-b from-sky-100 to-sky-300 py-1 text-sky-700 font-bold rounded-md w-full",
+                  if(option == @chosen_option,
+                    do: "!bg-gradient-to-b !text-white !from-sky-300 !to-sky-800"
+                  )
+                ]}
+              >
+                <%= option %>
+              </button>
+              <hr />
+            <% end %>
+          <% else %>
+            <%= for {option, id} <- @options do %>
+              <button
+                phx-target={@target}
+                phx-click={
+                  JS.push(@event)
+                  |> JS.toggle(to: "#content_#{@id}")
+                  |> JS.toggle(to: "#down_#{@id}")
+                  |> JS.toggle(to: "#up_#{@id}")
+                }
+                phx-value-id={id}
+                id={option}
+                class={[
+                  "hover:bg-gradient-to-b from-sky-100 to-sky-300 py-1 text-sky-700 font-bold rounded-md w-full",
+                  if(id == @chosen_option,
+                    do: "!bg-gradient-to-b !text-white !from-sky-300 !to-sky-800"
+                  )
+                ]}
+              >
+                <%= option %>
+              </button>
+              <hr />
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
     """
   end
 
