@@ -8,6 +8,7 @@ defmodule TheArk.Results.Result do
     field :total_marks, :integer
     field :year, :integer
     field :subject_of_result, :string
+    field :class_of_result, :string
 
     belongs_to :subject, TheArk.Subjects.Subject
     belongs_to :student, TheArk.Students.Student
@@ -27,14 +28,23 @@ defmodule TheArk.Results.Result do
   @doc false
   def yearly_changeset(result, attrs) do
     result
-    |> cast(attrs, [:name, :total_marks, :obtained_marks, :student_id, :year, :subject_of_result])
+    |> cast(attrs, [
+      :name,
+      :total_marks,
+      :obtained_marks,
+      :student_id,
+      :year,
+      :subject_of_result,
+      :class_of_result
+    ])
     |> validate_required([
       :name,
       :total_marks,
       :obtained_marks,
       :student_id,
       :year,
-      :subject_of_result
+      :subject_of_result,
+      :class_of_result
     ])
     |> unique_constraint(:name_subject_id_year, name: :unique_name_subject_id_year)
     |> validate_obtained_marks_less_than_total_marks()

@@ -20,7 +20,8 @@ defmodule TheArkWeb.Router do
   scope "/", TheArkWeb do
     pipe_through [:browser]
 
-    get "/", PageController, :home
+    # get "/", PageController, :home
+    live "/", Home
     live "/home", Home
     live "/classes", ClassLive
     live "/classes/:id/results", ClassResultLive

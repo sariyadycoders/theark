@@ -76,6 +76,8 @@ defmodule TheArkWeb.Home do
     |> assign(open_modal_id: nil)
     |> assign(for_staff: false)
     |> assign(for_students: false)
+    |> assign(is_end_of_year: false)
+    |> assign(list_of_terms: Classes.make_list_of_terms())
     |> ok()
   end
 
@@ -199,11 +201,12 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
-  def handle_event("terms_announcement", %{"term_name" => term_name, "type" => type}, socket) do
-    type = if type == "true", do: true, else: false
-    Classes.term_announcement(term_name, type)
+  def handle_event("terms_announcement", %{"term_name" => term_name}, socket) do
+    Classes.term_announcement(term_name)
 
     socket
+    |> assign(list_of_terms: Classes.make_list_of_terms())
+    |> assign(is_end_of_year: false)
     |> noreply()
   end
 
@@ -655,6 +658,13 @@ defmodule TheArkWeb.Home do
   end
 
   @impl true
+  def handle_event("end_of_year", _payload, socket) do
+    socket
+    |> assign(is_end_of_year: true)
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -702,56 +712,32 @@ defmodule TheArkWeb.Home do
         <.button phx-click={JS.push("open_offdays_modal") |> show_modal("off_days")}>
           Off days
         </.button>
-        <.button phx-click={JS.push("open_end_month_modal") |> show_modal("end_of_month")}>
-          Mark End of Month
-        </.button>
         <.button
+          :if={"first_term" not in @list_of_terms or @is_end_of_year}
           phx-click="terms_announcement"
           class="flex justify-center"
           phx-value-term_name="first_term"
-          phx-value-type="true"
         >
           Announce 1st Term
         </.button>
         <.button
-          class="flex justify-center"
-          phx-click="terms_announcement"
-          phx-value-term_name="first_term"
-          phx-value-type="false"
-        >
-          Finish 1st Term
-        </.button>
-        <.button
+          :if={"second_term" not in @list_of_terms}
           class="flex justify-center"
           phx-click="terms_announcement"
           phx-value-term_name="second_term"
-          phx-value-type="true"
         >
           Announce 2nd Term
         </.button>
         <.button
-          class="flex justify-center"
-          phx-click="terms_announcement"
-          phx-value-term_name="second_term"
-          phx-value-type="false"
-        >
-          Finish 2nd Term
-        </.button>
-        <.button
+          :if={"third_term" not in @list_of_terms}
           phx-click="terms_announcement"
           class="flex justify-center"
           phx-value-term_name="third_term"
-          phx-value-type="true"
         >
           Announce 3rd Term
         </.button>
-        <.button
-          phx-click="terms_announcement"
-          phx-value-term_name="third_term"
-          phx-value-type="false"
-          class="flex justify-center"
-        >
-          Finish 3rd Term
+        <.button phx-click="end_of_year" class="flex justify-center">
+          Mark End of Year
         </.button>
       </div>
 

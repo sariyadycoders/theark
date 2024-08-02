@@ -207,10 +207,12 @@ defmodule TheArk.Students do
   """
 
   def update_student(%Student{} = student, %{"class_id" => class_id} = attrs) do
+    prev_class_id = student.class_id
+
     student
     |> Student.changeset(attrs)
     |> Repo.update()
-    |> summerize_the_results()
+    |> summerize_the_results(prev_class_id)
     |> delete_prev_subjects()
     |> create_new_subjects(class_id)
   end
@@ -221,8 +223,9 @@ defmodule TheArk.Students do
     |> Repo.update()
   end
 
-  defp summerize_the_results({:ok, student} = success) do
+  defp summerize_the_results({:ok, student} = success, prev_class_id) do
     student = get_student!(student.id)
+    prev_class = Classes.get_class!(prev_class_id)
 
     for term_name <- Classes.make_list_of_terms() do
       for subject <- student.subjects do
@@ -238,7 +241,8 @@ defmodule TheArk.Students do
           obtained_marks: result.obtained_marks,
           student_id: student.id,
           subject_of_result: subject.name,
-          year: student.class.year
+          year: student.prev_class.year,
+          class_of_result: prev_class.name
         })
       end
     end
@@ -246,7 +250,7 @@ defmodule TheArk.Students do
     success
   end
 
-  defp summerize_the_results({:error, _} = error) do
+  defp summerize_the_results({:error, _} = error, _prev_class_id) do
     error
   end
 

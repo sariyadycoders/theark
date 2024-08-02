@@ -7,6 +7,7 @@ defmodule TheArk.Classes do
   alias TheArk.Subjects.Subject
   alias TheArk.Periods.Period
   alias TheArk.Attendances.Attendance
+  alias TheArk.Classresults.Classresult
 
   @traits [
     %{id: 5001, label: "Punctuality_t", selected: true},
@@ -220,17 +221,32 @@ defmodule TheArk.Classes do
     Class.changeset(class, attrs)
   end
 
-  def term_announcement(name, type) do
+  def term_announcement(name) do
     case name do
       "first_term" ->
-        Repo.update_all(Class, set: [is_first_term_announced: type, year: Date.utc_today().year])
+        Repo.update_all(Class,
+          set: [
+            is_first_term_announced: true,
+            is_second_term_announced: false,
+            is_third_term_announced: false,
+            year: Date.utc_today().year
+          ]
+        )
+
+        reset_results_of_all_classes()
 
       "second_term" ->
-        Repo.update_all(Class, set: [is_second_term_announced: type])
+        Repo.update_all(Class, set: [is_second_term_announced: true])
 
       "third_term" ->
-        Repo.update_all(Class, set: [is_third_term_announced: type])
+        Repo.update_all(Class, set: [is_third_term_announced: true])
     end
+  end
+
+  defp reset_results_of_all_classes() do
+    Repo.update_all(Classresult,
+      set: [total_marks: nil, obtained_marks: nil, students_appeared: nil, absent_students: []]
+    )
   end
 
   def make_list_of_terms() do
@@ -243,15 +259,6 @@ defmodule TheArk.Classes do
 
       class.is_first_term_announced and class.is_second_term_announced ->
         ["first_term", "second_term"]
-
-      class.is_second_term_announced and class.is_third_term_announced ->
-        ["second_term", "third_term"]
-
-      class.is_third_term_announced and !class.is_first_term_announced ->
-        ["third_term"]
-
-      class.is_second_term_announced ->
-        ["second_term"]
 
       class.is_first_term_announced and !class.is_third_term_announced ->
         ["first_term"]

@@ -8,6 +8,7 @@ defmodule TheArk.Repo.Migrations.CreateResults do
       add :obtained_marks, :integer
       add :year, :integer
       add :subject_of_result, :string
+      add :class_of_result, :string
 
       add :subject_id, references(:subjects, on_delete: :delete_all)
       add :student_id, references(:students, on_delete: :delete_all)
