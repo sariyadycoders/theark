@@ -1,7 +1,5 @@
 defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
-
-  # End of year (terms reset, year reset, classes subjects results reset)
   # progress graphs system
   # teachers attendance and salary system
 
