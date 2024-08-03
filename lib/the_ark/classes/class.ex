@@ -34,6 +34,9 @@ defmodule TheArk.Classes.Class do
       :is_first_term_announced,
       :is_second_term_announced,
       :is_third_term_announced,
+      :is_first_term_result_completed,
+      :is_second_term_result_completed,
+      :is_third_term_result_completed,
       :year
     ])
     |> validate_required([:name])

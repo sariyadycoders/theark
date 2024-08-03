@@ -23,6 +23,7 @@ defmodule TheArk.Students.Student do
     belongs_to :class, TheArk.Classes.Class
     belongs_to :group, TheArk.Groups.Group
     has_many :subjects, TheArk.Subjects.Subject, on_delete: :delete_all
+    has_many :results, TheArk.Results.Result, on_delete: :delete_all
     has_many :notes, TheArk.Notes.Note, on_delete: :delete_all
     has_many :attendances, TheArk.Attendances.Attendance, on_delete: :delete_all
     has_many :tests, TheArk.Tests.Test, on_delete: :delete_all

@@ -258,14 +258,20 @@ defmodule TheArkWeb.StudentTermResultLive do
       end)
       |> Enum.count()
 
-    (Enum.reject(subjects, fn subject ->
-       subject.name
-       |> String.ends_with?("_t")
-     end)
-     |> Enum.map(fn subject ->
-       get_percentage_of_marks(subject.results, term_name)
-     end)
-     |> Enum.sum()) / subjects_count
+    Enum.reject(subjects, fn subject ->
+      subject.name
+      |> String.ends_with?("_t")
+    end)
+    |> Enum.map(fn subject ->
+      get_percentage_of_marks(subject.results, term_name)
+    end)
+    |> then(fn list ->
+      if Enum.count(list) > 0 do
+        Enum.sum(list) / subjects_count
+      else
+        0
+      end
+    end)
   end
 
   def get_grade(subjects, term_name) do

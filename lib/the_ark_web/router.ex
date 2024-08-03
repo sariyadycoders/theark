@@ -36,6 +36,7 @@ defmodule TheArkWeb.Router do
     live "/classes/:id/submit-fine", ClassSubmitFineLive
     live "/students", StudentIndexLive
     live "/students/:id", StudentsShowLive
+    live "/students/:id/performance", StudentPerformanceLive
     live "/students/:id/attendance", StudentAttendanceLive
     live "/students/:id/result-sheet/:term", StudentTermResultLive
     live "/groups/:id/finances", StudentFinanceLive

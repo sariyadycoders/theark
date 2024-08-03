@@ -22,10 +22,12 @@ import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 import MultiSelectHook from "./hooks/multi-select-hook"
+import LineChartHook from "./hooks/line-chart"
 // import ThemeChangerHook from "./theme-changer-hook"
 
 Hooks = {
-    MultiSelectHook
+    MultiSelectHook,
+    LineChartHook
 }
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
