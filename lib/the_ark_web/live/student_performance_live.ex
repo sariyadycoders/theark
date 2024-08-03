@@ -82,7 +82,7 @@ defmodule TheArkWeb.StudentPerformanceLive do
   defp get_labels(data) do
     ["start"] ++
       Enum.flat_map(data, fn {year, results} ->
-        Enum.map(results, fn {term, result} ->
+        Enum.map(results, fn {term, _result} ->
           name =
             case term do
               "first_term" -> "FT"
