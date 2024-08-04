@@ -62,6 +62,16 @@ defmodule TheArk.Students do
     ])
   end
 
+  def get_student_for_performance_page(id) do
+    Repo.get!(Student, id)
+    |> Repo.preload([
+      :class,
+      :results,
+      :attendances,
+      :tests
+    ])
+  end
+
   def get_student_for_finance(id) do
     Repo.get!(Student, id)
     |> Repo.preload(:class)

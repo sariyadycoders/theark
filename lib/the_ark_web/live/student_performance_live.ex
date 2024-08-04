@@ -7,11 +7,12 @@ defmodule TheArkWeb.StudentPerformanceLive do
 
   @impl true
   def mount(%{"id" => student_id}, _session, socket) do
-    student = Students.get_student!(student_id)
+    student = Students.get_student_for_performance_page(student_id)
 
     socket
     |> assign(student: student)
     |> assign_terms_data()
+    |> assign_tests_data()
     |> ok
   end
 
@@ -31,20 +32,39 @@ defmodule TheArkWeb.StudentPerformanceLive do
       </div>
       <canvas id="chart-canvas" data-chart-data={Jason.encode!(@terms_data)} phx-hook="LineChartHook">
       </canvas>
+
+      <div class="mt-10 text-xl font-bold">
+        Class Tests Result
+      </div>
+      <canvas
+        id="chart-canvas-2"
+        data-chart-data={Jason.encode!(@tests_data)}
+        phx-hook="LineChartHook"
+      >
+      </canvas>
     </div>
     """
   end
 
   defp assign_terms_data(%{assigns: %{student: student}} = socket) do
-    data = prepare_data(student.results)
-    labels = get_labels(data)
-    values = get_values(data)
+    data = prepare_data(student.results, "terms")
+    labels = get_labels(data, "terms")
+    values = get_values(data, "terms")
 
     socket
     |> assign(terms_data: %{labels: labels, values: values, heading: "results"})
   end
 
-  defp prepare_data(results) do
+  defp assign_tests_data(%{assigns: %{student: student}} = socket) do
+    data = prepare_data(student.tests, "tests")
+    labels = get_labels(data, "tests")
+    values = get_values(data, "tests")
+
+    socket
+    |> assign(tests_data: %{labels: labels, values: values, heading: "results"})
+  end
+
+  defp prepare_data(results, "terms") do
     Enum.reject(results, &String.ends_with?(&1.subject_of_result, "_t"))
     |> Enum.group_by(fn data -> data.year end, fn data ->
       data
@@ -79,7 +99,36 @@ defmodule TheArkWeb.StudentPerformanceLive do
     |> Enum.sort(:asc)
   end
 
-  defp get_labels(data) do
+  defp prepare_data(tests, "tests") do
+    Enum.group_by(tests, & &1.date_of_test, & &1)
+    |> Enum.map(fn {key, values} ->
+      active_values =
+        Enum.reject(values, fn v ->
+          is_nil(v.obtained_marks)
+        end)
+
+      total_percentage =
+        active_values
+        |> Enum.map(fn v ->
+          total = v.total_marks
+          obtained = v.obtained_marks
+
+          (obtained / total * 100) |> round()
+        end)
+        |> Enum.sum()
+
+      net_percentage =
+        if Enum.any?(active_values),
+          do: (total_percentage / Enum.count(active_values)) |> round(),
+          else: nil
+
+      if !net_percentage, do: nil, else: {key, net_percentage}
+    end)
+    |> Enum.reject(&is_nil(&1))
+    |> Enum.sort(fn {date1, _}, {date2, _} -> Date.compare(date1, date2) == :lt end)
+  end
+
+  defp get_labels(data, "terms") do
     ["start"] ++
       Enum.flat_map(data, fn {year, results} ->
         Enum.map(results, fn {term, _result} ->
@@ -95,12 +144,29 @@ defmodule TheArkWeb.StudentPerformanceLive do
       end)
   end
 
-  def get_values(data) do
+  defp get_labels(data, "tests") do
+    ["start"] ++
+      Enum.map(data, fn {date, _result} ->
+        month = Timex.month_shortname(date.month)
+        year = date.year |> Integer.to_string() |> String.slice(2, 2)
+
+        "#{month} #{date.day}, #{year}"
+      end)
+  end
+
+  def get_values(data, "terms") do
     [0] ++
       Enum.flat_map(data, fn {_year, results} ->
         Enum.map(results, fn {_term, result} ->
           result
         end)
+      end)
+  end
+
+  def get_values(data, "tests") do
+    [0] ++
+      Enum.map(data, fn {_date, result} ->
+        result
       end)
   end
 end

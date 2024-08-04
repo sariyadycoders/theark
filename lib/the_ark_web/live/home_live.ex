@@ -2,6 +2,7 @@ defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
   # progress graphs system (terms DONE, tests and attendance)
   # teachers attendance and salary system
+  # Global Settings System
 
   import Phoenix.HTML.Form
 
