@@ -2,15 +2,27 @@ defmodule TheArkWeb.StudentPerformanceLive do
   use TheArkWeb, :live_view
 
   alias TheArk.{
-    Students
+    Students,
+    Attendances
   }
+
+  alias TheArkWeb.SharedLive
 
   @impl true
   def mount(%{"id" => student_id}, _session, socket) do
     student = Students.get_student_for_performance_page(student_id)
+    student_id = String.to_integer(student_id)
+
+    attendances =
+      Attendances.get_student_monthly_attendances_to_show(student_id)
+      |> Enum.filter(fn attendance ->
+        attendance.month_number in last_eleven_months()
+      end)
+      |> Enum.sort_by(& &1.inserted_at, {:desc, Date})
 
     socket
     |> assign(student: student)
+    |> assign(attendances: attendances)
     |> assign_terms_data()
     |> assign_tests_data()
     |> ok
@@ -26,6 +38,13 @@ defmodule TheArkWeb.StudentPerformanceLive do
         <div><b>Student Name: </b> <%= @student.name %></div>
         <div><b>Father Name: </b> <%= @student.father_name %></div>
         <div><b>Class: </b> <%= @student.class.name %></div>
+      </div>
+      <div class="mt-5 text-xl font-bold">
+        Attendance Stats
+      </div>
+      <div class="border-2 border-black p-5 rounded-lg">
+        <SharedLive.student_attendance_heading assigns={assigns} />
+        <SharedLive.student_attendance_table attendances={@attendances} />
       </div>
       <div class="mt-5 text-xl font-bold">
         Regular Terms Result
