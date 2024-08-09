@@ -253,6 +253,13 @@ defmodule TheArkWeb.StudentsShowLive do
   end
 
   @impl true
+  def handle_event("go_to_peformance", %{"id" => id}, socket) do
+    socket
+    |> redirect(to: ~p"/students/#{id}/performance")
+    |> noreply()
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div>
@@ -307,6 +314,9 @@ defmodule TheArkWeb.StudentsShowLive do
             See <%= term_name |> String.replace("_", " ") %> Result Card
           </.button>
         <% end %>
+        <.button phx-click="go_to_peformance" phx-value-id={@student.id}>
+          See Performance Statistics
+        </.button>
       </div>
 
       <div class="grid grid-cols-2 p-5 border rounded-lg mt-5 gap-2">

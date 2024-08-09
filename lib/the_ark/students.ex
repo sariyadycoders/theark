@@ -57,7 +57,18 @@ defmodule TheArk.Students do
     |> Repo.preload([
       [subjects: from(s in Subject, order_by: s.subject_id, preload: :results)],
       [notes: from(n in Note, order_by: [desc: n.updated_at])],
-      :class
+      :class,
+      :results
+    ])
+  end
+
+  def get_student_for_performance_page(id) do
+    Repo.get!(Student, id)
+    |> Repo.preload([
+      :class,
+      :results,
+      :attendances,
+      :tests
     ])
   end
 
@@ -241,7 +252,7 @@ defmodule TheArk.Students do
           obtained_marks: result.obtained_marks,
           student_id: student.id,
           subject_of_result: subject.name,
-          year: student.prev_class.year,
+          year: prev_class.year,
           class_of_result: prev_class.name
         })
       end

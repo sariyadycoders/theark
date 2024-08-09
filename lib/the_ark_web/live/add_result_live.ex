@@ -132,12 +132,14 @@ defmodule TheArkWeb.AddResultLive do
       socket
       |> assign(total_marks: total_marks)
       |> assign(total_marks_submitted: true)
+      |> assign(term: term)
       |> assign(result_changesets: result_changesets)
       |> put_flash(:info, "Total marks added")
       |> noreply()
     else
       socket
       |> put_flash(:error, "Total marks should be greater than 0")
+      |> assign(term: term)
       |> noreply()
     end
   end
@@ -229,7 +231,13 @@ defmodule TheArkWeb.AddResultLive do
             }
             value={@subject_id}
           />
-          <.input field={s[:term]} type="select" label="Choose Term" options={make_term_options()} />
+          <.input
+            field={s[:term]}
+            type="select"
+            label="Choose Term"
+            options={make_term_options()}
+            value={@term}
+          />
           <.input
             field={s[:total_marks]}
             type="number"
