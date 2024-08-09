@@ -18,6 +18,7 @@ defmodule TheArk.Teachers.Teacher do
 
     has_many :subjects, TheArk.Subjects.Subject
     has_many :periods, TheArk.Periods.Period
+    has_many :attendances, TheArk.Attendances.Attendance
 
     timestamps(type: :utc_datetime)
   end

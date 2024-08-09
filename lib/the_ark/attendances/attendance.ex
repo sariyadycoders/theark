@@ -5,6 +5,7 @@ defmodule TheArk.Attendances.Attendance do
   schema "attendances" do
     field :date, :date
     field :entry, :string
+    field :time, :time
 
     field :is_monthly, :boolean
     field :month_number, :integer
@@ -31,6 +32,7 @@ defmodule TheArk.Attendances.Attendance do
     |> cast(attrs, [
       :date,
       :entry,
+      :time,
       :is_monthly,
       :month_number,
       :year,
