@@ -19,6 +19,8 @@ defmodule TheArk.Teachers.Teacher do
     has_many :subjects, TheArk.Subjects.Subject
     has_many :periods, TheArk.Periods.Period
     has_many :attendances, TheArk.Attendances.Attendance
+    has_many :finances, TheArk.Finances.Finance, on_delete: :nothing
+    has_many :notes, TheArk.Notes.Note
 
     timestamps(type: :utc_datetime)
   end

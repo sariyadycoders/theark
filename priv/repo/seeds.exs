@@ -10,16 +10,19 @@
 # We recommend using the bang functions (`insert!`, `update!`
 # and so on) as they will fail if something goes wrong.
 
-alias TheArk.Repo
-alias TheArk.Classes.Class
-alias TheArk.Teachers.Teacher
-alias TheArk.Subjects.Subject
-alias TheArk.Serials.Serial
-alias TheArk.Organizations.Organization
-alias TheArk.Roles.Role
-alias TheArk.Students.Student
-alias TheArk.Students
-alias TheArk.Groups
+alias TheArk.{
+  Repo,
+  Teachers,
+  Teachers.Teacher,
+  Classes.Class,
+  Subjects.Subject,
+  Serials.Serial,
+  Organizations.Organization,
+  Roles.Role,
+  Students.Student,
+  Students,
+  Groups
+}
 
 for {name, dig} <- [
       {"Play Group", 1},
@@ -62,7 +65,8 @@ end
 
 for name <- ["Amina", "Sania", "Malaika"] do
   %Teacher{name: name, registration_date: Date.utc_today()}
-  |> Repo.insert!()
+  |> Repo.insert()
+  |> Teachers.create_attendance_of_month()
 end
 
 for name <- [

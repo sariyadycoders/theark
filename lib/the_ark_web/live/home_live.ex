@@ -2,6 +2,7 @@ defmodule TheArkWeb.Home do
   use TheArkWeb, :live_view
 
   # teachers attendance and salary system [Done: modifications is teacher and attendance tables. creating attendances while creating teacher. route and simple liveview.]
+  # Do: teacher finance system [tables done]
   # Global Settings System
 
   import Phoenix.HTML.Form
