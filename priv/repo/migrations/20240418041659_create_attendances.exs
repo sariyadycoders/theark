@@ -5,6 +5,7 @@ defmodule TheArk.Repo.Migrations.CreateAttendances do
     create table(:attendances) do
       add :date, :date
       add :entry, :string
+      add :time, :time
 
       add :is_monthly, :boolean
       add :month_number, :integer
