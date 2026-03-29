@@ -40,7 +40,7 @@ defmodule TheArk.Transaction_details do
       where: t.paid_amount == 0,
       where: t.is_accepted != true,
       select: %{
-        name: f.absent_student_name,
+        name: f.absentee_name,
         date: f.absent_fine_date,
         transaction_id: t.id,
         group_id: g.id

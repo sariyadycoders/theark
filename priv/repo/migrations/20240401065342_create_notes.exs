@@ -7,6 +7,7 @@ defmodule TheArk.Repo.Migrations.CreateNotes do
       add :description, :string
       add :finance_id, references(:finances, on_delete: :delete_all)
       add :student_id, references(:students, on_delete: :delete_all)
+      add :teacher_id, references(:teachers, on_delete: :delete_all)
 
       timestamps(type: :utc_datetime)
     end

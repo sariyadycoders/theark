@@ -9,6 +9,7 @@ defmodule TheArk.Teachers do
   alias TheArk.Teachers.Teacher
   alias TheArk.Subjects.Subject
   alias TheArk.Periods.Period
+  alias TheArk.Attendances
 
   @doc """
   Returns the list of teachers.
@@ -82,6 +83,23 @@ defmodule TheArk.Teachers do
     %Teacher{}
     |> Teacher.changeset(attrs)
     |> Repo.insert()
+    |> create_attendance_of_month()
+  end
+
+  def create_attendance_of_month({:ok, teacher}) do
+    for day_number <- 1..Timex.days_in_month(Timex.today()) do
+      beginning_of_month = Timex.beginning_of_month(Timex.today())
+      date = Date.add(beginning_of_month, day_number - 1)
+      entry = "Not Marked Yet"
+
+      Attendances.create_attendance(%{date: date, entry: entry, teacher_id: teacher.id})
+    end
+
+    {:ok, teacher}
+  end
+
+  def create_attendance_of_month({:error, _} = error) do
+    error
   end
 
   @doc """

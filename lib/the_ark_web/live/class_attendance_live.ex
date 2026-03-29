@@ -91,7 +91,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
       Finances.change_finance(%Finance{}, %{
         group_id: group_id,
         absent_fine_date: new_attendance.date,
-        absent_student_name: Students.get_student_name(new_attendance.student_id),
+        absentee_name: Students.get_student_name(new_attendance.student_id),
         transaction_details: [
           %{
             title: "Absent Fine",
@@ -182,7 +182,7 @@ defmodule TheArkWeb.ClassAttendanceLive do
             Finances.change_finance(%Finance{}, %{
               group_id: group_id,
               absent_fine_date: date,
-              absent_student_name: Students.get_student_name(id),
+              absentee_name: Students.get_student_name(id),
               transaction_details: [
                 %{
                   title: "Absent Fine",
